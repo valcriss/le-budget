@@ -1,0 +1,68 @@
+<div class="min-h-screen bg-gradient-to-br from-[#58a9ff] via-[#3a8eff] to-[#1e66ff] flex items-center justify-center">
+    <div class="flex flex-row mx-auto max-w-7xl">
+
+        <!-- Left / branding -->
+        <div class="basis-8/12 text-white p-10">
+            <div class="">
+                <h1 class="text-4xl font-semibold">Le Budget</h1>
+                <p class="mt-2 text-white/90">Gérez votre budget simplement</p>
+
+                <div class="mt-6 bg-white/6 rounded-lg p-6 text-white/90 leading-relaxed text-sm" aria-hidden="true">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor,
+                    dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas
+                    ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie,
+                    enim est eleifend mi, non fermentum diam nisl sit amet erat.
+                </div>
+            </div>
+        </div>
+
+        <!-- Right / panel -->
+        <aside
+            class="basis-4/12 bg-white shadow-xl p-8 md:p-10 rounded-[28px]"
+            role="region" aria-label="Formulaire de connexion">
+            <div class="mb-4">
+                <h2 class="text-2xl font-medium text-slate-900">Bienvenue</h2>
+                <p class="text-sm text-slate-500 mt-1">Connectez-vous pour continuer</p>
+            </div>
+
+            <form class="flex flex-col gap-4 mt-4" (submit)="onSubmit($event)">
+                <label class="flex flex-col">
+                    <span class="text-sm text-slate-500 mb-2">Email</span>
+                    <input
+                        class="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#6968f033]"
+                        type="email" name="email" required placeholder="votre@exemple.com" />
+                </label>
+
+                <label class="flex flex-col">
+                    <span class="text-sm text-slate-500 mb-2">Mot de passe</span>
+                    <input
+                        class="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#6968f033]"
+                        type="password" name="password" required placeholder="••••••••" />
+                </label>
+
+                <div class="flex items-center justify-between mt-1">
+                    <a class="text-sm text-[#3a8eff] hover:underline cursor-pointer" routerLink="/forgot-password">Mot de passe oublié ?</a>
+                    <button type="submit" class="bg-[#58a9ff] hover:bg-[#3a8eff] text-white px-4 py-2 rounded-lg font-semibold transition">Se
+                        connecter</button>
+                </div>
+
+                <div class="text-center text-sm text-slate-400 mt-4">OU</div>
+
+                <div class="flex flex-col gap-3 mt-3">
+                    <button type="button"
+                        class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 flex items-center gap-2 justify-center"
+                        (click)="onGoogleSignIn()"><fa-icon [icon]="faGoogle"></fa-icon>Se connecter avec Google</button>
+                    <button type="button" class="w-full px-3 py-2 rounded-lg bg-[#1877f2] text-white flex items-center gap-2 justify-center"
+                        (click)="onFacebookSignIn()"><fa-icon [icon]="faFacebook"></fa-icon>Se connecter avec Facebook</button>
+                </div>
+
+        <p class="text-sm text-slate-500 mt-4">Pas encore de compte ? <a
+            class="text-[#6968f0] hover:underline cursor-pointer" routerLink="/register">Créer un
+            compte</a></p>
+            </form>
+
+            <footer class="mt-auto text-xs text-slate-400">En continuant, vous acceptez nos conditions d'utilisation.
+            </footer>
+        </aside>
+    </div>
+</div>
