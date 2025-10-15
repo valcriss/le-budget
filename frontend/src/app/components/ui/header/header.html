@@ -36,9 +36,9 @@
 
                     <!-- user dropdown -->
                     <div *ngIf="userMenuOpen()" class="absolute right-0 mt-2 w-44 bg-white border rounded-md shadow-lg py-1 z-50">
-                        <app-nav-item link="/profile" [icon]="icUser">Profil</app-nav-item>
-                        <app-nav-item link="/settings" [icon]="icSettings">Paramètres</app-nav-item>
-                        <app-nav-item [icon]="icLogout" [classes]="'cursor-pointer'">Se déconnecter</app-nav-item>
+                    <app-nav-item link="/profile" [icon]="icUser" (activated)="closeMenus()">Profil</app-nav-item>
+                    <app-nav-item link="/settings" [icon]="icSettings" (activated)="closeMenus()">Paramètres</app-nav-item>
+                    <app-nav-item [icon]="icLogout" [classes]="'cursor-pointer'" (activated)="closeMenus()">Se déconnecter</app-nav-item>
                     </div>
                 </div>
             </div>
@@ -48,9 +48,9 @@
     <!-- mobile popup nav -->
     <div *ngIf="mobileOpen()" class="md:hidden">
             <div class="px-2 pt-2 pb-3 space-y-1">
-            <app-nav-item link="/budget" [icon]="icDashboard" [classes]="'rounded-md text-base font-medium'">Mon Budget</app-nav-item>
-            <app-nav-item link="/accounts" [icon]="icAccounts" [classes]="'rounded-md text-base font-medium'">Mes comptes</app-nav-item>
-            <app-nav-item link="/categories" [icon]="icCategories" [classes]="'rounded-md text-base font-medium'">Mes catégories</app-nav-item>
+            <app-nav-item link="/budget" [icon]="icDashboard" [classes]="'rounded-md text-base font-medium'" (activated)="mobileOpen.set(false)">Mon Budget</app-nav-item>
+            <app-nav-item link="/accounts" [icon]="icAccounts" [classes]="'rounded-md text-base font-medium'" (activated)="mobileOpen.set(false)">Mes comptes</app-nav-item>
+            <app-nav-item link="/categories" [icon]="icCategories" [classes]="'rounded-md text-base font-medium'" (activated)="mobileOpen.set(false)">Mes catégories</app-nav-item>
         </div>
     </div>
 
