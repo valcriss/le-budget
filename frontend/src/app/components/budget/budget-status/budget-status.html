@@ -1,24 +1,24 @@
 <div class="relative z-50">
     <!-- tooltip container -->
     <div class="bg-white border border-gray-300 drop-shadow-xl rounded-xl shadow-lg p-4 w-80 text-slate-800">
-        <div class="text-sm text-slate-500 mb-2 border-b border-gray-500">
+        <div class="text-sm text-gray-700 mb-2 border-b border-gray-500">
             <div class="flex items-center gap-2"><fa-icon [icon]="icIncomes" class="text-lg text-emerald-700"></fa-icon>
             <div>Ressources du mois</div></div>
         </div>
         <div class="flex flex-row">
             <div class="basis-8/12 text-xs">Disponible du mois précédent</div>
-            <div class="basis-4/12 text-xs text-right text-rose-600">-250,00 €</div>
+            <div class="basis-4/12 text-xs text-right text-rose-600">- 250,00 €</div>
         </div>
         <div class="flex flex-row">
             <div class="basis-8/12 text-xs">Revenus du mois</div>
-            <div class="basis-4/12 text-xs text-right text-emerald-600">1 500,00 €</div>
+            <div class="basis-4/12 text-xs text-right text-emerald-600">+ 1 500,00 €</div>
         </div>
         <div class="flex flex-row border-t border-gray-200 pt-1 mt-1">
             <div class="basis-8/12 text-xs font-bold">Total ressources</div>
-            <div class="basis-4/12 text-xs text-right text-emerald-600">{{ available }}</div>
+            <div class="basis-4/12 text-xs text-right text-emerald-600">+ {{ available }}</div>
         </div>
 
-        <div class="text-sm text-slate-500 mb-2 border-b border-gray-500">
+        <div class="text-sm text-gray-700 mb-2 border-b border-gray-500">
             <div class="flex items-center gap-2"><fa-icon [icon]="icExpenses" class="text-lg text-rose-700"></fa-icon>
             <div>Charges du mois</div></div>
         </div>
@@ -28,16 +28,16 @@
         </div>
         <div class="flex flex-row">
             <div class="basis-8/12 text-xs">Montant sous-budgétisé</div>
-            <div class="basis-4/12 text-xs text-right text-rose-600">1 500,00 €</div>
+            <div class="basis-4/12 text-xs text-right text-rose-600">- 1 500,00 €</div>
         </div>
         <div class="flex flex-row border-t border-gray-200 pt-1 mt-1">
             <div class="basis-8/12 text-xs font-bold">Total charges</div>
-            <div class="basis-4/12 text-xs text-right text-rose-600">1 500,00 €</div>
+            <div class="basis-4/12 text-xs text-right text-rose-600">- 1 500,00 €</div>
         </div>
 
         <div id="final-available" class="flex w-full items-center justify-end gap-2 mt-4">
             <div class="text-xl font-semibold text-right text-emerald-600">{{ available }}</div>
-            <div class="text-sm text-slate-500 text-right">disponible</div>
+            <div class="text-sm text-gray-700 text-right">disponible</div>
         </div>
         
     </div>
