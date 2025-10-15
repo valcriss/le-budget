@@ -1,0 +1,14 @@
+.tooltip-box {
+  /* small visual tweak: ensure tooltip appears above other elements when positioned */
+  position: relative;
+}
+
+/* pop animation */
+.animate-pop {
+  animation: pop-in 160ms ease-out;
+}
+
+@keyframes pop-in {
+  from { transform: translateY(-6px) scale(.98); opacity: 0 }
+  to { transform: translateY(0) scale(1); opacity: 1 }
+}
