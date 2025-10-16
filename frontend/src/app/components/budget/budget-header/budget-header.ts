@@ -66,9 +66,12 @@ export class BudgetHeader {
 
       const portal = new ComponentPortal(BudgetStatus, this.viewContainerRef);
   const compRef = this.overlayRef.attach(portal);
-  // pass input
-  if (compRef && compRef.instance) compRef.instance.available = this.available;
-  this.attachedCompRef = compRef;
+      // pass input
+      if (compRef && compRef.instance) {
+        compRef.instance.available = this.available;
+        compRef.instance.requestClose = ()=> this.closeOverlay();
+      }
+      this.attachedCompRef = compRef;
 
       // show status signal for template/logic parity
       this.showStatus.set(true);
@@ -77,6 +80,13 @@ export class BudgetHeader {
       this.overlayRef.backdropClick().subscribe(()=> this.closeOverlay());
       // also close on detachments or outside clicks handled by CDK
       this.overlayRef.detachments().subscribe(()=> this.closeOverlay());
+
+      // handle Escape inside the overlay and return focus to the origin when closed
+      this.overlayRef.keydownEvents().subscribe((ev: KeyboardEvent) => {
+        if (ev.key === 'Escape') this.closeOverlay();
+      });
+      // ensure origin receives focus again when overlay is closed
+      this.overlayRef.detachments().subscribe(()=> { try { origin.focus(); } catch {} });
     } else {
       // close overlay and play any animation inside component if needed
       this.closeOverlay();
