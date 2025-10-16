@@ -1,2 +1,16 @@
 <app-header></app-header>
 <app-budget-header></app-budget-header>
+<div class="px-3 md:px-0">
+    <div class="flex flex-row mx-auto max-w-7xl gap-1 md:gap-3">
+        <div class="basis-full md:basis-9/12">
+            <app-ui-card>
+                <app-budget-menu></app-budget-menu>
+            </app-ui-card>
+        </div>
+        <div class="hidden md:block md:basis-3/12">
+            <app-ui-card>
+                <p>Contenu de la carte</p>
+            </app-ui-card>
+        </div>
+    </div>
+</div>
