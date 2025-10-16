@@ -20,6 +20,7 @@ export class BudgetHeader {
   protected readonly icStatus = faCheck;
 
   showStatus = signal(false);
+  closing = signal(false);
   protected readonly available = '1 250,00 €';
   tooltipStyle: { [k: string]: string } = {};
 
@@ -27,10 +28,21 @@ export class BudgetHeader {
   @ViewChild('budgetTooltip', { read: ElementRef }) budgetTooltip?: ElementRef;
 
   toggleStatus(){
-    this.showStatus.set(!this.showStatus());
-    // compute position when opening
-    if (this.showStatus()) {
-      setTimeout(()=> this.computeTooltipPosition(), 0);
+    const opening = !this.showStatus();
+    if (opening) {
+      // render tooltip off-screen and hidden immediately to avoid layout shift
+      this.tooltipStyle = { position: 'fixed', left: '-9999px', top: '-9999px', visibility: 'hidden', zIndex: '9999' };
+  this.showStatus.set(true);
+  // compute position after Angular has updated the view (ensure tooltip element exists)
+  setTimeout(()=> this.computeTooltipPositionWithRetry(), 0);
+    } else {
+      // start closing animation then remove
+      this.closing.set(true);
+      // match animation duration (140ms) + small buffer
+      setTimeout(()=>{
+        this.closing.set(false);
+        this.showStatus.set(false);
+      }, 180);
     }
   }
 
@@ -60,8 +72,28 @@ export class BudgetHeader {
       position: 'fixed',
       left: `${Math.round(left)}px`,
       top: `${Math.round(top)}px`,
-      zIndex: '9999'
+      zIndex: '9999',
+      visibility: 'visible'
     };
+  }
+
+  computeTooltipPositionWithRetry(maxAttempts = 6){
+    let attempts = 0;
+    const tryCompute = ()=>{
+      attempts++;
+      const avail = this.budgetAvailable?.nativeElement as HTMLElement | undefined;
+      const tip = this.budgetTooltip?.nativeElement as HTMLElement | undefined;
+      if (!avail || !tip) return;
+      const tipRect = tip.getBoundingClientRect();
+      if (tipRect.width > 0 || attempts >= maxAttempts){
+        // tooltip seems rendered (or we've retried enough) -> compute final position
+        this.computeTooltipPosition();
+      } else {
+        // try again on next frame
+        window.requestAnimationFrame(tryCompute);
+      }
+    };
+    window.requestAnimationFrame(tryCompute);
   }
 
   @HostListener('window:resize')
