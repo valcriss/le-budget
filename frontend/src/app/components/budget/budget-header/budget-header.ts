@@ -1,14 +1,15 @@
-import { Component, signal, ElementRef, ViewChild, HostListener } from '@angular/core';
+import { Component, signal, ElementRef, ViewChild, HostListener, ViewContainerRef } from '@angular/core';
 import { NgStyle } from '@angular/common';
-import { NgIf } from '@angular/common';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { faChevronCircleLeft, faChevronCircleRight, faArrowsTurnToDots, faWallet, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { BudgetStatus } from '../budget-status/budget-status';
+import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal } from '@angular/cdk/portal';
 
 @Component({
   selector: 'app-budget-header',
   standalone: true,
-  imports: [FontAwesomeModule, BudgetStatus, NgIf, NgStyle],
+  imports: [FontAwesomeModule],
   templateUrl: './budget-header.html',
   styleUrls: ['./budget-header.css']
 })
@@ -22,102 +23,111 @@ export class BudgetHeader {
   showStatus = signal(false);
   closing = signal(false);
   protected readonly available = '1 250,00 €';
-  tooltipStyle: { [k: string]: string } = {};
+  // Overlay reference when using CDK
+  private overlayRef?: OverlayRef;
+  // keep a reference to the attached component so we can trigger its close animation
+  private attachedCompRef: any;
 
   @ViewChild('budgetAvailable', { read: ElementRef }) budgetAvailable?: ElementRef;
-  @ViewChild('budgetTooltip', { read: ElementRef }) budgetTooltip?: ElementRef;
 
   toggleStatus(){
     const opening = !this.showStatus();
     if (opening) {
-      // render tooltip off-screen and hidden immediately to avoid layout shift
-      this.tooltipStyle = { position: 'fixed', left: '-9999px', top: '-9999px', visibility: 'hidden', zIndex: '9999' };
-  this.showStatus.set(true);
-  // compute position after Angular has updated the view (ensure tooltip element exists)
-  setTimeout(()=> this.computeTooltipPositionWithRetry(), 0);
+      const origin = this.budgetAvailable?.nativeElement as HTMLElement | undefined;
+      if (!origin) return;
+
+      // create overlay connected to the origin element
+      const positionStrategy = this.overlay.position()
+        .flexibleConnectedTo(origin)
+        .withPositions([
+          // prefer below
+          {
+            originX: 'center', originY: 'bottom',
+            overlayX: 'center', overlayY: 'top',
+            offsetY: 8
+          },
+          // fallback above
+          {
+            originX: 'center', originY: 'top',
+            overlayX: 'center', overlayY: 'bottom',
+            offsetY: -8
+          }
+        ])
+        .withFlexibleDimensions(false)
+        .withPush(true);
+
+      this.overlayRef = this.overlay.create({
+        positionStrategy,
+        scrollStrategy: this.overlay.scrollStrategies.reposition(),
+        hasBackdrop: true,
+        backdropClass: 'cdk-overlay-transparent-backdrop',
+        panelClass: 'z-50'
+      });
+
+      const portal = new ComponentPortal(BudgetStatus, this.viewContainerRef);
+  const compRef = this.overlayRef.attach(portal);
+  // pass input
+  if (compRef && compRef.instance) compRef.instance.available = this.available;
+  this.attachedCompRef = compRef;
+
+      // show status signal for template/logic parity
+      this.showStatus.set(true);
+
+      // close on backdrop click
+      this.overlayRef.backdropClick().subscribe(()=> this.closeOverlay());
+      // also close on detachments or outside clicks handled by CDK
+      this.overlayRef.detachments().subscribe(()=> this.closeOverlay());
     } else {
-      // start closing animation then remove
-      this.closing.set(true);
-      // match animation duration (140ms) + small buffer
-      setTimeout(()=>{
-        this.closing.set(false);
-        this.showStatus.set(false);
-      }, 180);
+      // close overlay and play any animation inside component if needed
+      this.closeOverlay();
     }
   }
 
-  computeTooltipPosition(){
-    const avail = this.budgetAvailable?.nativeElement as HTMLElement | undefined;
-    const tip = this.budgetTooltip?.nativeElement as HTMLElement | undefined;
-    if (!avail || !tip) return;
+  private async closeOverlay(){
+    const overlay = this.overlayRef;
+    if (!overlay) return;
 
-    const rect = avail.getBoundingClientRect();
-    const tipRect = tip.getBoundingClientRect();
-    const spaceRight = window.innerWidth - rect.left;
+    // prevent re-entrancy: clear the shared references early so concurrent
+    // callbacks won't try to operate on the same overlay again
+    this.overlayRef = undefined;
+    const attached = this.attachedCompRef;
+    this.attachedCompRef = undefined;
 
-    // default center above the element
-    let left = rect.left + rect.width/2 - tipRect.width/2;
-    // prevent overflow left/right
-    left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
-
-    // place tooltip below by default (top: rect.bottom) with small offset
-    let top = rect.bottom + 8;
-
-    // if not enough space below, place above
-    if (rect.bottom + tipRect.height + 16 > window.innerHeight) {
-      top = rect.top - tipRect.height - 8;
-    }
-
-    this.tooltipStyle = {
-      position: 'fixed',
-      left: `${Math.round(left)}px`,
-      top: `${Math.round(top)}px`,
-      zIndex: '9999',
-      visibility: 'visible'
-    };
-  }
-
-  computeTooltipPositionWithRetry(maxAttempts = 6){
-    let attempts = 0;
-    const tryCompute = ()=>{
-      attempts++;
-      const avail = this.budgetAvailable?.nativeElement as HTMLElement | undefined;
-      const tip = this.budgetTooltip?.nativeElement as HTMLElement | undefined;
-      if (!avail || !tip) return;
-      const tipRect = tip.getBoundingClientRect();
-      if (tipRect.width > 0 || attempts >= maxAttempts){
-        // tooltip seems rendered (or we've retried enough) -> compute final position
-        this.computeTooltipPosition();
-      } else {
-        // try again on next frame
-        window.requestAnimationFrame(tryCompute);
+    try {
+      // if the attached component exposes startClose, call it and wait for animation
+      if (attached && attached.instance && typeof attached.instance.startClose === 'function'){
+        try {
+          await attached.instance.startClose();
+        } catch {
+          // ignore animation errors and proceed to detach
+        }
       }
-    };
-    window.requestAnimationFrame(tryCompute);
-  }
-
-  @HostListener('window:resize')
-  onResize(){
-    if (this.showStatus()) this.computeTooltipPosition();
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocClick(event: MouseEvent){
-    const target = event.target as Node;
-    const avail = this.budgetAvailable?.nativeElement as HTMLElement | undefined;
-    const tip = this.budgetTooltip?.nativeElement as HTMLElement | undefined;
-    if (!avail) return;
-    if (this.showStatus() && tip && !avail.contains(target) && !tip.contains(target)){
+    } finally {
+      // best-effort detach/dispose on the captured overlay reference
+      try { overlay.detach(); } catch {}
+      try { overlay.dispose(); } catch {}
       this.showStatus.set(false);
     }
   }
 
-  @HostListener('document:keydown', ['$event'])
-  onEscape(event: KeyboardEvent){
-    if (event.key === 'Escape' && this.showStatus()) this.showStatus.set(false);
+  // position now handled by CDK Overlay; removed manual positioning helpers
+
+  @HostListener('window:resize')
+  onResize(){
+    // CDK overlay repositioning handles resize when using reposition scroll strategy
   }
 
-  constructor(library: FaIconLibrary){
+  @HostListener('document:click', ['$event'])
+  onDocClick(event: MouseEvent){
+    // CDK overlay handles backdrop clicks; no manual outside-click detection needed
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onEscape(event: KeyboardEvent){
+    if (event.key === 'Escape' && this.showStatus()) this.closeOverlay();
+  }
+
+  constructor(library: FaIconLibrary, private overlay: Overlay, private viewContainerRef: ViewContainerRef){
     library.addIcons(faChevronCircleLeft, faChevronCircleRight, faArrowsTurnToDots, faWallet, faCheck);
   }
 

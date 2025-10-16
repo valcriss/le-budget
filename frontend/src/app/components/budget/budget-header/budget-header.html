@@ -23,10 +23,7 @@
                         <div class="text-xl font-semibold">1 250,00 €</div>
                     </div>
                 </div>
-                <!-- budget status tooltip positioned smartly by TS -->
-                <div *ngIf="showStatus()" #budgetTooltip [ngStyle]="tooltipStyle" class="z-50">
-                    <app-budget-status [available]="available" [class.animate-pop]="!closing()" [class.animate-fade-out]="closing()"></app-budget-status>
-                </div>
+                <!-- budget status is rendered via Angular CDK Overlay -->
             </div>
 
         </div>
