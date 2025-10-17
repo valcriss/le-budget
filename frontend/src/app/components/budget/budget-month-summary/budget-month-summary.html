@@ -1,0 +1,24 @@
+<div>
+    <div class="flex flex-col">
+        <div class="text-base font-semibold text-gray-600">Résumé du mois</div>
+
+        <div class="flex flex-row justify-between text-sm text-gray-600">
+            <div>Disponible du mois précédent</div>
+            <div [class]="getAmountClass(availableFromPreviousMonth)">{{ formatCurrencyWithSign(availableFromPreviousMonth) }}</div>
+        </div>
+        <div class="flex flex-row justify-between text-sm text-gray-600">
+            <div>Revenus du mois</div>
+            <div [class]="getAmountClass(incomesOfTheCurrentMonth)">{{ formatCurrencyWithSign(incomesOfTheCurrentMonth) }}</div>
+        </div>
+
+        <div class="flex flex-row justify-between text-sm text-gray-600 pt-1 mt-1 border-t border-gray-200">
+            <div>Total Payé</div>
+            <div [class]="getAmountClass(totalPaid)">{{ formatCurrencyWithSign(totalPaid) }}</div>
+        </div>
+
+        <div class="flex flex-row justify-between font-bold text-sm text-gray-600 pt-1 mt-1 border-t border-gray-200">
+            <div>Total Disponible</div>
+            <div [class]="getAmountClass(totalAvailable)">{{ formatCurrencyWithSign(totalAvailable) }}</div>
+        </div>
+    </div>
+</div>

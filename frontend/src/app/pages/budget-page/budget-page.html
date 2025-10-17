@@ -10,8 +10,16 @@
     </div>
     <div class="hidden md:block md:basis-3/12">
       <app-ui-card>
-        <p>Contenu de la carte</p>
+        <app-budget-month-summary [availableFromPreviousMonth]="-120"
+                                  [incomesOfTheCurrentMonth]="150"
+                                  [totalPaid]="100"
+                                  [totalAvailable]="170"></app-budget-month-summary>
       </app-ui-card>
+
+      <app-ui-card>
+        <app-budget-month-actions></app-budget-month-actions>
+      </app-ui-card>
+
     </div>
   </div>
 </div>
