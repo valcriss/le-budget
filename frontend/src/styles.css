@@ -4,3 +4,9 @@
 body {
   background-color: #f7f7f7;
 }
+
+/* Ensure any flex container with height 2rem (h-8) centers its children vertically.
+   This helps to vertically center content in the budget rows/cells. */
+.flex.h-8 {
+  align-items: center;
+}

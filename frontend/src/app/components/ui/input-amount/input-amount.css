@@ -1,0 +1,6 @@
+/* Styles moved to Tailwind utility classes in the template. Keep file present as fallback. */
+
+:host {
+	display: block;
+	width: 100%;
+}
