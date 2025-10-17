@@ -4,8 +4,8 @@
       <fa-icon [icon]="icChevronRight" class="text-gray-400 text-xs cursor-pointer"></fa-icon>
     </div>
     <div class="basis-4/12 md:basis-3/12 flex items-center px-1 group">
-      <div class="flex items-center gap-2">
-        <div>{{ label }}</div>
+      <div class="flex items-center gap-2 font-bold">
+        <div class="text-gray-800">{{ label }}</div>
         <div class="relative">
           <button type="button" (click)="onAddCategory($event)" aria-label="Ajouter une catégorie" class="peer cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-150 text-gray-500 hover:text-[#58a9ff] focus:outline-none">
             <fa-icon [icon]="icAdd" class="text-base"></fa-icon>
@@ -17,10 +17,10 @@
         </div>
       </div>
     </div>
-    <div class="basis-4/12 md:basis-3/12 flex items-center justify-end px-1 text-right" [class]="getAvailableClass(assigned)">
+    <div class="font-bold basis-4/12 md:basis-3/12 flex items-center justify-end px-1 text-right" [class]="getAvailableClass(assigned)">
       {{ formatCurrencyWithSign(assigned) }}
     </div>
-    <div class="hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right" [class]="getAvailableClass(paid)">
+    <div class="hidden font-bold basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right" [class]="getAvailableClass(paid)">
       {{ formatCurrencyWithSign(paid) }}
     </div>
     <div class="basis-4/12 md:basis-3/12 flex items-center justify-end px-1 text-right" [class]="getAvailableClass(available)">
