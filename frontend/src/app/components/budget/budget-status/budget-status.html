@@ -21,7 +21,7 @@
         </div>
         <div class="flex flex-row border-t border-gray-200 pt-1 mt-1">
             <div class="basis-8/12 text-xs font-bold">Total ressources</div>
-            <div class="basis-4/12 text-xs text-right text-emerald-600">+ {{ available }}</div>
+            <div class="basis-4/12 text-xs text-right" [class]="getAvailableClass(available)">{{ formatCurrencyWithSign(available) }}</div>
         </div>
 
         <div class="text-sm text-gray-700 mb-2 border-b border-gray-500">
@@ -42,7 +42,7 @@
         </div>
 
         <div id="final-available" class="flex w-full items-center justify-end gap-2 mt-4">
-            <div class="text-xl font-semibold text-right text-emerald-600">{{ available }}</div>
+            <div class="text-xl font-semibold text-right" [class]="getAvailableClass(available)">{{ formatCurrencyWithSign(available) }}</div>
             <div class="text-sm text-gray-700 text-right">disponible</div>
         </div>
         

@@ -1,1 +1,14 @@
-<p>budget-categories works!</p>
+<div>
+    <div class="flex flex-row px-2 h-8 text-xs font-semibold uppercase text-gray-500 mt-1">
+        <div class="basis-0 flex items-center pr-2">
+            <fa-icon [icon]="icChevronRight" class="text-gray-400 text-xs cursor-pointer"></fa-icon>
+        </div>
+        <div class="basis-4/12 md:basis-3/12 flex items-center px-1">Catégorie</div>
+        <div class="basis-4/12 md:basis-3/12 flex items-center justify-end px-1 text-right">Assigné</div>
+        <div class="hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right">Payé</div>
+        <div class="basis-4/12 md:basis-3/12 flex items-center justify-end px-1 text-right">Disponible</div>
+    </div>
+</div>
+<div class="">
+    <app-budget-category-group [label]="'Catégorie 1'" [assigned]="100" [paid]="-50" [available]="50"></app-budget-category-group>
+</div>

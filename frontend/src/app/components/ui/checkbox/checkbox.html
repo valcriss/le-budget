@@ -1,0 +1,32 @@
+<label
+	(click)="$event.preventDefault(); toggle()"
+	(keydown)="onKeydown($event)"
+	tabindex="0"
+	role="checkbox"
+	[attr.aria-checked]="checked"
+	[attr.aria-disabled]="disabled"
+	[class.cursor-not-allowed]="disabled"
+	[class.opacity-60]="disabled"
+	 class="inline-flex items-center gap-2 outline-none focus-visible:ring-4 focus-visible:ring-blue-200 rounded-md align-middle leading-none"
+>
+		<!-- box: unchecked -->
+					<span *ngIf="!checked" class="w-4 h-4 rounded-md grid place-items-center flex-shrink-0 border-2 border-slate-300 transition-all duration-150 active:translate-y-0" aria-hidden="true">
+						<!-- invisible svg to preserve box metrics -->
+						<svg class="w-3 h-3 opacity-0 block" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+							<polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					</span>
+
+				<!-- box: checked -->
+					<span *ngIf="checked" class="w-4 h-4 rounded-md grid place-items-center flex-shrink-0 border-2 border-transparent bg-gradient-to-b from-sky-400 to-blue-600 bg-sky-500 transition-all duration-150 active:translate-y-0" aria-hidden="true">
+						<svg class="w-3 h-3 text-white block" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+				<polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+			</svg>
+		</span>
+
+	<!-- label/content -->
+	<span class="text-sm text-slate-900">
+		<ng-container *ngIf="label; else content">{{ label }}</ng-container>
+		<ng-template #content><ng-content></ng-content></ng-template>
+	</span>
+</label>

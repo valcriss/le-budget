@@ -1,0 +1,4 @@
+
+/* Minimal host CSS: Tailwind utility classes are used in template */
+:host { display: inline-block; }
+

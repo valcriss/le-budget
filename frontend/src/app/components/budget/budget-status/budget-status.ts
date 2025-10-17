@@ -2,6 +2,7 @@ import { Component, Input, ElementRef, ViewChild, AfterViewInit, OnDestroy } fro
 import { FocusTrap, FocusTrapFactory, A11yModule } from '@angular/cdk/a11y';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { faPlusCircle, faMinusCircle } from '@fortawesome/free-solid-svg-icons';
+import { formatCurrencyWithSign, getAmountClass } from '../../../shared/formatters';
 
 @Component({
     selector: 'app-budget-status',
@@ -27,6 +28,15 @@ export class BudgetStatus implements AfterViewInit, OnDestroy {
     // resolves when the CSS animation 'animationend' fires on the root element.
     // A fallback timeout is used as a safety net.
     constructor(private focusTrapFactory: FocusTrapFactory){}
+
+    // wrappers that call shared helpers
+    formatCurrencyWithSign(value?: string|number): string{
+        return formatCurrencyWithSign(value, true);
+    }
+
+    getAvailableClass(value?: string|number): string{
+        return getAmountClass(value);
+    }
 
     ngAfterViewInit(): void{
         const el = this.root?.nativeElement;
