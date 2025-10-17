@@ -7,13 +7,12 @@ import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
   standalone: true,
   imports: [FontAwesomeModule],
   templateUrl: './budget-menu.html',
-  styleUrls: ['./budget-menu.css']
+  styleUrls: ['./budget-menu.css'],
 })
 export class BudgetMenu {
-
   protected readonly icCategoryGroup = faPlusSquare;
 
-  constructor(library: FaIconLibrary){
+  constructor(library: FaIconLibrary) {
     library.addIcons(faPlusSquare);
   }
 }

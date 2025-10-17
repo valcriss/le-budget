@@ -2,7 +2,11 @@
   <!-- default wrapper classes to avoid repetition; can be overridden via [classes] -->
   <span [ngClass]="(defaultWrapper + ' ' + (classes || '')).trim()">
     <!-- default icon classes; can be overridden via [iconClasses] -->
-    <fa-icon *ngIf="icon" [icon]="icon" [ngClass]="(defaultIcon + ' ' + (iconClasses || '')).trim()"></fa-icon>
+    <fa-icon
+      *ngIf="icon"
+      [icon]="icon"
+      [ngClass]="(defaultIcon + ' ' + (iconClasses || '')).trim()"
+    ></fa-icon>
     <span><ng-content></ng-content></span>
   </span>
 </a>

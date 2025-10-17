@@ -1,4 +1,3 @@
-
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { NgIf } from '@angular/common';
 
@@ -7,7 +6,7 @@ import { NgIf } from '@angular/common';
   standalone: true,
   imports: [NgIf],
   templateUrl: './checkbox.html',
-  styleUrls: ['./checkbox.css']
+  styleUrls: ['./checkbox.css'],
 })
 export class Checkbox {
   @Input() checked = false;
@@ -15,15 +14,15 @@ export class Checkbox {
   @Input() label?: string;
   @Output() checkedChange = new EventEmitter<boolean>();
 
-  toggle(){
+  toggle() {
     if (this.disabled) return;
     this.checked = !this.checked;
     this.checkedChange.emit(this.checked);
   }
 
-  onKeydown(event: KeyboardEvent){
+  onKeydown(event: KeyboardEvent) {
     if (this.disabled) return;
-    if (event.key === ' ' || event.key === 'Enter'){
+    if (event.key === ' ' || event.key === 'Enter') {
       event.preventDefault();
       this.toggle();
     }

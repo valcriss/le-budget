@@ -4,8 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-input-text',
   imports: [],
   templateUrl: './input-text.html',
-  styleUrl: './input-text.css'
+  styleUrl: './input-text.css',
 })
-export class InputText {
-
-}
+export class InputText {}

@@ -5,8 +5,8 @@ import { Register } from './pages/register/register';
 import { BudgetPage } from './pages/budget-page/budget-page';
 
 export const routes: Routes = [
-    { path: 'login', component: LoginPage },
-    { path: 'forgot-password', component: ForgotPassword },
-    { path: 'register', component: Register },
-    { path: 'budget', component: BudgetPage }
+  { path: 'login', component: LoginPage },
+  { path: 'forgot-password', component: ForgotPassword },
+  { path: 'register', component: Register },
+  { path: 'budget', component: BudgetPage },
 ];

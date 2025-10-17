@@ -4,6 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "lint": "eslint --ext .ts,.html src/ --max-warnings=0",
+    "format": "prettier --write \"src/**/*.{ts,html,css,json,md}\"",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
@@ -42,6 +44,11 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
+  "eslint": "^8.48.0",
+  "@typescript-eslint/parser": "^6.6.0",
+  "@typescript-eslint/eslint-plugin": "^6.6.0",
+  "eslint-config-prettier": "^8.8.0",
+  "prettier": "^2.8.8",
     "@angular/build": "^20.3.5",
     "@angular/cli": "^20.3.5",
     "@angular/compiler-cli": "^20.3.0",

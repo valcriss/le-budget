@@ -6,10 +6,10 @@ import { RouterLink } from '@angular/router';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './register.html',
-  styleUrls: ['./register.css']
+  styleUrls: ['./register.css'],
 })
 export class Register {
-  onSubmit(evt: Event){
+  onSubmit(evt: Event) {
     evt.preventDefault();
     const form = evt.target as HTMLFormElement;
     const data = new FormData(form);

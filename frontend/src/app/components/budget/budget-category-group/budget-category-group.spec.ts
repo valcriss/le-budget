@@ -8,9 +8,8 @@ describe('BudgetCategoryGroup', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [BudgetCategoryGroup]
-    })
-    .compileComponents();
+      imports: [BudgetCategoryGroup],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(BudgetCategoryGroup);
     component = fixture.componentInstance;

@@ -9,8 +9,14 @@
 }
 
 @keyframes pop-in {
-  from { transform: translateY(-6px) scale(.98); opacity: 0 }
-  to { transform: translateY(0) scale(1); opacity: 1 }
+  from {
+    transform: translateY(-6px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 /* fade-out animation for exit */
@@ -19,6 +25,12 @@
 }
 
 @keyframes fade-out {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to { opacity: 0; transform: translateY(-6px) scale(.98); }
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
 }

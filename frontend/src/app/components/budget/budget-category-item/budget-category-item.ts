@@ -4,8 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-budget-category-item',
   imports: [],
   templateUrl: './budget-category-item.html',
-  styleUrl: './budget-category-item.css'
+  styleUrl: './budget-category-item.css',
 })
-export class BudgetCategoryItem {
-
-}
+export class BudgetCategoryItem {}

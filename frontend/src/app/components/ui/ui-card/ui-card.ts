@@ -4,8 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-ui-card',
   imports: [],
   templateUrl: './ui-card.html',
-  styleUrl: './ui-card.css'
+  styleUrl: './ui-card.css',
 })
-export class UiCard {
-
-}
+export class UiCard {}

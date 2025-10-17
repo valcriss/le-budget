@@ -1,60 +1,99 @@
-<div #root class="relative z-50" role="dialog" aria-modal="true" aria-labelledby="budget-status-title" [class.animate-pop]="!closing" [class.animate-fade-out]="closing">
-    <!-- hidden title for screen readers -->
-    <h2 id="budget-status-title" class="sr-only">Détails du budget</h2>
-    <!-- close button (first tabbable element) -->
-    <div class="absolute right-2 top-2">
-        <button class="text-gray-600 hover:text-gray-800 focus:outline-none" (click)="requestClose?.()" aria-label="Fermer le panneau">✕</button>
+<div
+  #root
+  class="relative z-50"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="budget-status-title"
+  [class.animate-pop]="!closing"
+  [class.animate-fade-out]="closing"
+>
+  <!-- hidden title for screen readers -->
+  <h2 id="budget-status-title" class="sr-only">Détails du budget</h2>
+  <!-- close button (first tabbable element) -->
+  <div class="absolute right-2 top-2">
+    <button
+      class="text-gray-600 hover:text-gray-800 focus:outline-none"
+      (click)="requestClose?.()"
+      aria-label="Fermer le panneau"
+    >
+      ✕
+    </button>
+  </div>
+  <!-- tooltip container -->
+  <div
+    class="bg-white border border-gray-300 drop-shadow-xl rounded-xl shadow-lg p-4 w-80 text-slate-800"
+  >
+    <div class="text-sm text-gray-700 mb-2 border-b border-gray-500">
+      <div class="flex items-center gap-2">
+        <fa-icon [icon]="icIncomes" class="text-lg text-emerald-700"></fa-icon>
+        <div>Ressources du mois</div>
+      </div>
     </div>
-    <!-- tooltip container -->
-    <div class="bg-white border border-gray-300 drop-shadow-xl rounded-xl shadow-lg p-4 w-80 text-slate-800">
-        <div class="text-sm text-gray-700 mb-2 border-b border-gray-500">
-            <div class="flex items-center gap-2"><fa-icon [icon]="icIncomes" class="text-lg text-emerald-700"></fa-icon>
-            <div>Ressources du mois</div></div>
-        </div>
-        <div class="flex flex-row">
-            <div class="basis-8/12 text-xs">Disponible du mois précédent</div>
-            <div class="basis-4/12 text-xs text-right text-rose-600">- 250,00 €</div>
-        </div>
-        <div class="flex flex-row">
-            <div class="basis-8/12 text-xs">Revenus du mois</div>
-            <div class="basis-4/12 text-xs text-right text-emerald-600">+ 1 500,00 €</div>
-        </div>
-        <div class="flex flex-row border-t border-gray-200 pt-1 mt-1">
-            <div class="basis-8/12 text-xs font-bold">Total ressources</div>
-            <div class="basis-4/12 text-xs text-right" [class]="getAvailableClass(available)">{{ formatCurrencyWithSign(available) }}</div>
-        </div>
+    <div class="flex flex-row">
+      <div class="basis-8/12 text-xs">Disponible du mois précédent</div>
+      <div class="basis-4/12 text-xs text-right text-rose-600">- 250,00 €</div>
+    </div>
+    <div class="flex flex-row">
+      <div class="basis-8/12 text-xs">Revenus du mois</div>
+      <div class="basis-4/12 text-xs text-right text-emerald-600">+ 1 500,00 €</div>
+    </div>
+    <div class="flex flex-row border-t border-gray-200 pt-1 mt-1">
+      <div class="basis-8/12 text-xs font-bold">Total ressources</div>
+      <div class="basis-4/12 text-xs text-right" [class]="getAvailableClass(available)">
+        {{ formatCurrencyWithSign(available) }}
+      </div>
+    </div>
 
-        <div class="text-sm text-gray-700 mb-2 border-b border-gray-500">
-            <div class="flex items-center gap-2"><fa-icon [icon]="icExpenses" class="text-lg text-rose-700"></fa-icon>
-            <div>Charges du mois</div></div>
-        </div>
-        <div class="flex flex-row">
-            <div class="basis-8/12 text-xs">Montant budgétisé</div>
-            <div class="basis-4/12 text-xs text-right text-gray-500">0,00 €</div>
-        </div>
-        <div class="flex flex-row">
-            <div class="basis-8/12 text-xs">Montant sous-budgétisé</div>
-            <div class="basis-4/12 text-xs text-right text-rose-600">- 1 500,00 €</div>
-        </div>
-        <div class="flex flex-row border-t border-gray-200 pt-1 mt-1">
-            <div class="basis-8/12 text-xs font-bold">Total charges</div>
-            <div class="basis-4/12 text-xs text-right text-rose-600">- 1 500,00 €</div>
-        </div>
+    <div class="text-sm text-gray-700 mb-2 border-b border-gray-500">
+      <div class="flex items-center gap-2">
+        <fa-icon [icon]="icExpenses" class="text-lg text-rose-700"></fa-icon>
+        <div>Charges du mois</div>
+      </div>
+    </div>
+    <div class="flex flex-row">
+      <div class="basis-8/12 text-xs">Montant budgétisé</div>
+      <div class="basis-4/12 text-xs text-right text-gray-500">0,00 €</div>
+    </div>
+    <div class="flex flex-row">
+      <div class="basis-8/12 text-xs">Montant sous-budgétisé</div>
+      <div class="basis-4/12 text-xs text-right text-rose-600">- 1 500,00 €</div>
+    </div>
+    <div class="flex flex-row border-t border-gray-200 pt-1 mt-1">
+      <div class="basis-8/12 text-xs font-bold">Total charges</div>
+      <div class="basis-4/12 text-xs text-right text-rose-600">- 1 500,00 €</div>
+    </div>
 
-        <div id="final-available" class="flex w-full items-center justify-end gap-2 mt-4">
-            <div class="text-xl font-semibold text-right" [class]="getAvailableClass(available)">{{ formatCurrencyWithSign(available) }}</div>
-            <div class="text-sm text-gray-700 text-right">disponible</div>
-        </div>
-        
+    <div id="final-available" class="flex w-full items-center justify-end gap-2 mt-4">
+      <div class="text-xl font-semibold text-right" [class]="getAvailableClass(available)">
+        {{ formatCurrencyWithSign(available) }}
+      </div>
+      <div class="text-sm text-gray-700 text-right">disponible</div>
     </div>
-    <!-- arrow pointing up toward the source element -->
-    <div class="absolute left-1/2 transform -translate-x-1/2" style="top:-11px">
-        <svg class="w-6 h-6 text-white" viewBox="0 0 20 20" aria-hidden="true">
-            <!-- white filled triangle -->
-            <polygon points="10,0 20,10 0,10" fill="currentColor"></polygon>
-            <!-- black strokes on the two slanted sides only -->
-            <line x1="10" y1="0" x2="20" y2="10" stroke="#d1d5dc" stroke-width="1" stroke-linecap="round" />
-            <line x1="10" y1="0" x2="0" y2="10" stroke="#d1d5dc" stroke-width="1" stroke-linecap="round" />
-        </svg>
-    </div>
+  </div>
+  <!-- arrow pointing up toward the source element -->
+  <div class="absolute left-1/2 transform -translate-x-1/2" style="top: -11px">
+    <svg class="w-6 h-6 text-white" viewBox="0 0 20 20" aria-hidden="true">
+      <!-- white filled triangle -->
+      <polygon points="10,0 20,10 0,10" fill="currentColor"></polygon>
+      <!-- black strokes on the two slanted sides only -->
+      <line
+        x1="10"
+        y1="0"
+        x2="20"
+        y2="10"
+        stroke="#d1d5dc"
+        stroke-width="1"
+        stroke-linecap="round"
+      />
+      <line
+        x1="10"
+        y1="0"
+        x2="0"
+        y2="10"
+        stroke="#d1d5dc"
+        stroke-width="1"
+        stroke-linecap="round"
+      />
+    </svg>
+  </div>
 </div>

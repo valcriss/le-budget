@@ -9,7 +9,7 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
   selector: 'app-budget-category-group',
   imports: [FontAwesomeModule],
   templateUrl: './budget-category-group.html',
-  styleUrl: './budget-category-group.css'
+  styleUrl: './budget-category-group.css',
 })
 export class BudgetCategoryGroup {
   protected readonly icChevronRight = faChevronRight;
@@ -21,32 +21,31 @@ export class BudgetCategoryGroup {
   @Input() available?: number | string;
   @Output() addCategory = new EventEmitter<void>();
 
-  constructor(library: FaIconLibrary){
+  constructor(library: FaIconLibrary) {
     library.addIcons(faChevronRight, faPlusSquare);
   }
 
   // wrappers for template usage
-  fmt(value?: string|number){
+  fmt(value?: string | number) {
     return formatCurrencyWithSign(value);
   }
 
-  amountClass(value?: string|number){
+  amountClass(value?: string | number) {
     return getAmountClass(value);
   }
 
   // same names as BudgetStatus for consistency
-  formatCurrencyWithSign(value?: string|number){
+  formatCurrencyWithSign(value?: string | number) {
     return formatCurrencyWithSign(value, false);
   }
 
-  getAvailableClass(value?: string|number){
+  getAvailableClass(value?: string | number) {
     return getAmountClass(value);
   }
 
-  onAddCategory(event?: MouseEvent){
+  onAddCategory(event?: MouseEvent) {
     // prevent parent row handlers from receiving the click
     event?.stopPropagation();
     this.addCategory.emit();
   }
-
 }
