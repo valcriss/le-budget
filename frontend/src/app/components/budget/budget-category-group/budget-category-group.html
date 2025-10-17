@@ -1,7 +1,5 @@
 <div>
-  <div
-    class="flex flex-row bg-gray-50 px-2 h-8 text-xs font-semibold text-gray-500 mt-1 border-t border-b border-gray-300"
-  >
+  <div class="flex flex-row bg-gray-50 px-2 h-8 text-xs font-semibold text-gray-500 mt-1 border-t border-b border-gray-300">
     <div class="basis-0 flex items-center pr-2">
       <fa-icon [icon]="icChevronRight" class="text-gray-400 text-xs cursor-pointer"></fa-icon>
     </div>
@@ -9,39 +7,23 @@
       <div class="flex items-center gap-2">
         <div>{{ label }}</div>
         <div class="relative">
-          <button
-            type="button"
-            (click)="onAddCategory($event)"
-            aria-label="Ajouter une catégorie"
-            class="peer cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-150 text-gray-500 hover:text-[#58a9ff] focus:outline-none"
-          >
+          <button type="button" (click)="onAddCategory($event)" aria-label="Ajouter une catégorie" class="peer cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-150 text-gray-500 hover:text-[#58a9ff] focus:outline-none">
             <fa-icon [icon]="icAdd" class="text-base"></fa-icon>
             <span class="sr-only">Ajouter une catégorie</span>
           </button>
-          <div
-            class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-300 text-gray-500 border border-gray-400 text-xs rounded-sm opacity-0 peer-hover:opacity-100 peer-focus:opacity-100 transition-opacity duration-150 inline-flex items-center whitespace-nowrap"
-          >
+          <div class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-300 text-gray-500 border border-gray-400 text-xs rounded-sm opacity-0 peer-hover:opacity-100 peer-focus:opacity-100 transition-opacity duration-150 inline-flex items-center whitespace-nowrap">
             Ajouter une catégorie
           </div>
         </div>
       </div>
     </div>
-    <div
-      class="basis-4/12 md:basis-3/12 flex items-center justify-end px-1 text-right"
-      [class]="getAvailableClass(assigned)"
-    >
+    <div class="basis-4/12 md:basis-3/12 flex items-center justify-end px-1 text-right" [class]="getAvailableClass(assigned)">
       {{ formatCurrencyWithSign(assigned) }}
     </div>
-    <div
-      class="hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right"
-      [class]="getAvailableClass(paid)"
-    >
+    <div class="hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right" [class]="getAvailableClass(paid)">
       {{ formatCurrencyWithSign(paid) }}
     </div>
-    <div
-      class="basis-4/12 md:basis-3/12 flex items-center justify-end px-1 text-right"
-      [class]="getAvailableClass(available)"
-    >
+    <div class="basis-4/12 md:basis-3/12 flex items-center justify-end px-1 text-right" [class]="getAvailableClass(available)">
       {{ formatCurrencyWithSign(available) }}
     </div>
   </div>

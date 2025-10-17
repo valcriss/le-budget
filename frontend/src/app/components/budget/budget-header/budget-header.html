@@ -1,31 +1,18 @@
 <div class="px-3 md:px-0">
-  <div
-    class="mx-auto md:max-w-7xl p-2 px-4 bg-white mt-3 shadow-sm rounded-sm md:rounded-lg md:flex md:flex-row"
-  >
+  <div class="mx-auto md:max-w-7xl p-2 px-4 bg-white mt-3 shadow-sm rounded-sm md:rounded-lg md:flex md:flex-row">
     <div class="md:basis-4/12 flex items-center">
       <div id="budget-selector" class="flex flex-row items-center w-full">
         <div id="previous" class="basis-0 flex items-center">
-          <fa-icon
-            [icon]="icPrev"
-            class="transition-colors duration-150 cursor-pointer text-4xl text-slate-600 hover:text-[#58a9ff] focus:outline-none focus:ring-2 focus:ring-[#58a9ff]"
-          ></fa-icon>
+          <fa-icon [icon]="icPrev" class="transition-colors duration-150 cursor-pointer text-4xl text-slate-600 hover:text-[#58a9ff] focus:outline-none focus:ring-2 focus:ring-[#58a9ff]"></fa-icon>
         </div>
         <div id="budget-month" class="basis-full text-center text-xl">Octobre 2025</div>
         <div id="next" class="basis-0 flex items-center justify-end">
-          <fa-icon
-            [icon]="icNext"
-            class="transition-colors duration-150 cursor-pointer text-4xl text-slate-600 hover:text-[#58a9ff] focus:outline-none focus:ring-2 focus:ring-[#58a9ff]"
-          ></fa-icon>
+          <fa-icon [icon]="icNext" class="transition-colors duration-150 cursor-pointer text-4xl text-slate-600 hover:text-[#58a9ff] focus:outline-none focus:ring-2 focus:ring-[#58a9ff]"></fa-icon>
         </div>
       </div>
     </div>
     <div class="mt-2 mb-1 md:basis-8/12 flex items-center justify-center">
-      <div
-        id="budget-available"
-        #budgetAvailable
-        class="relative cursor-pointer bg-emerald-500 text-white px-5 rounded-sm md:rounded-lg w-full md:max-w-96"
-        (click)="toggleStatus()"
-      >
+      <div id="budget-available" #budgetAvailable class="relative cursor-pointer bg-emerald-500 text-white px-5 rounded-sm md:rounded-lg w-full md:max-w-96" (click)="toggleStatus()">
         <div class="flex flex-col items-center gap-1 p-2 md:p-3">
           <div class="flex items-center gap-2">
             <fa-icon [icon]="icCheck" class="text-2xl"></fa-icon>

@@ -16,35 +16,16 @@
       <!-- right: controls -->
       <div class="flex items-center gap-3">
         <!-- mobile hamburger -->
-        <button
-          (click)="toggleMobile()"
-          aria-label="Ouvrir le menu"
-          class="md:hidden p-2 rounded-md text-slate-600 hover:bg-slate-100"
-        >
+        <button (click)="toggleMobile()" aria-label="Ouvrir le menu" class="md:hidden p-2 rounded-md text-slate-600 hover:bg-slate-100">
           <!-- simple 3 bars -->
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16"
-            ></path>
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
         </button>
 
         <!-- user area -->
         <div class="relative">
-          <button
-            (click)="toggleUser()"
-            aria-label="Ouvrir le menu utilisateur"
-            class="flex items-center gap-2 p-1 rounded-md hover:bg-slate-100"
-          >
+          <button (click)="toggleUser()" aria-label="Ouvrir le menu utilisateur" class="flex items-center gap-2 p-1 rounded-md hover:bg-slate-100">
             <img
               src="/images/avatar-placeholder.png"
               alt="avatar"
@@ -76,26 +57,11 @@
   <!-- mobile popup nav -->
   <div *ngIf="mobileOpen()" class="md:hidden">
     <div class="px-2 pt-2 pb-3 space-y-1">
-      <app-nav-item
-        link="/budget"
-        [icon]="icDashboard"
-        [classes]="'rounded-md text-base font-medium'"
-        (activated)="mobileOpen.set(false)"
-        >Mon Budget</app-nav-item
+      <app-nav-item link="/budget" [icon]="icDashboard" [classes]="'rounded-md text-base font-medium'" (activated)="mobileOpen.set(false)">Mon Budget</app-nav-item
       >
-      <app-nav-item
-        link="/accounts"
-        [icon]="icAccounts"
-        [classes]="'rounded-md text-base font-medium'"
-        (activated)="mobileOpen.set(false)"
-        >Mes comptes</app-nav-item
+      <app-nav-item link="/accounts" [icon]="icAccounts" [classes]="'rounded-md text-base font-medium'" (activated)="mobileOpen.set(false)">Mes comptes</app-nav-item
       >
-      <app-nav-item
-        link="/categories"
-        [icon]="icCategories"
-        [classes]="'rounded-md text-base font-medium'"
-        (activated)="mobileOpen.set(false)"
-        >Mes catégories</app-nav-item
+      <app-nav-item link="/categories" [icon]="icCategories" [classes]="'rounded-md text-base font-medium'" (activated)="mobileOpen.set(false)">Mes catégories</app-nav-item
       >
     </div>
   </div>
