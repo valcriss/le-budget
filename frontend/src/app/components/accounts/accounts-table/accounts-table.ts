@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-accounts-table',
@@ -9,10 +9,10 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
   styleUrl: './accounts-table.css'
 })
 export class AccountsTable {
-  protected readonly icChevronRight = faChevronRight;
+  protected readonly icEditAccount = faPenToSquare;
 
   constructor(library: FaIconLibrary) {
-    library.addIcons(faChevronRight);
+    library.addIcons(faPenToSquare);
   }
 
 }
