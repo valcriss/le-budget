@@ -20,6 +20,18 @@
         <app-budget-month-actions></app-budget-month-actions>
       </app-ui-card>
 
+      <app-ui-card>
+        <app-budget-category-summary [availableFromPreviousMonth]="-50"
+                                     [assignedThisMonth]="200"
+                                     [totalPaid]="80"
+                                     [totalAvailable]="70"
+                                     [neededThisMonth]="100"
+                                     [neededForNextMonths]="200"></app-budget-category-summary>
+      </app-ui-card>
+
+           <app-ui-card>
+        <app-budget-category-actions></app-budget-category-actions>
+      </app-ui-card>
     </div>
   </div>
 </div>
