@@ -32,9 +32,12 @@
   </div>
   <div id="category-group-content" #content role="region" [attr.aria-hidden]="collapsed" class="border-l border-r border-gray-200" [class.border-b]="!collapsed">
     <div class="collapse-inner">
-      <app-budget-category-item [label]="label" [assigned]="assigned" [paid]="paid" [available]="available"></app-budget-category-item>
-      <app-budget-category-item [label]="label" [assigned]="assigned" [paid]="paid" [available]="available"></app-budget-category-item>
-      <app-budget-category-item [label]="label" [assigned]="assigned" [paid]="paid" [available]="available"></app-budget-category-item>
+      <ng-container *ngIf="items && items.length; else noItems">
+        <app-budget-category-item *ngFor="let it of items" [label]="it.label" [assigned]="it.assigned" [paid]="it.paid" [available]="it.available"></app-budget-category-item>
+      </ng-container>
+      <ng-template #noItems>
+        <div class="px-2 py-3 text-sm text-gray-500">Aucune catégorie dans ce groupe.</div>
+      </ng-template>
     </div>
   </div>
 </div>

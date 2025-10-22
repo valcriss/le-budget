@@ -1,12 +1,14 @@
 import { Component, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule } from '@angular/common';
 import { faPlusSquare, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { formatCurrencyWithSign, getAmountClass } from '../../../shared/formatters';
 import { BudgetCategoryItem } from '../budget-category-item/budget-category-item';
+import { BudgetCategoryItemData } from '../test-data/budget-test-data';
 
 @Component({
   selector: 'app-budget-category-group',
-  imports: [FontAwesomeModule, BudgetCategoryItem],
+  imports: [CommonModule, FontAwesomeModule, BudgetCategoryItem],
   templateUrl: './budget-category-group.html',
   styleUrls: ['./budget-category-group.css'],
 })
@@ -19,6 +21,8 @@ export class BudgetCategoryGroup {
   @Input() assigned?: number | string;
   @Input() paid?: number | string;
   @Input() available?: number | string;
+  // items belonging to this group. Matches the test-data shape.
+  @Input() items?: BudgetCategoryItemData[];
   @Output() addCategory = new EventEmitter<void>();
 
   constructor(library: FaIconLibrary) {

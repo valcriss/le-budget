@@ -16,6 +16,13 @@
   </div>
 </div>
 <div>
-  <app-budget-category-group [label]="'Catégorie 1'" [assigned]="100" [paid]="-50" [available]="50"></app-budget-category-group>
-  <app-budget-category-group [label]="'Catégorie 2'" [assigned]="100" [paid]="-50" [available]="50"></app-budget-category-group>
+  <ng-container *ngFor="let g of groups">
+    <app-budget-category-group [label]="g.label" [assigned]="g.assigned" [paid]="g.paid" [available]="g.available" [items]="g.items">
+      <!-- If group items are present, render them inside collapse-inner of the group component.
+           The group component template currently contains static items; if you want the
+           items to come from projection you'd need to update the group template to
+           use <ng-content> where items should appear. For now this passes inputs only.
+      -->
+    </app-budget-category-group>
+  </ng-container>
 </div>
