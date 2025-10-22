@@ -10,3 +10,15 @@ body {
 .flex.h-8 {
   align-items: center;
 }
+
+/* Global override for FontAwesome svg rotation on chevrons used in budget categories */
+app-budget-categories .chevron-icon svg,
+app-budget-categories fa-icon.chevron-icon svg {
+  transform-origin: center center !important;
+  transition: transform 100ms ease !important;
+}
+
+app-budget-categories .chevron-icon.rotate-open svg,
+app-budget-categories fa-icon.chevron-icon.rotate-open svg {
+  transform: rotate(90deg) !important;
+}

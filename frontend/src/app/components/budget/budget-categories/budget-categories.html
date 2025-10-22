@@ -16,13 +16,68 @@
   </div>
 </div>
 <div>
-  <ng-container *ngFor="let g of groups">
-    <app-budget-category-group [label]="g.label" [assigned]="g.assigned" [paid]="g.paid" [available]="g.available" [items]="g.items">
-      <!-- If group items are present, render them inside collapse-inner of the group component.
-           The group component template currently contains static items; if you want the
-           items to come from projection you'd need to update the group template to
-           use <ng-content> where items should appear. For now this passes inputs only.
-      -->
-    </app-budget-category-group>
+  <ng-container *ngFor="let g of groups; let i = index">
+    <div>
+      <div class="flex flex-row bg-gray-50 px-2 h-8 text-sm font-semibold text-gray-500 mt-1 border-t border-b border-gray-200 border-l border-r">
+        <div class="basis-0 flex items-center pr-2">
+          <button type="button" (click)="toggleGroup(i, $event)" aria-label="Plier / déplier" [attr.aria-expanded]="!g.collapsed" [attr.aria-controls]="'category-group-content-' + i" class="text-gray-400 text-xs cursor-pointer focus:outline-none">
+            <fa-icon [icon]="icChevronRight" [class.rotate-open]="!g.collapsed" class="chevron-icon"></fa-icon>
+          </button>
+        </div>
+        <div class="basis-6/12 md:basis-3/12 flex items-center px-1 group">
+          <div class="flex items-center gap-2 font-bold">
+            <div class="text-gray-800 hover:underline cursor-pointer">{{ g.label }}</div>
+            <div class="relative">
+              <button type="button" (click)="onAddCategory(i, $event)" aria-label="Ajouter une catégorie" class="peer cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-150 text-gray-500 hover:text-[#58a9ff] focus:outline-none">
+                <fa-icon [icon]="icAdd" class="text-base"></fa-icon>
+                <span class="sr-only">Ajouter une catégorie</span>
+              </button>
+              <div class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-300 text-gray-500 border border-gray-400 text-xs rounded-sm opacity-0 peer-hover:opacity-100 peer-focus:opacity-100 transition-opacity duration-150 inline-flex items-center whitespace-nowrap">
+                Ajouter une catégorie
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cursor-default pr-0 md:pr-2 font-bold basis-3/12 md:basis-3/12 flex items-center justify-end md:px-1 text-right" [class]="getAmountClass(g.assigned)">
+          {{ formatCurrencyWithSign(g.assigned) }}
+        </div>
+        <div class="cursor-default hidden font-bold basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right" [class]="getAmountClass(g.paid)">
+          {{ formatCurrencyWithSign(g.paid) }}
+        </div>
+        <div class="cursor-default font-bold basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right" [class]="getAmountClass(g.available)">
+          {{ formatCurrencyWithSign(g.available) }}
+        </div>
+      </div>
+  <div #contentEl [id]="'category-group-content-' + i" role="region" [attr.aria-hidden]="g.collapsed" class="border-l border-r border-gray-200" [class.border-b]="!g.collapsed">
+        <div class="collapse-inner">
+          <ng-container *ngIf="g.items && g.items.length; else noItems">
+            <div *ngFor="let it of g.items; let j = index">
+              <div class="flex flex-row bg-white px-2 h-8 text-sm text-gray-500 hover:bg-yellow-50">
+                <div class="basis-0 flex items-center">
+                  <div class="w-6"></div>
+                </div>
+                <div class="h-8 basis-6/12 md:basis-3/12 flex items-center px-1 group">
+                  <div class="flex items-center gap-2">
+                    <div class="text-gray-800 hover:underline cursor-pointer">{{ it.label }}</div>
+                  </div>
+                </div>
+                <div class="h-8 basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right" [class]="getAmountClass(it.assigned)">
+                  <app-input-amount [value]="it.assigned" (valueChange)="onItemAssignedChange(i, j, $event)"></app-input-amount>
+                </div>
+                <div class="h-8 hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right hover:underline cursor-pointer" [class]="getAmountClass(it.paid)">
+                  {{ formatCurrencyWithSign(it.paid) }}
+                </div>
+                <div class="h-8 basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right">
+                  <app-badge-amount [amount]="it.available" [needed]="0"></app-badge-amount>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #noItems>
+            <div class="px-2 py-3 text-sm text-gray-500">Aucune catégorie dans ce groupe.</div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
   </ng-container>
 </div>

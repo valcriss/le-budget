@@ -1,0 +1,22 @@
+/* chevron icon smoothing */
+.chevron-icon svg {
+	transition: transform 100ms ease;
+	transform-origin: center center;
+}
+
+.chevron-icon.rotate-open svg {
+	transform: rotate(90deg) !important;
+}
+
+/* Ensure a defined initial state and strong specificity to override any FontAwesome inline styles */
+fa-icon.chevron-icon svg,
+.chevron-icon svg {
+	transform: rotate(0deg) !important;
+	display: inline-block !important;
+}
+
+fa-icon.chevron-icon.rotate-open svg,
+.chevron-icon.rotate-open svg {
+	transform: rotate(90deg) !important;
+}
+
