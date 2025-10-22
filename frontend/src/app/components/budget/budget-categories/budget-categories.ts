@@ -1,4 +1,5 @@
 import { Component, ElementRef, ViewChildren, QueryList } from '@angular/core';
+import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { faChevronRight, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
@@ -9,7 +10,7 @@ import { BadgeAmount } from '../../ui/badge-amount/badge-amount';
 
 @Component({
   selector: 'app-budget-categories',
-  imports: [CommonModule, FontAwesomeModule, InputAmount, BadgeAmount],
+  imports: [CommonModule, FontAwesomeModule, InputAmount, BadgeAmount, DragDropModule],
   templateUrl: './budget-categories.html',
   styleUrl: './budget-categories.css',
 })
@@ -53,6 +54,48 @@ export class BudgetCategories {
     // animateToggle expects `open` = true when we want to open the content.
     // If `collapsed` is true the content is closed, so `open` should be true.
     this.animateToggle(el, g, !!g.collapsed);
+  }
+
+  // drag & drop handlers
+  dropGroup(event: CdkDragDrop<any[]>) {
+    if (event.previousIndex === event.currentIndex) return;
+    moveItemInArray(this.groups, event.previousIndex, event.currentIndex);
+  }
+
+  dropItem(event: CdkDragDrop<any[]>, targetGroupIndex: number) {
+    if (event.previousContainer === event.container) {
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+      // recalc totals for the affected group
+      this.recalcGroupTotals(targetGroupIndex);
+    } else {
+      // moving between groups
+      const prevIndex = this.groups.findIndex(g => g.items === event.previousContainer.data);
+      transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
+      // recalc totals for both groups
+      if (prevIndex >= 0) this.recalcGroupTotals(prevIndex);
+      this.recalcGroupTotals(targetGroupIndex);
+    }
+  }
+
+  private recalcGroupTotals(groupIndex: number) {
+    const g = this.groups[groupIndex];
+    if (!g || !g.items) return;
+    let assignedSum = 0;
+    let paidSum = 0;
+    for (const item of g.items) {
+      assignedSum += Number(item.assigned ?? 0);
+      paidSum += Number(item.paid ?? 0);
+      // recalc item available
+      item.available = Number(item.assigned ?? 0) + Number(item.paid ?? 0);
+    }
+    g.assigned = assignedSum;
+    g.paid = paidSum;
+    g.available = assignedSum + paidSum;
+  }
+
+  // helper for template: return ids for all item drop lists
+  getItemListIds(): string[] {
+    return this.groups.map((_, idx) => `items-${idx}`);
   }
 
   private animateToggle(el: HTMLElement | undefined, group: any, open: boolean) {
