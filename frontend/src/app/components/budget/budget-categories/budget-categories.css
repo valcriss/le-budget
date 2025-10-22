@@ -20,3 +20,13 @@ fa-icon.chevron-icon.rotate-open svg,
 	transform: rotate(90deg) !important;
 }
 
+/* Drag handle */
+
+/* Previews and placeholders */
+.drag-preview { background: #f8fafc; border: 1px solid #e5e7eb; padding: 8px 12px; border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+.group-preview { font-weight: 600; }
+.item-preview { font-weight: 500; }
+.drag-placeholder { background: rgba(99,102,241,0.08); border: 2px dashed rgba(99,102,241,0.3); height: 32px; border-radius: 4px; }
+.group-placeholder { height: 40px; }
+.item-placeholder { height: 32px; }
+
