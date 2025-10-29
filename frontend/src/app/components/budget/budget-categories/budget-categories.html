@@ -86,7 +86,7 @@
                 <span class="sr-only">Ajouter une catégorie</span>
               </button>
               <div
-                class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-300 text-gray-500 border border-gray-400 text-xs rounded-sm opacity-0 peer-hover:opacity-100 peer-focus:opacity-100 transition-opacity duration-150 inline-flex items-center whitespace-nowrap">
+                class="roboto-light absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-100 text-gray-500 border border-gray-400 text-xs rounded-sm opacity-0 peer-hover:opacity-100 peer-focus:opacity-100 transition-opacity duration-150 inline-flex items-center whitespace-nowrap">
                 Ajouter une catégorie
               </div>
             </div>
@@ -168,7 +168,14 @@
             </div>
           </ng-container>
           <ng-template #noItems>
-            <div class="px-2 py-3 text-sm text-gray-500">Aucune catégorie dans ce groupe.</div>
+            <div class="flex flex-row bg-white pl-0 pr-2 h-8 text-sm text-gray-500">
+              <div class="basis-0 flex items-center">
+                    <div class="w-8"></div>
+                  </div>
+                  <div class="h-8 basis-full flex items-center px-1 group">
+              <div class="py-3 text-sm text-gray-500">Aucune catégorie dans ce groupe.</div>
+              </div>
+            </div>
           </ng-template>
         </div>
       </div>
