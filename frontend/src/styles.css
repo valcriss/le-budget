@@ -3,6 +3,12 @@
 
 body {
   background-color: #f7f7f7;
+    font-family: "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;
 }
 
 /* Ensure any flex container with height 2rem (h-8) centers its children vertically.
@@ -21,4 +27,31 @@ app-budget-categories fa-icon.chevron-icon svg {
 app-budget-categories .chevron-icon.rotate-open svg,
 app-budget-categories fa-icon.chevron-icon.rotate-open svg {
   transform: rotate(90deg) !important;
+}
+
+.roboto-light {
+  font-family: "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 200;
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;
+}
+
+.roboto-regular {
+  font-family: "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;
+}
+
+.roboto-heavy {
+  font-family: "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;
 }
