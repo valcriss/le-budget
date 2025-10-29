@@ -3,7 +3,7 @@ import { Checkbox } from '../../ui/checkbox/checkbox';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
-import { faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircle,faTimes,faSave } from '@fortawesome/free-solid-svg-icons';
 import { formatCurrencyWithSign, getAmountClass } from '../../../shared/formatters';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { DatePickerComponent } from '../../ui/date-picker/date-picker';
@@ -34,8 +34,8 @@ export class AccountTransaction {
   };
 
   // Expose helpers so templates can call them directly.
-  formatCurrencyWithSign(value?: string | number, showPlus = true) {
-    return formatCurrencyWithSign(value, showPlus);
+  formatCurrencyWithSign(value?: string | number, showPlus = true, hideZero = false) {
+    return formatCurrencyWithSign(value, showPlus, hideZero);
   }
 
   getAmountClass(value?: string | number) {
@@ -68,11 +68,12 @@ export class AccountTransaction {
   ];
 
   // fontawesome icons
-  protected icSave = faSave;
+  protected icCircle = faCircle;
   protected icTimes = faTimes;
+  protected icSave = faSave;
 
   constructor(library: FaIconLibrary) {
-    library.addIcons(faSave, faTimes);
+    library.addIcons(faSave, faTimes, faCircle);
   }
 
   @Output() update = new EventEmitter<any>();

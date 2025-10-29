@@ -9,7 +9,6 @@ import {
   faCog,
   faUser,
   faWallet,
-  faTags,
   faRightFromBracket,
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -29,7 +28,6 @@ export class Header {
   protected readonly icTransactions = faList;
   protected readonly icSettings = faCog;
   protected readonly icAccounts = faWallet;
-  protected readonly icCategories = faTags;
   protected readonly icLogout = faRightFromBracket;
   protected readonly icUser = faUser;
 
@@ -47,7 +45,7 @@ export class Header {
   }
 
   constructor(library: FaIconLibrary, private el: ElementRef) {
-    library.addIcons(faGauge, faList, faCog, faUser, faWallet, faTags, faRightFromBracket);
+    library.addIcons(faGauge, faList, faCog, faUser, faWallet, faRightFromBracket);
   }
 
   @HostListener('document:click', ['$event'])

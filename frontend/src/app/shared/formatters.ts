@@ -28,10 +28,12 @@ export function formatCurrency(value?: string | number): string {
   }
 }
 
-export function formatCurrencyWithSign(value?: string | number, showPlus = true): string {
+export function formatCurrencyWithSign(value?: string | number, showPlus = true, hideZero = false): string {
   const n = toNumber(value);
+  const rounded = Math.round(n * 100) / 100;
   const formatted = formatCurrency(n);
   if (n > 0) return showPlus ? '+ ' + formatted : formatted;
+  if (hideZero && rounded === 0) return '';
   return formatted;
 }
 

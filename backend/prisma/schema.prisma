@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  CASH
+  INVESTMENT
+  OTHER
+}
+
+enum CategoryKind {
+  EXPENSE
+  INCOME
+  TRANSFER
+  GOAL
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  displayName  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  accounts       Account[]
+  categories     Category[]
+  budgetMonths   BudgetMonth[]
+}
+
+model Account {
+  id             String       @id @default(uuid())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  name           String
+  type           AccountType  @default(CHECKING)
+  institution    String?
+  currency       String       @default("EUR")
+  initialBalance Decimal      @default(0)
+  currentBalance Decimal      @default(0)
+  archived       Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  transactions   Transaction[]
+
+  @@index([userId, name])
+}
+
+model Category {
+  id          String           @id @default(uuid())
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  name        String
+  description String?
+  color       String?
+  icon        String?
+  kind        CategoryKind     @default(EXPENSE)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  transactions     Transaction[]
+  budgetCategories BudgetCategory[]
+
+  @@unique([userId, name])
+}
+
+model Transaction {
+  id         String    @id @default(uuid())
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId  String
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId String?
+  date       DateTime
+  label      String
+  amount     Decimal
+  memo       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([accountId, date, createdAt])
+}
+
+model BudgetMonth {
+  id                   String               @id @default(uuid())
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId               String
+  month                DateTime
+  income               Decimal              @default(0)
+  availableCarryover   Decimal              @default(0)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  groups               BudgetCategoryGroup[]
+
+  @@unique([userId, month])
+}
+
+model BudgetCategoryGroup {
+  id        String       @id @default(uuid())
+  month     BudgetMonth  @relation(fields: [monthId], references: [id], onDelete: Cascade)
+  monthId   String
+  name      String
+  sortOrder Int
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  categories BudgetCategory[]
+
+  @@index([monthId, sortOrder])
+}
+
+model BudgetCategory {
+  id         String               @id @default(uuid())
+  group      BudgetCategoryGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId    String
+  category   Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId String?
+  name       String
+  assigned   Decimal              @default(0)
+  activity   Decimal              @default(0)
+  available  Decimal              @default(0)
+  sortOrder  Int
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@index([groupId, sortOrder])
+}

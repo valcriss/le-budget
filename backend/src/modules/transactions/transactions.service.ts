@@ -1,0 +1,295 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, Transaction } from '@prisma/client';
+import { plainToInstance } from 'class-transformer';
+import { PrismaService } from '../../prisma/prisma.service';
+import { EventsService } from '../events/events.service';
+import { UserContextService } from '../../common/services/user-context.service';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { TransactionsQueryDto } from './dto/transactions-query.dto';
+import { TransactionEntity } from './entities/transaction.entity';
+import { TransactionsListEntity } from './entities/transactions-list.entity';
+
+@Injectable()
+export class TransactionsService {
+  private readonly DEFAULT_LIMIT = 50;
+  private readonly MAX_LIMIT = 200;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventsService,
+    private readonly userContext: UserContextService,
+  ) {}
+
+  async findMany(
+    accountId: string,
+    query: TransactionsQueryDto,
+  ): Promise<TransactionsListEntity> {
+    const userId = await this.userContext.getDefaultUserId();
+    const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
+    if (!account) {
+      throw new NotFoundException(`Account ${accountId} not found`);
+    }
+
+    const skip = query.skip ?? 0;
+    const take = Math.min(query.take ?? this.DEFAULT_LIMIT, this.MAX_LIMIT);
+
+    const where: Prisma.TransactionWhereInput = {
+      accountId: account.id,
+    };
+
+    if (query.from || query.to) {
+      where.date = {};
+      if (query.from) {
+        (where.date as Prisma.DateTimeFilter).gte = new Date(query.from);
+      }
+      if (query.to) {
+        (where.date as Prisma.DateTimeFilter).lte = new Date(query.to);
+      }
+    }
+
+    if (query.search) {
+      where.OR = [
+        { label: { contains: query.search, mode: 'insensitive' } },
+        { memo: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [items, total, ledger] = await this.prisma.$transaction([
+      this.prisma.transaction.findMany({
+        where,
+        include: { category: { select: { id: true, name: true } } },
+        orderBy: [
+          { date: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        skip,
+        take,
+      }),
+      this.prisma.transaction.count({ where }),
+      this.prisma.transaction.findMany({
+        where: { accountId: account.id },
+        select: { id: true, amount: true, date: true, createdAt: true },
+        orderBy: [
+          { date: 'asc' },
+          { createdAt: 'asc' },
+        ],
+      }),
+    ]);
+
+    const runningBalanceMap = this.computeRunningBalances(
+      ledger,
+      Number(account.initialBalance),
+    );
+
+    const entities = items.map((tx) => this.toEntity(tx, runningBalanceMap.get(tx.id) ?? 0));
+
+    return plainToInstance(TransactionsListEntity, {
+      items: entities,
+      meta: { total, skip, take },
+    });
+  }
+
+  async create(accountId: string, dto: CreateTransactionDto): Promise<TransactionEntity> {
+    const userId = await this.userContext.getDefaultUserId();
+    const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
+    if (!account) {
+      throw new NotFoundException(`Account ${accountId} not found`);
+    }
+
+    if (dto.categoryId) {
+      await this.ensureCategoryOwnership(dto.categoryId, userId);
+    }
+
+    const amount = new Prisma.Decimal(dto.amount);
+
+    const transaction = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.transaction.create({
+        data: {
+          accountId: account.id,
+          categoryId: dto.categoryId,
+          date: new Date(dto.date),
+          label: dto.label,
+          amount,
+          memo: dto.memo,
+        },
+        include: { category: { select: { id: true, name: true } } },
+      });
+
+      await tx.account.update({
+        where: { id: account.id },
+        data: { currentBalance: { increment: amount } },
+      });
+
+      return created;
+    });
+
+    const runningMap = await this.recalculateRunningMap(account.id, Number(account.initialBalance));
+    const entity = this.toEntity(transaction, runningMap.get(transaction.id) ?? 0);
+    this.events.emit('transaction.created', entity);
+    return entity;
+  }
+
+  async findOne(accountId: string, transactionId: string): Promise<TransactionEntity> {
+    const userId = await this.userContext.getDefaultUserId();
+    const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
+    if (!account) {
+      throw new NotFoundException(`Account ${accountId} not found`);
+    }
+
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id: transactionId },
+      include: { category: { select: { id: true, name: true } } },
+    });
+    if (!transaction || transaction.accountId !== account.id) {
+      throw new NotFoundException(`Transaction ${transactionId} not found`);
+    }
+
+    const runningMap = await this.recalculateRunningMap(account.id, Number(account.initialBalance));
+    return this.toEntity(transaction, runningMap.get(transaction.id) ?? 0);
+  }
+
+  async update(
+    accountId: string,
+    transactionId: string,
+    dto: UpdateTransactionDto,
+  ): Promise<TransactionEntity> {
+    const userId = await this.userContext.getDefaultUserId();
+    const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
+    if (!account) {
+      throw new NotFoundException(`Account ${accountId} not found`);
+    }
+
+    const existing = await this.prisma.transaction.findUnique({
+      where: { id: transactionId },
+      include: { category: true },
+    });
+    if (!existing || existing.accountId !== account.id) {
+      throw new NotFoundException(`Transaction ${transactionId} not found`);
+    }
+
+    if (dto.categoryId) {
+      await this.ensureCategoryOwnership(dto.categoryId, userId);
+    }
+
+    const newAmount = dto.amount !== undefined ? new Prisma.Decimal(dto.amount) : existing.amount;
+    const diff = newAmount.minus(existing.amount);
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const txn = await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          categoryId: dto.categoryId ?? existing.categoryId,
+          date: dto.date ? new Date(dto.date) : existing.date,
+          label: dto.label ?? existing.label,
+          amount: newAmount,
+          memo: dto.memo ?? existing.memo,
+        },
+        include: { category: { select: { id: true, name: true } } },
+      });
+
+      if (!diff.isZero()) {
+        await tx.account.update({
+          where: { id: account.id },
+          data: { currentBalance: { increment: diff } },
+        });
+      }
+
+      return txn;
+    });
+
+    const runningMap = await this.recalculateRunningMap(account.id, Number(account.initialBalance));
+    const entity = this.toEntity(updated, runningMap.get(updated.id) ?? 0);
+    this.events.emit('transaction.updated', entity);
+    return entity;
+  }
+
+  async remove(accountId: string, transactionId: string): Promise<TransactionEntity> {
+    const userId = await this.userContext.getDefaultUserId();
+    const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
+    if (!account) {
+      throw new NotFoundException(`Account ${accountId} not found`);
+    }
+
+    const existing = await this.prisma.transaction.findUnique({
+      where: { id: transactionId },
+      include: { category: { select: { id: true, name: true } } },
+    });
+    if (!existing || existing.accountId !== account.id) {
+      throw new NotFoundException(`Transaction ${transactionId} not found`);
+    }
+
+    const runningBefore = await this.recalculateRunningMap(
+      account.id,
+      Number(account.initialBalance),
+    );
+    const balance = runningBefore.get(existing.id) ?? 0;
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.transaction.delete({ where: { id: transactionId } });
+      await tx.account.update({
+        where: { id: account.id },
+        data: { currentBalance: { decrement: existing.amount } },
+      });
+    });
+
+    const entity = this.toEntity(existing, balance);
+    this.events.emit('transaction.deleted', { accountId, transactionId });
+    return entity;
+  }
+
+  private computeRunningBalances(
+    ledger: Array<Pick<Transaction, 'id' | 'amount' | 'date' | 'createdAt'>>,
+    initialBalance: number,
+  ): Map<string, number> {
+    const map = new Map<string, number>();
+    let running = initialBalance;
+    for (const entry of ledger) {
+      running += Number(entry.amount);
+      map.set(entry.id, running);
+    }
+    return map;
+  }
+
+  private async recalculateRunningMap(accountId: string, initialBalance: number) {
+    const ledger = await this.prisma.transaction.findMany({
+      where: { accountId },
+      select: { id: true, amount: true, date: true, createdAt: true },
+      orderBy: [
+        { date: 'asc' },
+        { createdAt: 'asc' },
+      ],
+    });
+    return this.computeRunningBalances(ledger, initialBalance);
+  }
+
+  private async ensureCategoryOwnership(categoryId: string, userId: string) {
+    const category = await this.prisma.category.findFirst({
+      where: { id: categoryId, userId },
+      select: { id: true },
+    });
+    if (!category) {
+      throw new NotFoundException(`Category ${categoryId} not found`);
+    }
+  }
+
+  private toEntity(
+    transaction: Transaction & { category?: { id: string | null; name: string | null } | null },
+    runningBalance: number,
+  ): TransactionEntity {
+    const amount = Number(transaction.amount);
+    const debit = amount < 0 ? Math.abs(amount) : undefined;
+    const credit = amount > 0 ? amount : undefined;
+
+    return plainToInstance(TransactionEntity, {
+      ...transaction,
+      date: transaction.date.toISOString(),
+      amount,
+      debit,
+      credit,
+      balance: runningBalance,
+      categoryId: transaction.category?.id ?? transaction.categoryId ?? null,
+      categoryName: transaction.category?.name ?? null,
+    });
+  }
+}

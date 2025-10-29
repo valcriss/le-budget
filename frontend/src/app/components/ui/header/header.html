@@ -9,8 +9,7 @@
       <!-- center: nav (hidden on small) -->
       <nav class="hidden md:flex space-x-6">
         <app-nav-item link="/budget" [icon]="icDashboard">Mon Budget</app-nav-item>
-        <app-nav-item link="/accounts" [icon]="icAccounts">Mes comptes</app-nav-item>
-        <app-nav-item link="/categories" [icon]="icCategories">Mes catégories</app-nav-item>
+        <app-nav-item link="/accounts/1" [icon]="icAccounts">Mes comptes</app-nav-item>
       </nav>
 
       <!-- right: controls -->
@@ -60,8 +59,6 @@
       <app-nav-item link="/budget" [icon]="icDashboard" [classes]="'rounded-md text-base font-medium'" (activated)="mobileOpen.set(false)">Mon Budget</app-nav-item
       >
       <app-nav-item link="/accounts" [icon]="icAccounts" [classes]="'rounded-md text-base font-medium'" (activated)="mobileOpen.set(false)">Mes comptes</app-nav-item
-      >
-      <app-nav-item link="/categories" [icon]="icCategories" [classes]="'rounded-md text-base font-medium'" (activated)="mobileOpen.set(false)">Mes catégories</app-nav-item
       >
     </div>
   </div>
