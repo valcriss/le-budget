@@ -1,0 +1,21 @@
+    <div class="flex flex-row px-2 h-8 text-xs text-gray-500 border-b border-gray-100">
+        <div class="basis-0 flex items-center"><app-checkbox></app-checkbox></div>
+        <div class="basis-6/12 md:basis-2/12 flex items-center px-1">{{ transaction.date }}</div>
+        <div class="basis-3/12 md:basis-2/12 flex items-center px-1">
+            {{ transaction.label }}
+        </div>
+        <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">
+            {{ transaction.category }}</div>
+        <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right"
+             [class]="getAmountClass(transaction.debit)">
+            {{ formatCurrencyWithSign(transaction.debit, false) }}
+        </div>
+        <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right"
+             [class]="getAmountClass(transaction.credit)">
+            {{ formatCurrencyWithSign(transaction.credit) }}
+        </div>
+        <div class="basis-3/12 md:basis-2/12 flex items-center justify-end px-1 text-right"
+             [class]="getAmountClass(transaction.balance)">
+            {{ formatCurrencyWithSign(transaction.balance) }}
+        </div>
+    </div>
