@@ -1,0 +1,67 @@
+:host ::ng-deep ng-select.transaction-select {
+  width: 100%;
+  font-size: 0.75rem;
+}
+
+:host ::ng-deep ng-select.transaction-select .ng-select-container {
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  min-height: auto;
+  padding: 0;
+}
+
+:host ::ng-deep ng-select.transaction-select .ng-select-container .ng-value-container {
+  padding: 0.25rem 0.5rem;
+}
+
+:host ::ng-deep ng-select.transaction-select .ng-select-container .ng-input > input {
+  padding: 0;
+  margin: 0;
+}
+
+:host ::ng-deep ng-select.transaction-select.ng-select-opened .ng-select-container,
+:host ::ng-deep ng-select.transaction-select.ng-select-focused .ng-select-container {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 1px #60a5fa33;
+}
+
+:host ::ng-deep ng-select.transaction-select .ng-dropdown-panel {
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  
+}
+
+:host ::ng-deep ng-select.transaction-select .ng-dropdown-panel .ng-option {
+  padding: 0.3rem 0 0.3rem 0.5rem;
+}
+
+:host ::ng-deep ng-select.transaction-select .ng-dropdown-panel .ng-option.ng-option-marked,
+:host ::ng-deep ng-select.transaction-select .ng-dropdown-panel .ng-option.ng-option-selected {
+  background-color: #f6faff;
+  
+}
+
+:host input[type='text'],
+:host input[type='number'] {
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  color: #1f2937;
+  background-color: #fff;
+  -moz-appearance: textfield;
+}
+
+:host input[type='text']:focus,
+:host input[type='number']:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 1px #60a5fa33;
+}
+
+:host input[type='number']::-webkit-outer-spin-button,
+:host input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

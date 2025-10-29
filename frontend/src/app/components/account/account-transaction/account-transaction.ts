@@ -5,10 +5,19 @@ import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { formatCurrencyWithSign, getAmountClass } from '../../../shared/formatters';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { DatePickerComponent } from '../../ui/date-picker/date-picker';
 
 @Component({
   selector: 'app-account-transaction',
-  imports: [CommonModule, FormsModule, FontAwesomeModule, Checkbox],
+  imports: [
+    CommonModule,
+    FormsModule,
+    FontAwesomeModule,
+    Checkbox,
+    NgSelectModule,
+    DatePickerComponent,
+  ],
   templateUrl: './account-transaction.html',
   styleUrl: './account-transaction.css'
 })
@@ -45,6 +54,19 @@ export class AccountTransaction {
     'Logement',
     'Transports'
   ];
+
+  labels = [
+    'Salaire',
+    'Trésor Public',
+    'Loyer',
+    'Supermarché',
+    'Électricité',
+    'Internet',
+    'Assurance',
+    'Essence',
+    'Remboursement'
+  ];
+
   // fontawesome icons
   protected icSave = faSave;
   protected icTimes = faTimes;

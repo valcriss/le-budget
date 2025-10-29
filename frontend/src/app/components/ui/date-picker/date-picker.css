@@ -1,0 +1,146 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.date-picker {
+  position: relative;
+  width: 100%;
+  font-size: inherit;
+}
+
+.date-picker-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-size: inherit;
+  padding: 0.25rem 2rem 0.25rem 0.5rem;
+  color: #1f2937;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.date-picker-input:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 1px #60a5fa33;
+}
+
+.date-picker-input:disabled {
+  cursor: not-allowed;
+  background-color: #f9fafb;
+  color: #9ca3af;
+}
+
+.date-picker-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 0.125rem;
+  border-radius: 0.25rem;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.date-picker-toggle:hover,
+.date-picker-toggle:focus {
+  color: #2563eb;
+  background-color: #eff6ff;
+  outline: none;
+}
+
+.date-picker-toggle:disabled {
+  cursor: not-allowed;
+  color: #9ca3af;
+}
+
+.date-picker-panel {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 30;
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 15px 35px rgba(30, 58, 138, 0.2);
+  padding: 0.75rem;
+  min-width: 14rem;
+}
+
+.date-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-transform: capitalize;
+}
+
+.date-picker-title {
+  font-size: 0.75rem;
+}
+
+.date-picker-nav {
+  background: transparent;
+  border: none;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.date-picker-nav:hover,
+.date-picker-nav:focus {
+  background-color: #eff6ff;
+  color: #2563eb;
+  outline: none;
+}
+
+.date-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.date-picker-weekday {
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.date-picker-cell {
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  padding: 0.35rem 0;
+  font-size: 0.75rem;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.date-picker-cell:hover {
+  background-color: #e0f2fe;
+}
+
+.date-picker-cell.outside-month {
+  color: #9ca3af;
+}
+
+.date-picker-cell.today {
+  border: 1px solid #60a5fa;
+}
+
+.date-picker-cell.selected {
+  background-color: #1d4ed8;
+  color: #fff;
+}
+
+.date-picker-cell.selected:hover {
+  background-color: #1e40af;
+}

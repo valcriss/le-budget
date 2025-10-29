@@ -1,0 +1,68 @@
+<div class="date-picker" [class.open]="datePickerOpen">
+  <input
+    class="date-picker-input"
+    type="text"
+    [value]="displayValue"
+    [placeholder]="placeholder"
+    readonly
+    (click)="toggleDatepicker($event)"
+    (blur)="onInputBlur()"
+    [disabled]="disabled"
+  >
+  <button
+    type="button"
+    class="date-picker-toggle"
+    (click)="toggleDatepicker($event)"
+    [disabled]="disabled"
+    aria-label="Choisir une date"
+  >
+    <fa-icon [icon]="icCalendar"></fa-icon>
+  </button>
+
+  <div
+    class="date-picker-panel"
+    *ngIf="datePickerOpen"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="date-picker-header">
+      <button
+        type="button"
+        class="date-picker-nav"
+        aria-label="Mois précédent"
+        (click)="changeCalendarMonth(-1)"
+      >
+        <fa-icon [icon]="icChevronLeft"></fa-icon>
+      </button>
+      <span class="date-picker-title">
+        {{ getMonthYearLabel(calendarViewDate) }}
+      </span>
+      <button
+        type="button"
+        class="date-picker-nav"
+        aria-label="Mois suivant"
+        (click)="changeCalendarMonth(1)"
+      >
+        <fa-icon [icon]="icChevronRight"></fa-icon>
+      </button>
+    </div>
+
+    <div class="date-picker-grid">
+      <div class="date-picker-weekday" *ngFor="let day of weekdayLabels">
+        {{ day }}
+      </div>
+      <ng-container *ngFor="let week of calendarWeeks">
+        <button
+          type="button"
+          *ngFor="let day of week"
+          class="date-picker-cell"
+          [class.outside-month]="!day.isCurrentMonth"
+          [class.selected]="day.isSelected"
+          [class.today]="day.isToday"
+          (click)="selectCalendarDate(day)"
+        >
+          {{ day.label }}
+        </button>
+      </ng-container>
+    </div>
+  </div>
+</div>

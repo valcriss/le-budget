@@ -22,19 +22,32 @@
                 <!-- Edit mode -->
                 <ng-container *ngIf="editing">
                     <div class="basis-6/12 md:basis-2/12 flex items-center px-1">
-                        <!-- Using native date input: parent should provide ISO-like date strings or adapt parsing -->
-                        <input class="w-full text-xs p-1 border rounded" type="date" [(ngModel)]="editModel.date">
+                      <app-date-picker
+                        class="w-full text-xs"
+                        [(ngModel)]="editModel.date"
+                      ></app-date-picker>
                     </div>
                     <div class="basis-3/12 md:basis-2/12 flex items-center px-1">
-                        <input class="w-full text-xs p-1 border rounded" type="text" [(ngModel)]="editModel.label">
+                      <ng-select
+                        class="w-full text-xs transaction-select"
+                        [items]="labels"
+                        [(ngModel)]="editModel.label"
+                        [clearable]="false"
+                        [searchable]="true"
+                        [addTag]="true"
+                        dropdownPosition="bottom"
+                      ></ng-select>
                     </div>
-                                <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">
-                                    <!-- combobox using datalist for restrictive suggestions -->
-                                                <input [attr.list]="'cats-' + (transaction?.id || 0)" class="w-full text-xs p-1 border rounded" [(ngModel)]="editModel.category" />
-                                                <datalist [attr.id]="'cats-' + (transaction?.id || 0)">
-                                        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
-                                    </datalist>
-                                </div>
+                    <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">
+                      <ng-select
+                        class="w-full text-xs transaction-select"
+                        [items]="categories"
+                        [(ngModel)]="editModel.category"
+                        [clearable]="false"
+                        [searchable]="true"
+                        dropdownPosition="bottom"
+                      ></ng-select>
+                    </div>
                     <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right">
                         <input class="w-full text-xs p-1 text-right border rounded" type="number" step="0.01" [(ngModel)]="editModel.debit">
                     </div>
@@ -43,11 +56,11 @@
                     </div>
                                 <!-- last visible column reserved for action buttons in edit mode -->
                                 <div class="basis-3/12 md:basis-2/12 flex items-center justify-end px-1 text-right">
-                                    <div class="flex gap-2 items-center ml-2">
-                                                        <button title="Sauvegarder" aria-label="Sauvegarder" class="p-1 bg-blue-500 text-white rounded" (click)="onSave()">
+                                    <div class="flex items-center">
+                                                        <button title="Sauvegarder" aria-label="Sauvegarder" class="p-1 bg-blue-500 text-white rounded cursor-pointer" (click)="onSave()">
                                                             <fa-icon [icon]="icSave" class="w-4 h-4"></fa-icon>
                                                         </button>
-                                                        <button title="Annuler" aria-label="Annuler" class="p-1 ml-2 bg-gray-200 rounded" (click)="onCancel()">
+                                                        <button title="Annuler" aria-label="Annuler" class="p-1 ml-0.5 bg-gray-200 rounded cursor-pointer" (click)="onCancel()">
                                                             <fa-icon [icon]="icTimes" class="w-4 h-4"></fa-icon>
                                                         </button>
                                     </div>
