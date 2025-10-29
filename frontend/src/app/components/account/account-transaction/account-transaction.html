@@ -1,21 +1,56 @@
-    <div class="flex flex-row px-2 h-8 text-xs text-gray-500 border-b border-gray-100">
-        <div class="basis-0 flex items-center"><app-checkbox></app-checkbox></div>
-        <div class="basis-6/12 md:basis-2/12 flex items-center px-1">{{ transaction.date }}</div>
-        <div class="basis-3/12 md:basis-2/12 flex items-center px-1">
-            {{ transaction.label }}
-        </div>
-        <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">
-            {{ transaction.category }}</div>
-        <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right"
-             [class]="getAmountClass(transaction.debit)">
-            {{ formatCurrencyWithSign(transaction.debit, false) }}
-        </div>
-        <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right"
-             [class]="getAmountClass(transaction.credit)">
-            {{ formatCurrencyWithSign(transaction.credit) }}
-        </div>
-        <div class="basis-3/12 md:basis-2/12 flex items-center justify-end px-1 text-right"
-             [class]="getAmountClass(transaction.balance)">
-            {{ formatCurrencyWithSign(transaction.balance) }}
-        </div>
+        <div (dblclick)="onDoubleClick()" class="flex flex-row px-2 h-8 text-xs text-gray-500 border-b border-gray-100">
+                <div class="basis-0 flex items-center"><app-checkbox></app-checkbox></div>
+                <!-- Read mode -->
+                <ng-container *ngIf="!editing">
+                    <div class="basis-6/12 md:basis-2/12 flex items-center px-1">{{ transaction.date }}</div>
+                    <div class="basis-3/12 md:basis-2/12 flex items-center px-1">{{ transaction.label }}</div>
+                    <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">{{ transaction.category }}</div>
+                    <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right"
+                             [class]="getAmountClass(transaction.debit)">
+                        {{ formatCurrencyWithSign(transaction.debit, false) }}
+                    </div>
+                    <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right"
+                             [class]="getAmountClass(transaction.credit)">
+                        {{ formatCurrencyWithSign(transaction.credit) }}
+                    </div>
+                    <div class="basis-3/12 md:basis-2/12 flex items-center justify-end px-1 text-right"
+                             [class]="getAmountClass(transaction.balance)">
+                        {{ formatCurrencyWithSign(transaction.balance) }}
+                    </div>
+                </ng-container>
+
+                <!-- Edit mode -->
+                <ng-container *ngIf="editing">
+                    <div class="basis-6/12 md:basis-2/12 flex items-center px-1">
+                        <!-- Using native date input: parent should provide ISO-like date strings or adapt parsing -->
+                        <input class="w-full text-xs p-1 border rounded" type="date" [(ngModel)]="editModel.date">
+                    </div>
+                    <div class="basis-3/12 md:basis-2/12 flex items-center px-1">
+                        <input class="w-full text-xs p-1 border rounded" type="text" [(ngModel)]="editModel.label">
+                    </div>
+                                <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">
+                                    <!-- combobox using datalist for restrictive suggestions -->
+                                                <input [attr.list]="'cats-' + (transaction?.id || 0)" class="w-full text-xs p-1 border rounded" [(ngModel)]="editModel.category" />
+                                                <datalist [attr.id]="'cats-' + (transaction?.id || 0)">
+                                        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+                                    </datalist>
+                                </div>
+                    <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right">
+                        <input class="w-full text-xs p-1 text-right border rounded" type="number" step="0.01" [(ngModel)]="editModel.debit">
+                    </div>
+                    <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right">
+                        <input class="w-full text-xs p-1 text-right border rounded" type="number" step="0.01" [(ngModel)]="editModel.credit">
+                    </div>
+                                <!-- last visible column reserved for action buttons in edit mode -->
+                                <div class="basis-3/12 md:basis-2/12 flex items-center justify-end px-1 text-right">
+                                    <div class="flex gap-2 items-center ml-2">
+                                                        <button title="Sauvegarder" aria-label="Sauvegarder" class="p-1 bg-blue-500 text-white rounded" (click)="onSave()">
+                                                            <fa-icon [icon]="icSave" class="w-4 h-4"></fa-icon>
+                                                        </button>
+                                                        <button title="Annuler" aria-label="Annuler" class="p-1 ml-2 bg-gray-200 rounded" (click)="onCancel()">
+                                                            <fa-icon [icon]="icTimes" class="w-4 h-4"></fa-icon>
+                                                        </button>
+                                    </div>
+                                </div>
+                </ng-container>
     </div>
