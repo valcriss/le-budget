@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import configuration from './config/configuration';
 import validationSchema from './config/validation';
 import { PrismaModule } from './prisma/prisma.module';
@@ -9,6 +10,8 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { BudgetModule } from './modules/budget/budget.module';
 import { EventsModule } from './modules/events/events.module';
 import { HealthModule } from './modules/health/health.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -24,6 +27,13 @@ import { HealthModule } from './modules/health/health.module';
     CategoriesModule,
     BudgetModule,
     HealthModule,
+    AuthModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
   ],
 })
 export class AppModule {}

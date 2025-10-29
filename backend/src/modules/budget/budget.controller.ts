@@ -9,7 +9,7 @@ import {
   Post,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { BudgetService } from './budget.service';
 import { CreateBudgetMonthDto } from './dto/create-budget-month.dto';
 import { UpdateBudgetMonthDto } from './dto/update-budget-month.dto';
@@ -22,6 +22,7 @@ import { BudgetCategoryGroupEntity } from './entities/budget-group.entity';
 import { BudgetCategoryEntity } from './entities/budget-category.entity';
 
 @ApiTags('budget')
+@ApiBearerAuth('access-token')
 @Controller('budget')
 @UseInterceptors(ClassSerializerInterceptor)
 export class BudgetController {

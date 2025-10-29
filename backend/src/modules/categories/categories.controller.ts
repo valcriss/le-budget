@@ -9,13 +9,14 @@ import {
   Post,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoryEntity } from './entities/category.entity';
 
 @ApiTags('categories')
+@ApiBearerAuth('access-token')
 @Controller('categories')
 @UseInterceptors(ClassSerializerInterceptor)
 export class CategoriesController {

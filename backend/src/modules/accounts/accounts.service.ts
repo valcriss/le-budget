@@ -17,7 +17,7 @@ export class AccountsService {
   ) {}
 
   async create(dto: CreateAccountDto): Promise<AccountEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const initial = dto.initialBalance ?? 0;
 
     const account = await this.prisma.account.create({
@@ -39,7 +39,7 @@ export class AccountsService {
   }
 
   async findAll(): Promise<AccountEntity[]> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const accounts = await this.prisma.account.findMany({
       where: { userId },
       orderBy: { createdAt: 'asc' },
@@ -48,7 +48,7 @@ export class AccountsService {
   }
 
   async findOne(id: string): Promise<AccountEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const account = await this.prisma.account.findFirst({
       where: { id, userId },
     });
@@ -59,7 +59,7 @@ export class AccountsService {
   }
 
   async update(id: string, dto: UpdateAccountDto): Promise<AccountEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const existing = await this.prisma.account.findFirst({
       where: { id, userId },
     });
@@ -94,7 +94,7 @@ export class AccountsService {
   }
 
   async remove(id: string): Promise<AccountEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const existing = await this.prisma.account.findFirst({
       where: { id, userId },
     });

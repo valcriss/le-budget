@@ -10,7 +10,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
@@ -19,6 +19,7 @@ import { TransactionsListEntity } from './entities/transactions-list.entity';
 import { TransactionEntity } from './entities/transaction.entity';
 
 @ApiTags('transactions')
+@ApiBearerAuth('access-token')
 @Controller('accounts/:accountId/transactions')
 @UseInterceptors(ClassSerializerInterceptor)
 export class TransactionsController {

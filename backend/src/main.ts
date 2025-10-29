@@ -5,7 +5,7 @@ import {
 } from '@nestjs/platform-fastify';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost } from '@nestjs/core';
@@ -14,6 +14,7 @@ import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter'
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({ logger: true }),
@@ -48,6 +49,15 @@ async function bootstrap() {
     .addTag('transactions')
     .addTag('categories')
     .addTag('budget')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Provide the JWT access token returned by the auth endpoints.',
+      },
+      'access-token',
+    )
     .addServer('/')
     .build();
 
@@ -58,6 +68,8 @@ async function bootstrap() {
 
   const port = configService.get<number>('PORT', 3000);
   await app.listen({ port, host: '0.0.0.0' });
+  const appUrl = await app.getUrl();
+  logger.log(`API listening on ${appUrl}`);
 }
 
 bootstrap();

@@ -17,7 +17,7 @@ export class CategoriesService {
   ) {}
 
   async create(dto: CreateCategoryDto): Promise<CategoryEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const category = await this.prisma.category.create({
       data: {
         userId,
@@ -35,7 +35,7 @@ export class CategoriesService {
   }
 
   async findAll(): Promise<CategoryEntity[]> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const categories = await this.prisma.category.findMany({
       where: { userId },
       orderBy: [{ kind: 'asc' }, { name: 'asc' }],
@@ -44,7 +44,7 @@ export class CategoriesService {
   }
 
   async findOne(id: string): Promise<CategoryEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const category = await this.prisma.category.findFirst({ where: { id, userId } });
     if (!category) {
       throw new NotFoundException(`Category ${id} not found`);
@@ -53,7 +53,7 @@ export class CategoriesService {
   }
 
   async update(id: string, dto: UpdateCategoryDto): Promise<CategoryEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const existing = await this.prisma.category.findFirst({ where: { id, userId } });
     if (!existing) {
       throw new NotFoundException(`Category ${id} not found`);
@@ -78,7 +78,7 @@ export class CategoriesService {
   }
 
   async remove(id: string): Promise<CategoryEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const existing = await this.prisma.category.findFirst({ where: { id, userId } });
     if (!existing) {
       throw new NotFoundException(`Category ${id} not found`);

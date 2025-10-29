@@ -25,7 +25,7 @@ export class TransactionsService {
     accountId: string,
     query: TransactionsQueryDto,
   ): Promise<TransactionsListEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
     if (!account) {
       throw new NotFoundException(`Account ${accountId} not found`);
@@ -91,7 +91,7 @@ export class TransactionsService {
   }
 
   async create(accountId: string, dto: CreateTransactionDto): Promise<TransactionEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
     if (!account) {
       throw new NotFoundException(`Account ${accountId} not found`);
@@ -131,7 +131,7 @@ export class TransactionsService {
   }
 
   async findOne(accountId: string, transactionId: string): Promise<TransactionEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
     if (!account) {
       throw new NotFoundException(`Account ${accountId} not found`);
@@ -154,7 +154,7 @@ export class TransactionsService {
     transactionId: string,
     dto: UpdateTransactionDto,
   ): Promise<TransactionEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
     if (!account) {
       throw new NotFoundException(`Account ${accountId} not found`);
@@ -205,7 +205,7 @@ export class TransactionsService {
   }
 
   async remove(accountId: string, transactionId: string): Promise<TransactionEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
     if (!account) {
       throw new NotFoundException(`Account ${accountId} not found`);

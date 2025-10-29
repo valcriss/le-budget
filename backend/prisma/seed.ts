@@ -1,15 +1,21 @@
 import { AccountType, CategoryKind, PrismaClient } from '@prisma/client';
+import { hash } from 'argon2';
 
 const prisma = new PrismaClient();
 
 async function main() {
   const demoEmail = 'demo@lebudget.local';
+  const demoPassword = process.env.DEMO_USER_PASSWORD ?? 'demo1234';
+  const passwordHash = await hash(demoPassword);
   const demoUser = await prisma.user.upsert({
     where: { email: demoEmail },
-    update: {},
+    update: {
+      passwordHash,
+      displayName: 'Demo User',
+    },
     create: {
       email: demoEmail,
-      passwordHash: '$argon2id$v=19$m=65536,t=3,p=4$YXV0b21hdGljLXNlZWQ$J05Jv2JAnCmvYzu3/n6PvQ',
+      passwordHash,
       displayName: 'Demo User',
     },
   });
@@ -208,7 +214,8 @@ async function main() {
     }
   }
 
-  console.info('Seed completed successfully. DEFAULT_USER_ID=', demoUser.id);
+  console.info('Seed completed successfully.');
+  console.info(`Demo credentials -> email: ${demoUser.email} | password: ${demoPassword}`);
 }
 
 main()

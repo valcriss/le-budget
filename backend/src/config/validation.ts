@@ -8,7 +8,10 @@ const validationSchema = Joi.object({
   DATABASE_URL: Joi.string()
     .uri({ scheme: ['postgres', 'postgresql'] })
     .required(),
-  DEFAULT_USER_ID: Joi.string().uuid().optional(),
+  JWT_SECRET: Joi.string().min(16).required(),
+  JWT_EXPIRES_IN: Joi.alternatives()
+    .try(Joi.string(), Joi.number())
+    .default('1h'),
 });
 
 export default validationSchema;

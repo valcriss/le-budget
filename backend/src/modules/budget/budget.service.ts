@@ -31,7 +31,7 @@ export class BudgetService {
   ) {}
 
   async listMonths(): Promise<BudgetMonthEntity[]> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const months = await this.prisma.budgetMonth.findMany({
       where: { userId },
       orderBy: { month: 'desc' },
@@ -40,7 +40,7 @@ export class BudgetService {
   }
 
   async createMonth(dto: CreateBudgetMonthDto): Promise<BudgetMonthEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const monthDate = this.monthStringToDate(dto.month);
 
     const month = await this.prisma.budgetMonth.create({
@@ -58,13 +58,13 @@ export class BudgetService {
   }
 
   async getMonth(key: string): Promise<BudgetMonthEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const month = await this.resolveMonth(key, userId);
     return this.buildMonthEntity(month);
   }
 
   async updateMonth(id: string, dto: UpdateBudgetMonthDto): Promise<BudgetMonthEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const existing = await this.prisma.budgetMonth.findFirst({ where: { id, userId } });
     if (!existing) {
       throw new NotFoundException(`Budget month ${id} not found`);
@@ -92,7 +92,7 @@ export class BudgetService {
   }
 
   async createGroup(monthId: string, dto: CreateBudgetGroupDto): Promise<BudgetCategoryGroupEntity> {
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     const month = await this.prisma.budgetMonth.findFirst({ where: { id: monthId, userId } });
     if (!month) {
       throw new NotFoundException(`Budget month ${monthId} not found`);
@@ -347,7 +347,7 @@ export class BudgetService {
     if (!group) {
       throw new NotFoundException(`Budget group ${groupId} not found`);
     }
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     if (group.month.userId !== userId) {
       throw new NotFoundException(`Budget group ${groupId} not found`);
     }
@@ -369,7 +369,7 @@ export class BudgetService {
     if (!category) {
       throw new NotFoundException(`Budget category ${categoryId} not found`);
     }
-    const userId = await this.userContext.getDefaultUserId();
+    const userId = this.userContext.getUserId();
     if (category.group.month.userId !== userId) {
       throw new NotFoundException(`Budget category ${categoryId} not found`);
     }

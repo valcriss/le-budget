@@ -95,7 +95,7 @@ Automatic OpenAPI definitions are available at `/docs`.
    ```bash
    npm run prisma:seed
    ```
-   Note the logged `DEFAULT_USER_ID` and place it in `.env`.
+   This seeds a demo user (`demo@lebudget.local` / `demo1234`) you can use to sign in immediately.
 6. **Start the API (watch mode)**
    ```bash
    npm run start:dev
@@ -113,7 +113,8 @@ Copy `.env.example` to `.env` and adjust as needed:
 - `NODE_ENV` – `development` | `production` | …
 - `PORT` – HTTP port (default `3000`)
 - `DATABASE_URL` – PostgreSQL connection string
-- `DEFAULT_USER_ID` – optional shortcut; otherwise the first user is auto-selected
+- `JWT_SECRET` – secret used to sign JWT access tokens
+- `JWT_EXPIRES_IN` – JWT lifetime (e.g. `1h`, `3600s`)
 
 ## Scripts
 
@@ -129,7 +130,6 @@ Copy `.env.example` to `.env` and adjust as needed:
 
 ## Notes & Next Steps
 
-- **Auth**: Currently the `UserContextService` picks a default seeded user. Replace with proper authentication once ready.
 - **Validation**: DTOs use `class-validator`; adjust as API contracts evolve.
 - **Testing**: No automated tests yet—add unit/e2e specs before production.
 - **CI/CD**: Integrate migration + seed steps into your deployment pipeline.
