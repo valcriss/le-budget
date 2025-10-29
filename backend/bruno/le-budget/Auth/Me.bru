@@ -1,0 +1,20 @@
+meta {
+  name: Me
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{API_URL}}/auth/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{JWT}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

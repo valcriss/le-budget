@@ -1,0 +1,28 @@
+meta {
+  name: Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{API_URL}}/auth/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "{{VALID_EMAIL}}",
+    "password": "{{VALID_PASSWORD}}"
+  }
+}
+
+tests {
+  let data = res.getBody();
+  bru.setEnvVar("JWT", data.accessToken, { persist: true });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
