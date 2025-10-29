@@ -44,9 +44,18 @@
             <app-nav-item link="/settings" [icon]="icSettings" (activated)="closeMenus()"
               >Paramètres</app-nav-item
             >
-            <app-nav-item [icon]="icLogout" [classes]="'cursor-pointer'" (activated)="closeMenus()"
-              >Se déconnecter</app-nav-item
+            <button
+              type="button"
+              class="w-full text-left"
+              (click)="logout()"
             >
+              <span
+                class="group flex items-center gap-2 text-sm text-red-600 hover:text-red-700 px-2 py-1 focus:outline-none"
+              >
+                <fa-icon [icon]="icLogout" class="w-4 h-4"></fa-icon>
+                Se déconnecter
+              </span>
+            </button>
           </div>
         </div>
       </div>

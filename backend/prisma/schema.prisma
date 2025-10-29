@@ -60,12 +60,12 @@ model Category {
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
   name        String
-  description String?
-  color       String?
-  icon        String?
   kind        CategoryKind     @default(EXPENSE)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+  parentCategoryId String?
+  parentCategory   Category?   @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
+  subCategories    Category[]  @relation("CategoryHierarchy")
 
   transactions     Transaction[]
   budgetCategories BudgetCategory[]

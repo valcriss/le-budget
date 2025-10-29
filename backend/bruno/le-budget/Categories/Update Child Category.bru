@@ -1,0 +1,22 @@
+meta {
+  name: Update Child Category
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{API_URL}}/categories/{{CHILD_CATEGORY_ID}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+     "name": "Jeux vidéos"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

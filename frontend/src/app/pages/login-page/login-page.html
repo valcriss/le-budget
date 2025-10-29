@@ -22,27 +22,41 @@
         <p class="text-sm text-slate-500 mt-1">Connectez-vous pour continuer</p>
       </div>
 
-      <form class="flex flex-col gap-4 mt-4" (submit)="onSubmit($event)">
+      <form class="flex flex-col gap-4 mt-4" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ error() }}
+        </div>
+
         <label class="flex flex-col">
           <span class="text-sm text-slate-500 mb-2">Email</span>
           <input
-            class="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#6968f033]"
+            class="px-4 py-2 rounded-lg border focus:outline-none focus:ring-4 focus:ring-[#6968f033] transition"
             type="email"
-            name="email"
-            required
+            formControlName="email"
             placeholder="votre@exemple.com"
+            [class.border-red-400]="form.controls.email.invalid && form.controls.email.touched"
           />
+          <span
+            *ngIf="form.controls.email.invalid && form.controls.email.touched"
+            class="mt-1 text-xs text-red-600"
+            >Veuillez saisir une adresse email valide.</span
+          >
         </label>
 
         <label class="flex flex-col">
           <span class="text-sm text-slate-500 mb-2">Mot de passe</span>
           <input
-            class="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#6968f033]"
+            class="px-4 py-2 rounded-lg border focus:outline-none focus:ring-4 focus:ring-[#6968f033] transition"
             type="password"
-            name="password"
-            required
+            formControlName="password"
             placeholder="••••••••"
+            [class.border-red-400]="form.controls.password.invalid && form.controls.password.touched"
           />
+          <span
+            *ngIf="form.controls.password.invalid && form.controls.password.touched"
+            class="mt-1 text-xs text-red-600"
+            >Le mot de passe doit contenir au moins 8 caractères.</span
+          >
         </label>
 
         <div class="flex items-center justify-between mt-1">
@@ -51,8 +65,12 @@
             routerLink="/forgot-password"
             >Mot de passe oublié ?</a
           >
-          <button type="submit" class="bg-[#58a9ff] hover:bg-[#3a8eff] text-white px-4 py-2 rounded-lg font-semibold transition">
-            Se connecter
+          <button
+            type="submit"
+            class="bg-[#58a9ff] hover:bg-[#3a8eff] text-white px-4 py-2 rounded-lg font-semibold transition disabled:cursor-not-allowed disabled:opacity-70"
+            [disabled]="form.invalid || loading()"
+          >
+            {{ loading() ? 'Connexion...' : 'Se connecter' }}
           </button>
         </div>
 

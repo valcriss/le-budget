@@ -1,0 +1,20 @@
+meta {
+  name: Delete Child Category
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{API_URL}}/categories/{{CHILD_CATEGORY_ID}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  bru.setEnvVar("CHILD_CATEGORY_ID", "deleted", { persist: true });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

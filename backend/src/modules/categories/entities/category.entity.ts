@@ -15,17 +15,9 @@ export class CategoryEntity {
   @Expose()
   kind!: CategoryKind;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ required: false, nullable: true, description: 'Identifiant de la catégorie parente' })
   @Expose()
-  description?: string | null;
-
-  @ApiProperty({ required: false, nullable: true })
-  @Expose()
-  color?: string | null;
-
-  @ApiProperty({ required: false, nullable: true })
-  @Expose()
-  icon?: string | null;
+  parentCategoryId?: string | null;
 
   @ApiProperty()
   @Expose()

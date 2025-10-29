@@ -1,0 +1,16 @@
+meta {
+  name: Get Child Category
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{API_URL}}/categories/{{CHILD_CATEGORY_ID}}
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

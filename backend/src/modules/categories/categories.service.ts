@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CategoryKind, Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -18,14 +18,18 @@ export class CategoriesService {
 
   async create(dto: CreateCategoryDto): Promise<CategoryEntity> {
     const userId = this.userContext.getUserId();
+    let parentCategoryId: string | null = null;
+    if (dto.parentCategoryId) {
+      await this.assertParentBelongsToUser(dto.parentCategoryId, userId);
+      parentCategoryId = dto.parentCategoryId;
+    }
+
     const category = await this.prisma.category.create({
       data: {
         userId,
         name: dto.name,
         kind: dto.kind ?? CategoryKind.EXPENSE,
-        description: dto.description,
-        color: this.normalizeColor(dto.color),
-        icon: dto.icon,
+        parentCategoryId,
       },
     });
 
@@ -62,10 +66,19 @@ export class CategoriesService {
     const data: Prisma.CategoryUpdateInput = {
       name: dto.name ?? existing.name,
       kind: dto.kind ?? existing.kind,
-      description: dto.description ?? existing.description,
-      color: dto.color !== undefined ? this.normalizeColor(dto.color) : existing.color,
-      icon: dto.icon ?? existing.icon,
     };
+
+    if (dto.parentCategoryId !== undefined) {
+      if (dto.parentCategoryId === null) {
+        data.parentCategory = { disconnect: true };
+      } else {
+        if (dto.parentCategoryId === id) {
+          throw new BadRequestException('Une catégorie ne peut pas être sa propre parente.');
+        }
+        await this.assertParentBelongsToUser(dto.parentCategoryId, userId);
+        data.parentCategory = { connect: { id: dto.parentCategoryId } };
+      }
+    }
 
     const category = await this.prisma.category.update({
       where: { id },
@@ -84,6 +97,15 @@ export class CategoriesService {
       throw new NotFoundException(`Category ${id} not found`);
     }
 
+    const childrenCount = await this.prisma.category.count({
+      where: { parentCategoryId: id, userId },
+    });
+    if (childrenCount > 0) {
+      throw new BadRequestException(
+        'Impossible de supprimer une catégorie qui possède des sous-catégories.',
+      );
+    }
+
     const category = await this.prisma.category.delete({ where: { id } });
     const entity = this.toEntity(category);
     this.events.emit('category.deleted', entity);
@@ -94,9 +116,13 @@ export class CategoriesService {
     return plainToInstance(CategoryEntity, category);
   }
 
-  private normalizeColor(color?: string) {
-    if (!color) return null;
-    const normalized = color.startsWith('#') ? color : `#${color}`;
-    return normalized.toUpperCase();
+  private async assertParentBelongsToUser(parentId: string, userId: string) {
+    const parent = await this.prisma.category.findFirst({
+      where: { id: parentId, userId },
+      select: { id: true },
+    });
+    if (!parent) {
+      throw new NotFoundException(`Catégorie parente ${parentId} introuvable`);
+    }
   }
 }

@@ -1,0 +1,29 @@
+meta {
+  name: Create Child Category
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{API_URL}}/categories
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Cinema",
+    "kind": "EXPENSE",
+    "parentCategoryId": "{{PARENT_CATEGORY_ID}}"
+  }
+}
+
+tests {
+  let data = res.getBody();
+  bru.setEnvVar("CHILD_CATEGORY_ID", data.id, { persist: true });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

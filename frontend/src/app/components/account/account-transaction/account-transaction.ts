@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, computed, inject } from '@angular/core';
 import { Checkbox } from '../../ui/checkbox/checkbox';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +7,7 @@ import { faCircle,faTimes,faSave } from '@fortawesome/free-solid-svg-icons';
 import { formatCurrencyWithSign, getAmountClass } from '../../../shared/formatters';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { DatePickerComponent } from '../../ui/date-picker/date-picker';
+import { CategoriesStore } from '../../../core/categories/categories.store';
 
 @Component({
   selector: 'app-account-transaction',
@@ -46,14 +47,18 @@ export class AccountTransaction {
   // working copy while editing
   editModel: any = null;
 
-  // sample restrictive categories list; ideally this should come from a parent or service
-  categories = [
-    'Catégorie',
-    'Alimentation',
-    'Loisirs',
-    'Logement',
-    'Transports'
-  ];
+  private readonly categoriesStore = inject(CategoriesStore);
+
+  // expose categories as a sorted string array for the select component
+  readonly categoryOptions = computed(() =>
+    this.categoriesStore
+      .categories()
+      .map((category) => category.name)
+      .sort((a, b) => a.localeCompare(b)),
+  );
+
+  readonly categoriesLoading = this.categoriesStore.loading;
+  readonly categoriesError = this.categoriesStore.error;
 
   labels = [
     'Salaire',
@@ -74,6 +79,7 @@ export class AccountTransaction {
 
   constructor(library: FaIconLibrary) {
     library.addIcons(faSave, faTimes, faCircle);
+    void this.categoriesStore.ensureLoaded();
   }
 
   @Output() update = new EventEmitter<any>();

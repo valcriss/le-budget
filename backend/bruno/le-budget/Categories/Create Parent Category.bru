@@ -1,0 +1,28 @@
+meta {
+  name: Create Parent Category
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{API_URL}}/categories
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Loisirs",
+    "kind": "EXPENSE"
+  }
+}
+
+tests {
+  let data = res.getBody();
+  bru.setEnvVar("PARENT_CATEGORY_ID", data.id, { persist: true });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

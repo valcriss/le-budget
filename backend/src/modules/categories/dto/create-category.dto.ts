@@ -1,12 +1,6 @@
 import { CategoryKind } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  Matches,
-  MaxLength,
-} from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({ description: 'Category label' })
@@ -19,20 +13,12 @@ export class CreateCategoryDto {
   @IsEnum(CategoryKind)
   kind?: CategoryKind;
 
-  @ApiPropertyOptional({ description: 'Optional description' })
+  @ApiPropertyOptional({
+    description: 'Identifiant de la catégorie parente',
+    format: 'uuid',
+    nullable: true,
+  })
   @IsOptional()
   @IsString()
-  @MaxLength(240)
-  description?: string;
-
-  @ApiPropertyOptional({ description: 'Hex color code', example: '#FF9900' })
-  @IsOptional()
-  @Matches(/^#?[0-9A-Fa-f]{6}$/)
-  color?: string;
-
-  @ApiPropertyOptional({ description: 'Icon identifier' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(64)
-  icon?: string;
+  parentCategoryId?: string | null;
 }

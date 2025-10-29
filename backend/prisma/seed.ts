@@ -32,12 +32,12 @@ async function main() {
   ]);
 
   const categoriesSeed = [
-    { name: 'Salaire', kind: CategoryKind.INCOME, color: '#0EA5E9' },
-    { name: 'Logement', kind: CategoryKind.EXPENSE, color: '#6366F1' },
-    { name: 'Alimentation', kind: CategoryKind.EXPENSE, color: '#F97316' },
-    { name: 'Loisirs', kind: CategoryKind.EXPENSE, color: '#A855F7' },
-    { name: 'Transports', kind: CategoryKind.EXPENSE, color: '#10B981' },
-    { name: 'Catégorie', kind: CategoryKind.EXPENSE, color: '#F59E0B' },
+    { name: 'Salaire', kind: CategoryKind.INCOME },
+    { name: 'Logement', kind: CategoryKind.EXPENSE },
+    { name: 'Alimentation', kind: CategoryKind.EXPENSE },
+    { name: 'Loisirs', kind: CategoryKind.EXPENSE },
+    { name: 'Transports', kind: CategoryKind.EXPENSE },
+    { name: 'Catégorie', kind: CategoryKind.EXPENSE },
   ];
 
   const categories: Record<string, string> = {};
@@ -47,7 +47,6 @@ async function main() {
         userId: demoUser.id,
         name: cat.name,
         kind: cat.kind,
-        color: cat.color,
       },
     });
     categories[cat.name] = created.id;

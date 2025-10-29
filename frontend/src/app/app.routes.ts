@@ -5,12 +5,16 @@ import { Register } from './pages/register/register';
 import { BudgetPage } from './pages/budget-page/budget-page';
 import { AccountsPage } from './pages/accounts-page/accounts-page';
 import { AccountPage } from './pages/account-page/account-page';
+import {
+  redirectIfAuthenticatedGuard,
+  requireAuthGuard,
+} from './core/auth/guards/auth.guards';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginPage },
+  { path: 'login', component: LoginPage, canActivate: [redirectIfAuthenticatedGuard] },
   { path: 'forgot-password', component: ForgotPassword },
-  { path: 'register', component: Register },
-  { path: 'budget', component: BudgetPage },
-  { path: 'accounts', component: AccountsPage },
-  { path: 'accounts/:id', component: AccountPage },
+  { path: 'register', component: Register, canActivate: [redirectIfAuthenticatedGuard] },
+  { path: 'budget', component: BudgetPage, canActivate: [requireAuthGuard] },
+  { path: 'accounts', component: AccountsPage, canActivate: [requireAuthGuard] },
+  { path: 'accounts/:id', component: AccountPage, canActivate: [requireAuthGuard] },
 ];

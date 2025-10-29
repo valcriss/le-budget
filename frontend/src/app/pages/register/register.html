@@ -6,46 +6,66 @@
         Créez votre compte pour commencer à gérer votre budget.
       </p>
 
-      <form class="flex flex-col gap-4" (submit)="onSubmit($event)">
+      <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ error() }}
+        </div>
+
         <label class="flex flex-col">
           <span class="text-sm text-slate-500 mb-2">Email</span>
           <input
-            class="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#58a9ff33]"
+            class="px-4 py-2 rounded-lg border focus:outline-none focus:ring-4 focus:ring-[#58a9ff33] transition"
             type="email"
-            name="email"
-            required
+            formControlName="email"
             placeholder="votre@exemple.com"
+            [class.border-red-400]="form.controls.email.invalid && form.controls.email.touched"
           />
+          <span
+            *ngIf="form.controls.email.invalid && form.controls.email.touched"
+            class="mt-1 text-xs text-red-600"
+            >Veuillez saisir une adresse email valide.</span
+          >
         </label>
 
         <label class="flex flex-col">
           <span class="text-sm text-slate-500 mb-2">Mot de passe</span>
           <input
-            class="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#58a9ff33]"
+            class="px-4 py-2 rounded-lg border focus:outline-none focus:ring-4 focus:ring-[#58a9ff33] transition"
             type="password"
-            name="password"
-            required
+            formControlName="password"
             placeholder="••••••••"
+            [class.border-red-400]="form.controls.password.invalid && form.controls.password.touched"
           />
+          <span
+            *ngIf="form.controls.password.invalid && form.controls.password.touched"
+            class="mt-1 text-xs text-red-600"
+            >Le mot de passe doit contenir au moins 8 caractères.</span
+          >
         </label>
 
         <label class="flex flex-col">
           <span class="text-sm text-slate-500 mb-2">Confirmer le mot de passe</span>
           <input
-            class="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#58a9ff33]"
+            class="px-4 py-2 rounded-lg border focus:outline-none focus:ring-4 focus:ring-[#58a9ff33] transition"
             type="password"
-            name="password_confirm"
-            required
+            formControlName="confirmPassword"
             placeholder="••••••••"
+            [class.border-red-400]="form.hasError('passwordMismatch') && form.controls.confirmPassword.touched"
           />
+          <span
+            *ngIf="form.hasError('passwordMismatch') && form.controls.confirmPassword.touched"
+            class="mt-1 text-xs text-red-600"
+            >Les mots de passe ne correspondent pas.</span
+          >
         </label>
 
         <div class="flex gap-3">
           <button
             type="submit"
-            class="bg-[#58a9ff] hover:bg-[#3a8eff] text-white px-4 py-2 rounded-lg font-semibold transition"
+            class="bg-[#58a9ff] hover:bg-[#3a8eff] text-white px-4 py-2 rounded-lg font-semibold transition disabled:cursor-not-allowed disabled:opacity-70"
+            [disabled]="form.invalid || loading()"
           >
-            Créer un compte
+            {{ loading() ? 'Création...' : 'Créer un compte' }}
           </button>
           <a routerLink="/login" class="inline-flex items-center px-4 py-2 text-sm text-slate-600 hover:underline">Retour à la connexion</a
           >
