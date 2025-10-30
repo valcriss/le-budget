@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, ViewChildren, QueryList } from '@angular/core';
+import { Component, ElementRef, Input, ViewChildren, QueryList, inject } from '@angular/core';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDragStart, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
@@ -7,18 +7,21 @@ import { formatCurrencyWithSign, getAmountClass } from '../../../shared/formatte
 import { InputAmount } from '../../ui/input-amount/input-amount';
 import { BadgeAmount } from '../../ui/badge-amount/badge-amount';
 import { BudgetCategory, BudgetCategoryGroup } from '../../../core/budget/budget.models';
+import { Dialog, DialogModule } from '@angular/cdk/dialog';
+import { CategoryCreateDialog } from '../category-create-dialog/category-create-dialog';
 // (CDK drag types are imported above)
 
 @Component({
   selector: 'app-budget-categories',
   standalone: true,
-  imports: [CommonModule, FontAwesomeModule, InputAmount, BadgeAmount, DragDropModule],
+  imports: [CommonModule, FontAwesomeModule, InputAmount, BadgeAmount, DragDropModule, DialogModule],
   templateUrl: './budget-categories.html',
   styleUrls: ['./budget-categories.css'],
 })
 export class BudgetCategories {
   protected readonly icChevronRight = faChevronRight;
   protected readonly icAdd = faPlusSquare;
+  private readonly dialog = inject(Dialog);
 
   constructor(library: FaIconLibrary) {
   library.addIcons(faChevronRight, faPlusSquare);
@@ -372,28 +375,17 @@ export class BudgetCategories {
     }
   }
 
-  onAddCategory(index: number, event?: MouseEvent) {
+  openAddCategoryDialog(index: number, event?: MouseEvent) {
     event?.stopPropagation();
-    // append a new empty item for quick testing
-    const g = this.groups[index];
-    const tempId = `temp-${Date.now()}`;
-    g.items.push({
-      id: tempId,
-      groupId: g.id,
-      categoryId: tempId,
-      category: {
-        id: tempId,
-        name: 'Nouvelle catégorie',
-        kind: 'EXPENSE',
-        parentCategoryId: g.categoryId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+    const group = this.groups[index];
+    if (!group) return;
+    this.dialog.open(CategoryCreateDialog, {
+      data: {
+        parentCategoryId: group.categoryId,
+        title: 'Créer une catégorie',
+        nameLabel: 'Nom de la catégorie',
+        placeholder: 'Ex : Supermarché',
       },
-      assigned: 0,
-      activity: 0,
-      available: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     });
   }
 

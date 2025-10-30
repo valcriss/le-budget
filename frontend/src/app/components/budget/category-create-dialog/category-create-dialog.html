@@ -1,0 +1,37 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <h2 class="dialog-title">{{ title }}</h2>
+    <button type="button" class="close-btn" (click)="close()" aria-label="Fermer la fenêtre">
+      ✕
+    </button>
+  </div>
+
+  <form class="dialog-body" (submit)="submit($event)" novalidate>
+    <label class="field-label" for="category-name">{{ nameLabel }}</label>
+    <input
+      id="category-name"
+      type="text"
+      [formControl]="nameControl"
+      [attr.aria-invalid]="nameControl.invalid && nameControl.touched"
+      class="field-input"
+      [placeholder]="placeholder"
+      autocomplete="off"
+    />
+    <div class="field-hint" *ngIf="nameControl.invalid && nameControl.touched">
+      Le nom est requis (80 caractères maximum).
+    </div>
+
+    <div class="error-banner" *ngIf="hasError()">
+      {{ hasError() }}
+    </div>
+
+    <div class="dialog-actions">
+      <button type="button" class="btn-secondary" (click)="close()" [disabled]="isSubmitting()">
+        Annuler
+      </button>
+      <button type="button" class="btn-primary" (click)="submit()" [disabled]="disableSubmit">
+        {{ isSubmitting() ? 'Création…' : 'Créer' }}
+      </button>
+    </div>
+  </form>
+</div>

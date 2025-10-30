@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../config/api-base-url.token';
 import { BudgetCategory, BudgetCategoryGroup, BudgetMonth } from './budget.models';
-import { normalizeMonthKey } from './budget.utils';
+import { getCurrentMonthKey, normalizeMonthKey } from './budget.utils';
 
 @Injectable({ providedIn: 'root' })
 export class BudgetStore {
@@ -22,12 +22,12 @@ export class BudgetStore {
   readonly hasData = computed(() => this.monthSignal() !== null);
   readonly groups = computed(() => this.monthSignal()?.groups ?? []);
 
-  async loadMonth(monthKey: string): Promise<void> {
+  async loadMonth(monthKey: string, force = false): Promise<void> {
     const normalizedKey = normalizeMonthKey(monthKey);
     if (this.loadingSignal()) {
       return;
     }
-    if (this.monthSignal() && this.monthKeySignal() === normalizedKey) {
+    if (!force && this.monthSignal() && this.monthKeySignal() === normalizedKey) {
       return;
     }
 
@@ -48,6 +48,11 @@ export class BudgetStore {
     } finally {
       this.setLoading(false);
     }
+  }
+
+  async reloadCurrentMonth(): Promise<void> {
+    const currentKey = this.monthKeySignal() ?? getCurrentMonthKey();
+    await this.loadMonth(currentKey, true);
   }
 
   reset(): void {
