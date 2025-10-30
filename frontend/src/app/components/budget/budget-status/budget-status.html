@@ -17,16 +17,20 @@
     </div>
     <div class="flex flex-row">
       <div class="basis-8/12 text-xs">Disponible du mois précédent</div>
-      <div class="basis-4/12 text-xs text-right text-rose-600">- 250,00 €</div>
+      <div class="basis-4/12 text-xs text-right" [class]="getAvailableClass(carryover ?? 0)">
+        {{ formatCurrencyWithSign(carryover ?? 0) }}
+      </div>
     </div>
     <div class="flex flex-row">
       <div class="basis-8/12 text-xs">Revenus du mois</div>
-      <div class="basis-4/12 text-xs text-right text-emerald-600">+ 1 500,00 €</div>
+      <div class="basis-4/12 text-xs text-right" [class]="getAvailableClass(income ?? 0)">
+        {{ formatCurrencyWithSign(income ?? 0) }}
+      </div>
     </div>
     <div class="flex flex-row border-t border-gray-200 pt-1 mt-1">
       <div class="basis-8/12 text-xs font-bold">Total ressources</div>
-      <div class="basis-4/12 text-xs text-right" [class]="getAvailableClass(available)">
-        {{ formatCurrencyWithSign(available) }}
+      <div class="basis-4/12 text-xs text-right" [class]="getAvailableClass(resourcesTotal)">
+        {{ formatCurrencyWithSign(resourcesTotal) }}
       </div>
     </div>
 
@@ -37,21 +41,27 @@
       </div>
     </div>
     <div class="flex flex-row">
-      <div class="basis-8/12 text-xs">Montant budgétisé</div>
-      <div class="basis-4/12 text-xs text-right text-gray-500">0,00 €</div>
+      <div class="basis-8/12 text-xs">Montant assigné</div>
+      <div class="basis-4/12 text-xs text-right" [class]="getAvailableClass(totalAssigned ?? 0)">
+        {{ formatCurrencyWithSign(totalAssigned ?? 0) }}
+      </div>
     </div>
     <div class="flex flex-row">
-      <div class="basis-8/12 text-xs">Montant sous-budgétisé</div>
-      <div class="basis-4/12 text-xs text-right text-rose-600">- 1 500,00 €</div>
+      <div class="basis-8/12 text-xs">Activité du mois</div>
+      <div class="basis-4/12 text-xs text-right" [class]="getAvailableClass(totalActivity ?? 0)">
+        {{ formatCurrencyWithSign(totalActivity ?? 0) }}
+      </div>
     </div>
     <div class="flex flex-row border-t border-gray-200 pt-1 mt-1">
       <div class="basis-8/12 text-xs font-bold">Total charges</div>
-      <div class="basis-4/12 text-xs text-right text-rose-600">- 1 500,00 €</div>
+      <div class="basis-4/12 text-xs text-right" [class]="getAvailableClass(totalCharges)">
+        {{ formatCurrencyWithSign(totalCharges) }}
+      </div>
     </div>
 
     <div id="final-available" class="flex w-full items-center justify-end gap-2 mt-4">
-      <div class="text-xl font-semibold text-right" [class]="getAvailableClass(available)">
-        {{ formatCurrencyWithSign(available) }}
+      <div class="text-xl font-semibold text-right" [class]="getAvailableClass(displayedAvailable)">
+        {{ formatCurrencyWithSign(displayedAvailable) }}
       </div>
       <div class="text-sm text-gray-700 text-right">disponible</div>
     </div>

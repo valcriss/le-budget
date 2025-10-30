@@ -12,6 +12,9 @@ const validationSchema = Joi.object({
   JWT_EXPIRES_IN: Joi.alternatives()
     .try(Joi.string(), Joi.number())
     .default('1h'),
+  JWT_REFRESH_EXPIRES_IN: Joi.alternatives()
+    .try(Joi.string(), Joi.number())
+    .default('30d'),
 });
 
 export default validationSchema;

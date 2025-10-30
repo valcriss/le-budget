@@ -1,12 +1,14 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../config/api-base-url.token';
 import { AuthResponse, AuthUser, LoginPayload, RegisterPayload } from './auth.models';
+import { SKIP_AUTH_REFRESH } from './auth-http-context.tokens';
 
 interface StoredSession {
   accessToken: string;
+  refreshToken: string;
   user: AuthUser;
 }
 
@@ -17,14 +19,17 @@ export class AuthStore {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly apiBaseUrl = inject(API_BASE_URL);
+  private refreshPromise: Promise<boolean> | null = null;
 
   private readonly userSignal = signal<AuthUser | null>(null);
   private readonly tokenSignal = signal<string | null>(null);
+  private readonly refreshTokenSignal = signal<string | null>(null);
   private readonly loadingSignal = signal(false);
   private readonly errorSignal = signal<string | null>(null);
 
   readonly user = this.userSignal.asReadonly();
   readonly accessToken = this.tokenSignal.asReadonly();
+  readonly refreshToken = this.refreshTokenSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
   readonly isAuthenticated = computed(
@@ -44,7 +49,9 @@ export class AuthStore {
     this.clearError();
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiBaseUrl}/auth/login`, payload),
+        this.http.post<AuthResponse>(`${this.apiBaseUrl}/auth/login`, payload, {
+          context: new HttpContext().set(SKIP_AUTH_REFRESH, true),
+        }),
       );
       this.persistSession(response);
       await this.router.navigate(['/budget']);
@@ -66,7 +73,9 @@ export class AuthStore {
     this.clearError();
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiBaseUrl}/auth/register`, payload),
+        this.http.post<AuthResponse>(`${this.apiBaseUrl}/auth/register`, payload, {
+          context: new HttpContext().set(SKIP_AUTH_REFRESH, true),
+        }),
       );
       this.persistSession(response);
       await this.router.navigate(['/budget']);
@@ -86,10 +95,16 @@ export class AuthStore {
 
     try {
       const user = await firstValueFrom(
-        this.http.get<AuthUser>(`${this.apiBaseUrl}/auth/me`),
+        this.http.get<AuthUser>(`${this.apiBaseUrl}/auth/me`, {
+          context: new HttpContext().set(SKIP_AUTH_REFRESH, true),
+        }),
       );
       this.userSignal.set(user);
-      this.persistSession({ accessToken: this.tokenSignal()!, user });
+      const accessToken = this.tokenSignal();
+      const refreshToken = this.refreshTokenSignal();
+      if (accessToken && refreshToken) {
+        this.saveSession({ accessToken, refreshToken, user });
+      }
     } catch (error) {
       if (error instanceof HttpErrorResponse && error.status === 401) {
         this.logout(true);
@@ -99,9 +114,44 @@ export class AuthStore {
     }
   }
 
+  async refreshAccessToken(): Promise<boolean> {
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    const refreshToken = this.refreshTokenSignal();
+    if (!refreshToken) {
+      return false;
+    }
+
+    const request = firstValueFrom(
+      this.http.post<AuthResponse>(
+        `${this.apiBaseUrl}/auth/refresh`,
+        { refreshToken },
+        { context: new HttpContext().set(SKIP_AUTH_REFRESH, true) },
+      ),
+    )
+      .then((response) => {
+        this.persistSession(response);
+        return true;
+      })
+      .catch(() => {
+        this.errorSignal.set('Votre session a expiré. Veuillez vous reconnecter.');
+        return false;
+      })
+      .finally(() => {
+        this.refreshPromise = null;
+      });
+
+    this.refreshPromise = request;
+    return this.refreshPromise;
+  }
+
   logout(silent = false): void {
     this.userSignal.set(null);
     this.tokenSignal.set(null);
+    this.refreshTokenSignal.set(null);
+    this.refreshPromise = null;
     this.clearError();
     localStorage.removeItem(STORAGE_KEY);
 
@@ -122,9 +172,8 @@ export class AuthStore {
 
     try {
       const parsed = JSON.parse(stored) as StoredSession;
-      if (parsed?.accessToken && parsed?.user) {
-        this.userSignal.set(parsed.user);
-        this.tokenSignal.set(parsed.accessToken);
+      if (parsed?.accessToken && parsed?.refreshToken && parsed?.user) {
+        this.saveSession(parsed);
         void this.refreshProfile();
       }
     } catch {
@@ -133,13 +182,18 @@ export class AuthStore {
   }
 
   private persistSession(response: AuthResponse): void {
-    this.userSignal.set(response.user);
-    this.tokenSignal.set(response.accessToken);
-    const stored: StoredSession = {
+    this.saveSession({
       accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
       user: response.user,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+    });
+  }
+
+  private saveSession(session: StoredSession): void {
+    this.userSignal.set(session.user);
+    this.tokenSignal.set(session.accessToken);
+    this.refreshTokenSignal.set(session.refreshToken);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
   }
 
   private setLoading(value: boolean): void {

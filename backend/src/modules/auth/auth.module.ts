@@ -12,6 +12,7 @@ import { CommonModule } from '../../common/common.module';
   imports: [
     PrismaModule,
     CommonModule,
+    ConfigModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

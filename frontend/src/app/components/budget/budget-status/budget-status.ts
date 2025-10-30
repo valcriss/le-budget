@@ -16,6 +16,11 @@ export class BudgetStatus implements AfterViewInit, OnDestroy {
   protected readonly icExpenses = faMinusCircle;
 
   @Input() available?: string | number;
+  @Input() carryover: number | null = null;
+  @Input() income: number | null = null;
+  @Input() totalAssigned: number | null = null;
+  @Input() totalActivity: number | null = null;
+  @Input() totalAvailable: number | null = null;
   // Optional callback provided by parent to request the overlay to close
   @Input() requestClose?: () => void;
   // show closing animation when true
@@ -36,6 +41,31 @@ export class BudgetStatus implements AfterViewInit, OnDestroy {
 
   getAvailableClass(value?: string | number): string {
     return getAmountClass(value);
+  }
+
+  get resourcesTotal(): number {
+    return Number(this.carryover ?? 0) + Number(this.income ?? 0);
+  }
+
+  get chargesTotal(): number {
+    return Number(this.totalAssigned ?? 0);
+  }
+
+  get totalCharges(): number {
+    return Number(this.totalAssigned ?? 0) + Number(this.totalActivity ?? 0);
+  }
+
+  get displayedAvailable(): number {
+    if (typeof this.totalAvailable === 'number') {
+      return this.totalAvailable;
+    }
+    if (typeof this.available === 'number') {
+      return this.available;
+    }
+    if (typeof this.available === 'string') {
+      return Number(this.available);
+    }
+    return 0;
   }
 
   ngAfterViewInit(): void {

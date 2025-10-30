@@ -3,21 +3,37 @@
     <div class="md:basis-4/12 flex items-center">
       <div id="budget-selector" class="flex flex-row items-center w-full">
         <div id="previous" class="basis-0 flex items-center">
-          <fa-icon [icon]="icPrev" class="transition-colors duration-150 cursor-pointer text-4xl text-slate-600 hover:text-[#58a9ff] focus:outline-none focus:ring-2 focus:ring-[#58a9ff]"></fa-icon>
+          <button type="button" class="transition-colors duration-150 cursor-pointer text-4xl text-slate-600 hover:text-[#58a9ff] focus:outline-none focus:ring-2 focus:ring-[#58a9ff] disabled:cursor-not-allowed disabled:opacity-60" (click)="onPreviousClick($event)" [disabled]="loading" aria-label="Mois précédent">
+            <fa-icon [icon]="icPrev"></fa-icon>
+          </button>
         </div>
-        <div id="budget-month" class="basis-full text-center text-xl">Octobre 2025</div>
+        <div id="budget-month" class="basis-full text-center text-xl">
+          <ng-container *ngIf="!loading; else loadingLabel">{{ monthLabel || 'Budget du mois' }}</ng-container>
+        </div>
         <div id="next" class="basis-0 flex items-center justify-end">
-          <fa-icon [icon]="icNext" class="transition-colors duration-150 cursor-pointer text-4xl text-slate-600 hover:text-[#58a9ff] focus:outline-none focus:ring-2 focus:ring-[#58a9ff]"></fa-icon>
+          <button type="button" class="transition-colors duration-150 cursor-pointer text-4xl text-slate-600 hover:text-[#58a9ff] focus:outline-none focus:ring-2 focus:ring-[#58a9ff] disabled:cursor-not-allowed disabled:opacity-60" (click)="onNextClick($event)" [disabled]="loading" aria-label="Mois suivant">
+            <fa-icon [icon]="icNext"></fa-icon>
+          </button>
         </div>
       </div>
     </div>
     <div class="mt-2 mb-1 md:basis-8/12 flex items-center justify-center">
-      <div id="budget-available" #budgetAvailable class="relative cursor-pointer bg-emerald-500 text-white px-5 rounded-sm md:rounded-lg w-full md:max-w-96" (click)="toggleStatus()">
+      <div
+        id="budget-available"
+        #budgetAvailable
+        class="relative cursor-pointer bg-emerald-500 text-white px-5 rounded-sm md:rounded-lg w-full md:max-w-96"
+        [class.opacity-60]="loading"
+        [class.cursor-wait]="loading"
+        (click)="toggleStatus()"
+        aria-live="polite"
+      >
         <div class="flex flex-col items-center gap-1 p-2 md:p-3">
           <div class="flex items-center gap-2">
             <fa-icon [icon]="icCheck" class="text-2xl"></fa-icon>
             <div class="text-base md:text-base font-medium">Disponible :</div>
-            <div class="text-xl font-semibold">1 250,00 €</div>
+            <div class="text-xl font-semibold">
+              <ng-container *ngIf="!loading; else loadingAmount">{{ formatCurrency(totalAvailable ?? 0) }}</ng-container>
+            </div>
           </div>
         </div>
         <!-- budget status is rendered via Angular CDK Overlay -->
@@ -25,3 +41,6 @@
     </div>
   </div>
 </div>
+
+<ng-template #loadingLabel>Chargement...</ng-template>
+<ng-template #loadingAmount>...</ng-template>

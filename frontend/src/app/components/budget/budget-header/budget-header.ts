@@ -5,8 +5,11 @@ import {
   ViewChild,
   HostListener,
   ViewContainerRef,
+  Input,
+  Output,
+  EventEmitter,
 } from '@angular/core';
-import { NgStyle } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import {
   faChevronCircleLeft,
@@ -18,11 +21,12 @@ import {
 import { BudgetStatus } from '../budget-status/budget-status';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
+import { formatCurrencyWithSign } from '../../../shared/formatters';
 
 @Component({
   selector: 'app-budget-header',
   standalone: true,
-  imports: [FontAwesomeModule],
+  imports: [CommonModule, FontAwesomeModule],
   templateUrl: './budget-header.html',
   styleUrls: ['./budget-header.css'],
 })
@@ -33,9 +37,18 @@ export class BudgetHeader {
   protected readonly icWallet = faWallet;
   protected readonly icStatus = faCheck;
 
+  @Input() monthLabel = '';
+  @Input() totalAvailable: number | null = null;
+  @Input() availableCarryover: number | null = null;
+  @Input() income: number | null = null;
+  @Input() totalAssigned: number | null = null;
+  @Input() totalActivity: number | null = null;
+  @Input() loading = false;
+  @Output() previousMonth = new EventEmitter<void>();
+  @Output() nextMonth = new EventEmitter<void>();
+
   showStatus = signal(false);
   closing = signal(false);
-  protected readonly available = '1 250,00 €';
   // Overlay reference when using CDK
   private overlayRef?: OverlayRef;
   // keep a reference to the attached component so we can trigger its close animation
@@ -43,7 +56,22 @@ export class BudgetHeader {
 
   @ViewChild('budgetAvailable', { read: ElementRef }) budgetAvailable?: ElementRef;
 
+  onPreviousClick(event?: MouseEvent) {
+    event?.preventDefault();
+    if (this.loading) return;
+    this.previousMonth.emit();
+  }
+
+  onNextClick(event?: MouseEvent) {
+    event?.preventDefault();
+    if (this.loading) return;
+    this.nextMonth.emit();
+  }
+
   toggleStatus() {
+    if (this.loading || this.totalAvailable === null) {
+      return;
+    }
     const opening = !this.showStatus();
     if (opening) {
       const origin = this.budgetAvailable?.nativeElement as HTMLElement | undefined;
@@ -86,7 +114,12 @@ export class BudgetHeader {
       const compRef = this.overlayRef.attach(portal);
       // pass input
       if (compRef && compRef.instance) {
-        compRef.instance.available = this.available;
+        compRef.instance.available = this.totalAvailable ?? 0;
+        compRef.instance.carryover = this.availableCarryover ?? 0;
+        compRef.instance.income = this.income ?? 0;
+        compRef.instance.totalAssigned = this.totalAssigned ?? 0;
+        compRef.instance.totalActivity = this.totalActivity ?? 0;
+        compRef.instance.totalAvailable = this.totalAvailable ?? 0;
         compRef.instance.requestClose = () => this.closeOverlay();
       }
       this.attachedCompRef = compRef;
@@ -175,5 +208,9 @@ export class BudgetHeader {
       faWallet,
       faCheck
     );
+  }
+
+  formatCurrency(value?: string | number) {
+    return formatCurrencyWithSign(value ?? 0, false);
   }
 }

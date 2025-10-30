@@ -1,16 +1,12 @@
-import { Component, ElementRef, ViewChildren, QueryList, OnInit } from '@angular/core';
+import { Component, ElementRef, Input, ViewChildren, QueryList } from '@angular/core';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDragStart, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { faChevronRight, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
-import {
-  BUDGET_TEST_DATA,
-  BudgetCategoryGroupData,
-  BudgetCategoryItemData,
-} from '../test-data/budget-test-data';
 import { formatCurrencyWithSign, getAmountClass } from '../../../shared/formatters';
 import { InputAmount } from '../../ui/input-amount/input-amount';
 import { BadgeAmount } from '../../ui/badge-amount/badge-amount';
+import { BudgetCategory, BudgetCategoryGroup } from '../../../core/budget/budget.models';
 // (CDK drag types are imported above)
 
 @Component({
@@ -20,7 +16,7 @@ import { BadgeAmount } from '../../ui/badge-amount/badge-amount';
   templateUrl: './budget-categories.html',
   styleUrls: ['./budget-categories.css'],
 })
-export class BudgetCategories implements OnInit {
+export class BudgetCategories {
   protected readonly icChevronRight = faChevronRight;
   protected readonly icAdd = faPlusSquare;
 
@@ -28,14 +24,33 @@ export class BudgetCategories implements OnInit {
   library.addIcons(faChevronRight, faPlusSquare);
   }
 
-  // groups with test data; we augment each group with UI state below
-  groups: Array<BudgetCategoryGroupData & { collapsed?: boolean; animating?: boolean }> = [];
+  private previousCollapsedState = new Map<string, boolean>();
 
-  protected groupLabel(group: BudgetCategoryGroupData): string {
+  // groups supplied by parent; we augment each group with UI state below
+  groups: Array<BudgetCategoryGroup & { collapsed?: boolean; animating?: boolean }> = [];
+
+  @Input()
+  set budgetGroups(value: BudgetCategoryGroup[] | null) {
+    const incoming = value ?? [];
+    const collapsedById = new Map(this.previousCollapsedState);
+    const mapped = incoming.map((group) => {
+      const collapsed = collapsedById.get(group.categoryId) ?? false;
+      return {
+        ...group,
+        collapsed,
+        animating: false,
+        items: (group.items ?? []).map((item) => ({ ...item })),
+      };
+    });
+    this.groups = mapped;
+    this.syncCollapsedState();
+  }
+
+  protected groupLabel(group: BudgetCategoryGroup): string {
     return group.category?.name ?? 'Sans nom';
   }
 
-  protected itemLabel(item: BudgetCategoryItemData): string {
+  protected itemLabel(item: BudgetCategory): string {
     return item.category?.name ?? 'Sans nom';
   }
 
@@ -52,13 +67,6 @@ export class BudgetCategories implements OnInit {
   dropIndicatorLeft = 0;
   dropIndicatorWidth = 0;
   dropIndicatorHeight = 0;
-
-
-  ngOnInit() {
-    // clone the test data so we can add UI state safely
-    this.groups = BUDGET_TEST_DATA.map(g => ({ ...g, collapsed: false, animating: false }));
-  }
-
   // references to the content containers for each group (one per ngFor)
   @ViewChildren('contentEl') contentEls!: QueryList<ElementRef<HTMLElement>>;
 
@@ -91,6 +99,7 @@ export class BudgetCategories implements OnInit {
     this.showDropIndicator = false;
     if (event.previousIndex === event.currentIndex) return;
     moveItemInArray(this.groups, event.previousIndex, event.currentIndex);
+    this.syncCollapsedState();
   }
 
   dropItem(event: CdkDragDrop<any[]>, targetGroupIndex: number) {
@@ -160,6 +169,12 @@ export class BudgetCategories implements OnInit {
     this.previewItemIndex = undefined;
     // hide floating drop indicator
     this.showDropIndicator = false;
+  }
+
+  private syncCollapsedState() {
+    this.previousCollapsedState = new Map(
+      this.groups.map((group) => [group.categoryId, !!group.collapsed]),
+    );
   }
 
   onDragMoved(e: CdkDragMove) {
@@ -295,6 +310,7 @@ export class BudgetCategories implements OnInit {
     if (!el) {
       // fallback: just flip state
       group.collapsed = !open ? true : false;
+      this.previousCollapsedState.set(group.categoryId, !!group.collapsed);
       return;
     }
 
@@ -326,6 +342,7 @@ export class BudgetCategories implements OnInit {
         el.removeEventListener('transitionend', onEnd);
         group.collapsed = false;
         group.animating = false;
+        this.previousCollapsedState.set(group.categoryId, false);
       };
       el.addEventListener('transitionend', onEnd);
     } else {
@@ -349,6 +366,7 @@ export class BudgetCategories implements OnInit {
         el.removeEventListener('transitionend', onEnd);
         group.collapsed = true;
         group.animating = false;
+        this.previousCollapsedState.set(group.categoryId, true);
       };
       el.addEventListener('transitionend', onEnd);
     }
@@ -360,16 +378,22 @@ export class BudgetCategories implements OnInit {
     const g = this.groups[index];
     const tempId = `temp-${Date.now()}`;
     g.items.push({
+      id: tempId,
+      groupId: g.id,
       categoryId: tempId,
       category: {
         id: tempId,
         name: 'Nouvelle catégorie',
+        kind: 'EXPENSE',
         parentCategoryId: g.categoryId,
-        sortOrder: g.items.length,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
       assigned: 0,
       activity: 0,
       available: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
   }
 

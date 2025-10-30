@@ -1,19 +1,43 @@
 <app-header></app-header>
-<app-budget-header></app-budget-header>
+<app-budget-header
+  [monthLabel]="monthLabel()"
+  [totalAvailable]="monthSummary().totalAvailable"
+  [availableCarryover]="monthSummary().availableCarryover"
+  [income]="monthSummary().income"
+  [totalAssigned]="monthSummary().totalAssigned"
+  [totalActivity]="monthSummary().totalActivity"
+  [loading]="loading()"
+  (previousMonth)="onPreviousMonth()"
+  (nextMonth)="onNextMonth()"
+></app-budget-header>
+
+<div *ngIf="error()" class="mx-auto max-w-7xl mt-4 px-4">
+  <div class="bg-rose-100 text-rose-700 border border-rose-300 rounded-md px-4 py-3 text-sm">
+    {{ error() }}
+  </div>
+</div>
+
 <div class="px-1 md:px-0 pb-8">
   <div class="flex flex-row mx-auto max-w-7xl gap-1 md:gap-3">
     <div class="basis-full md:basis-9/12">
       <app-ui-card>
         <app-budget-menu></app-budget-menu>
-        <app-budget-categories></app-budget-categories>
+        <ng-container *ngIf="!loading(); else categoriesLoading">
+          <app-budget-categories [budgetGroups]="groups()"></app-budget-categories>
+        </ng-container>
       </app-ui-card>
     </div>
     <div class="hidden md:block md:basis-3/12">
       <app-ui-card>
-        <app-budget-month-summary [availableFromPreviousMonth]="-120"
-                                  [incomesOfTheCurrentMonth]="150"
-                                  [totalPaid]="100"
-                                  [totalAvailable]="170"></app-budget-month-summary>
+        <ng-container *ngIf="!loading(); else summaryLoading">
+          <ng-container *ngIf="monthSummary() as summary">
+            <app-budget-month-summary [availableFromPreviousMonth]="summary.availableCarryover"
+                                      [incomesOfTheCurrentMonth]="summary.income"
+                                      [totalAssigned]="summary.totalAssigned"
+                                      [totalPaid]="summary.totalActivity"
+                                      [totalAvailable]="summary.totalAvailable"></app-budget-month-summary>
+          </ng-container>
+        </ng-container>
       </app-ui-card>
 
       <app-ui-card>
@@ -21,12 +45,16 @@
       </app-ui-card>
 
       <app-ui-card>
-        <app-budget-category-summary [availableFromPreviousMonth]="-50"
-                                     [assignedThisMonth]="200"
-                                     [totalPaid]="80"
-                                     [totalAvailable]="70"
-                                     [neededThisMonth]="100"
-                                     [neededForNextMonths]="200"></app-budget-category-summary>
+        <ng-container *ngIf="!loading(); else summaryLoading">
+          <ng-container *ngIf="monthSummary() as summary">
+            <app-budget-category-summary [availableFromPreviousMonth]="summary.availableCarryover"
+                                         [assignedThisMonth]="summary.totalAssigned"
+                                         [totalPaid]="summary.totalActivity"
+                                         [totalAvailable]="summary.totalAvailable"
+                                         [neededThisMonth]="0"
+                                         [neededForNextMonths]="0"></app-budget-category-summary>
+          </ng-container>
+        </ng-container>
       </app-ui-card>
 
            <app-ui-card>
@@ -35,3 +63,11 @@
     </div>
   </div>
 </div>
+
+<ng-template #categoriesLoading>
+  <div class="px-4 py-6 text-sm text-gray-500">Chargement des catégories…</div>
+</ng-template>
+
+<ng-template #summaryLoading>
+  <div class="px-4 py-6 text-sm text-gray-500 text-center">Chargement…</div>
+</ng-template>

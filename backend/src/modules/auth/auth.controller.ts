@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { AuthTokenResponseDto } from './dto/auth-token-response.dto';
 import { UserContextService } from '../../common/services/user-context.service';
 import { AuthUserDto } from './dto/auth-user.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -38,6 +39,18 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto): Promise<AuthTokenResponseDto> {
     return this.authService.login(dto);
+  }
+
+  @Public()
+  @ApiOperation({ summary: 'Renouveler un jeton d’accès à partir d’un refresh token' })
+  @ApiBody({ type: RefreshTokenDto })
+  @ApiOkResponse({
+    description: 'Nouveaux jetons d’authentification',
+    type: AuthTokenResponseDto,
+  })
+  @Post('refresh')
+  refresh(@Body() dto: RefreshTokenDto): Promise<AuthTokenResponseDto> {
+    return this.authService.refresh(dto.refreshToken);
   }
 
   @ApiBearerAuth('access-token')

@@ -1,0 +1,16 @@
+meta {
+  name: Get Month Budget
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{API_URL}}/budget/months/2025-11
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
