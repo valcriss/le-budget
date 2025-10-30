@@ -95,6 +95,7 @@
   padding: 0.75rem;
 }
 
+
 .dialog-actions {
   display: flex;
   align-items: center;
@@ -112,6 +113,32 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-danger {
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff7f7;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+}
+
+.btn-danger:focus {
+  outline: 2px solid rgba(248, 113, 113, 0.45);
+  outline-offset: 2px;
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-secondary {

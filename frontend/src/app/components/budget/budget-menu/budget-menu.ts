@@ -22,6 +22,7 @@ export class BudgetMenu {
   openCreateGroupDialog(): void {
     this.dialog.open(CategoryCreateDialog, {
       data: {
+        mode: 'create',
         parentCategoryId: null,
         title: 'Créer un groupe de catégorie',
         nameLabel: 'Nom du groupe',

@@ -221,7 +221,11 @@ export class BudgetService {
         group = created;
       }
 
-      const children = parent.subCategories.length > 0 ? parent.subCategories : [parent];
+      const children = parent.subCategories.filter((child) => child.parentCategoryId !== null);
+      if (children.length === 0) {
+        // no child categories defined for this parent; keep the group but skip budget-category entries
+        continue;
+      }
       const existingBudgetCategories = await this.prisma.budgetCategory.findMany({
         where: { groupId: group.id },
         select: { categoryId: true },

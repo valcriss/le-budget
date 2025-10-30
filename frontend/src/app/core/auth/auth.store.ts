@@ -136,8 +136,8 @@ export class AuthStore {
         return true;
       })
       .catch(() => {
-        this.errorSignal.set('Votre session a expiré. Veuillez vous reconnecter.');
-        return false;
+      this.errorSignal.set('Votre session a expiré. Veuillez vous reconnecter.');
+      return false;
       })
       .finally(() => {
         this.refreshPromise = null;
@@ -174,7 +174,7 @@ export class AuthStore {
       const parsed = JSON.parse(stored) as StoredSession;
       if (parsed?.accessToken && parsed?.refreshToken && parsed?.user) {
         this.saveSession(parsed);
-        void this.refreshProfile();
+        this.scheduleProfileRefresh();
       }
     } catch {
       localStorage.removeItem(STORAGE_KEY);
@@ -187,6 +187,7 @@ export class AuthStore {
       refreshToken: response.refreshToken,
       user: response.user,
     });
+    this.scheduleProfileRefresh();
   }
 
   private saveSession(session: StoredSession): void {
@@ -194,6 +195,12 @@ export class AuthStore {
     this.tokenSignal.set(session.accessToken);
     this.refreshTokenSignal.set(session.refreshToken);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  }
+
+  private scheduleProfileRefresh(): void {
+    Promise.resolve().then(() => {
+      void this.refreshProfile();
+    });
   }
 
   private setLoading(value: boolean): void {

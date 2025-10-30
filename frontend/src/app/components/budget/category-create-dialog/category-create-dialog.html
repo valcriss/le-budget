@@ -30,7 +30,16 @@
         Annuler
       </button>
       <button type="button" class="btn-primary" (click)="submit()" [disabled]="disableSubmit">
-        {{ isSubmitting() ? 'Création…' : 'Créer' }}
+        {{ isSubmitting() ? (isEdit() ? 'Mise à jour…' : 'Création…') : submitLabel }}
+      </button>
+      <button
+        *ngIf="isEdit()"
+        type="button"
+        class="btn-danger"
+        (click)="deleteCategory()"
+        [disabled]="isSubmitting()"
+      >
+        Supprimer
       </button>
     </div>
   </form>

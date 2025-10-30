@@ -381,10 +381,45 @@ export class BudgetCategories {
     if (!group) return;
     this.dialog.open(CategoryCreateDialog, {
       data: {
+        mode: 'create',
         parentCategoryId: group.categoryId,
         title: 'Créer une catégorie',
         nameLabel: 'Nom de la catégorie',
         placeholder: 'Ex : Supermarché',
+      },
+    });
+  }
+
+  openEditGroup(group: BudgetCategoryGroup, event?: MouseEvent) {
+    event?.stopPropagation();
+    if (!group?.category) return;
+    this.dialog.open(CategoryCreateDialog, {
+      data: {
+        mode: 'edit',
+        category: group.category,
+        parentCategoryId: null,
+        title: 'Modifier le groupe',
+        nameLabel: 'Nom du groupe',
+        placeholder: group.category.name ?? 'Nom du groupe',
+      },
+    });
+  }
+
+  openEditCategory(
+    group: BudgetCategoryGroup,
+    item: BudgetCategory,
+    event?: MouseEvent,
+  ) {
+    event?.stopPropagation();
+    if (!item?.category) return;
+    this.dialog.open(CategoryCreateDialog, {
+      data: {
+        mode: 'edit',
+        category: item.category,
+        parentCategoryId: group.categoryId,
+        title: 'Modifier la catégorie',
+        nameLabel: 'Nom de la catégorie',
+        placeholder: item.category.name ?? 'Nom de la catégorie',
       },
     });
   }
