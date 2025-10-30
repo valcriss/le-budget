@@ -1,4 +1,5 @@
 <div>
+  <div *ngIf="errorMessage" class="sync-error">{{ errorMessage }}</div>
   <!-- floating drop indicator: highlights whole element under cursor while dragging -->
   <div *ngIf="showDropIndicator" class="drop-indicator" [style.top.px]="dropIndicatorTop"
     [style.left.px]="dropIndicatorLeft" [style.width.px]="dropIndicatorWidth" [style.height.px]="dropIndicatorHeight">

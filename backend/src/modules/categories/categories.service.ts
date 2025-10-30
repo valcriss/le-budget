@@ -24,7 +24,10 @@ export class CategoriesService {
       parentCategoryId = dto.parentCategoryId;
     }
 
-    const sortOrder = await this.resolveNextSortOrder(userId, parentCategoryId);
+    let sortOrder = dto.sortOrder;
+    if (sortOrder === undefined || sortOrder === null) {
+      sortOrder = await this.resolveNextSortOrder(userId, parentCategoryId);
+    }
 
     const category = await this.prisma.category.create({
       data: {
@@ -81,6 +84,10 @@ export class CategoriesService {
         await this.assertParentBelongsToUser(dto.parentCategoryId, userId);
         data.parentCategory = { connect: { id: dto.parentCategoryId } };
       }
+    }
+
+    if (dto.sortOrder !== undefined) {
+      data.sortOrder = dto.sortOrder;
     }
 
     const category = await this.prisma.category.update({

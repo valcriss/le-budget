@@ -9,6 +9,9 @@ import { BadgeAmount } from '../../ui/badge-amount/badge-amount';
 import { BudgetCategory, BudgetCategoryGroup } from '../../../core/budget/budget.models';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { CategoryCreateDialog } from '../category-create-dialog/category-create-dialog';
+import { CategoriesStore } from '../../../core/categories/categories.store';
+import { BudgetStore } from '../../../core/budget/budget.store';
+import { UpdateCategoryPayload } from '../../../core/categories/categories.models';
 // (CDK drag types are imported above)
 
 @Component({
@@ -22,6 +25,8 @@ export class BudgetCategories {
   protected readonly icChevronRight = faChevronRight;
   protected readonly icAdd = faPlusSquare;
   private readonly dialog = inject(Dialog);
+  private readonly categoriesStore = inject(CategoriesStore);
+  private readonly budgetStore = inject(BudgetStore);
 
   constructor(library: FaIconLibrary) {
   library.addIcons(faChevronRight, faPlusSquare);
@@ -31,6 +36,8 @@ export class BudgetCategories {
 
   // groups supplied by parent; we augment each group with UI state below
   groups: Array<BudgetCategoryGroup & { collapsed?: boolean; animating?: boolean }> = [];
+  errorMessage: string | null = null;
+  private persistenceQueue: Promise<void> = Promise.resolve();
 
   @Input()
   set budgetGroups(value: BudgetCategoryGroup[] | null) {
@@ -103,13 +110,18 @@ export class BudgetCategories {
     if (event.previousIndex === event.currentIndex) return;
     moveItemInArray(this.groups, event.previousIndex, event.currentIndex);
     this.syncCollapsedState();
+    this.schedulePersistence(() => this.persistGroupOrder());
   }
 
   dropItem(event: CdkDragDrop<any[]>, targetGroupIndex: number) {
     if (event.previousContainer === event.container) {
+      if (event.previousIndex === event.currentIndex) {
+        return;
+      }
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
       // recalc totals for the affected group
       this.recalcGroupTotals(targetGroupIndex);
+      this.schedulePersistence(() => this.persistItemOrder([targetGroupIndex]));
     } else {
       // moving between groups
       const prevIndex = this.groups.findIndex(g => g.items === event.previousContainer.data);
@@ -117,6 +129,10 @@ export class BudgetCategories {
       // recalc totals for both groups
       if (prevIndex >= 0) this.recalcGroupTotals(prevIndex);
       this.recalcGroupTotals(targetGroupIndex);
+      const affected: number[] = [];
+      if (prevIndex >= 0) affected.push(prevIndex);
+      affected.push(targetGroupIndex);
+      this.schedulePersistence(() => this.persistItemOrder(affected));
     }
     // clear visual indicator after completing the drop
     this.showDropIndicator = false;
@@ -386,6 +402,7 @@ export class BudgetCategories {
         title: 'Créer une catégorie',
         nameLabel: 'Nom de la catégorie',
         placeholder: 'Ex : Supermarché',
+        sortOrder: group.items.length,
       },
     });
   }
@@ -435,5 +452,126 @@ export class BudgetCategories {
       (typeof newAssigned === 'number' ? newAssigned : 0) + (typeof activity === 'number' ? activity : 0);
     // recalc group totals
     this.recalcGroupTotals(groupIndex);
+  }
+
+  private schedulePersistence(task: () => Promise<void>): void {
+    this.persistenceQueue = this.persistenceQueue
+      .then(() => task())
+      .catch((error) => {
+        console.error('Persistence queue error', error);
+      });
+  }
+
+  private async persistGroupOrder(): Promise<void> {
+    this.errorMessage = null;
+    let hadChanges = false;
+    let hadError = false;
+
+    for (let index = 0; index < this.groups.length; index++) {
+      const group = this.groups[index];
+      const category = group?.category;
+      if (!category) continue;
+
+      const desiredOrder = index;
+      if ((category.sortOrder ?? 0) === desiredOrder) {
+        continue;
+      }
+
+      try {
+        const updated = await this.categoriesStore.update(category.id, {
+          sortOrder: desiredOrder,
+        });
+        if (!updated) {
+          hadError = true;
+        } else {
+          category.sortOrder = updated.sortOrder ?? desiredOrder;
+          hadChanges = true;
+        }
+      } catch (error) {
+        hadError = true;
+        console.error('Failed to persist group order', error);
+      }
+    }
+
+    if (hadError) {
+      this.errorMessage = this.categoriesStore.error() ?? "Impossible de sauvegarder l'ordre des groupes.";
+      await this.reloadBudgetSilently();
+      return;
+    }
+
+    if (hadChanges) {
+      await this.reloadBudgetSilently();
+    }
+  }
+
+  private async persistItemOrder(groupIndices: number[]): Promise<void> {
+    this.errorMessage = null;
+    const unique = Array.from(new Set(groupIndices)).filter((idx) => idx >= 0 && idx < this.groups.length);
+    if (unique.length === 0) {
+      return;
+    }
+
+    let hadChanges = false;
+    let hadError = false;
+
+    for (const index of unique) {
+      const group = this.groups[index];
+      if (!group) continue;
+      const desiredParentId = group.categoryId;
+
+      for (let itemIndex = 0; itemIndex < group.items.length; itemIndex++) {
+        const item = group.items[itemIndex];
+        const category = item.category;
+        if (!category) continue;
+
+        const payload: UpdateCategoryPayload = {};
+        let changed = false;
+
+        if ((category.sortOrder ?? 0) !== itemIndex) {
+          payload.sortOrder = itemIndex;
+          changed = true;
+        }
+        if (category.parentCategoryId !== desiredParentId) {
+          payload.parentCategoryId = desiredParentId;
+          changed = true;
+        }
+
+        if (!changed) {
+          continue;
+        }
+
+        try {
+          const updated = await this.categoriesStore.update(category.id, payload);
+          if (!updated) {
+            hadError = true;
+          } else {
+            category.sortOrder = updated.sortOrder ?? itemIndex;
+            category.parentCategoryId = updated.parentCategoryId ?? desiredParentId;
+            hadChanges = true;
+          }
+        } catch (error) {
+          hadError = true;
+          console.error('Failed to persist category order', error);
+        }
+      }
+    }
+
+    if (hadError) {
+      this.errorMessage = this.categoriesStore.error() ?? 'Impossible de sauvegarder la nouvelle organisation.';
+      await this.reloadBudgetSilently();
+      return;
+    }
+
+    if (hadChanges) {
+      await this.reloadBudgetSilently();
+    }
+  }
+
+  private async reloadBudgetSilently(): Promise<void> {
+    try {
+      await this.budgetStore.reloadCurrentMonth();
+    } catch (error) {
+      console.error('Failed to reload budget after reordering', error);
+    }
   }
 }

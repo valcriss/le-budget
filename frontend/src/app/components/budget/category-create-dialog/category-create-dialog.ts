@@ -13,6 +13,7 @@ export interface CategoryCreateDialogData {
   nameLabel?: string;
   placeholder?: string;
   category?: Category;
+  sortOrder?: number;
 }
 
 @Component({
@@ -124,6 +125,7 @@ export class CategoryCreateDialog {
         name: trimmed,
         kind: 'EXPENSE',
         parentCategoryId: this.data?.parentCategoryId ?? null,
+        sortOrder: this.data?.sortOrder,
       });
 
       if (!result) {

@@ -59,9 +59,7 @@ export class CategoriesStore {
       const category = await firstValueFrom(
         this.http.post<Category>(`${this.apiBaseUrl}/categories`, payload),
       );
-      this.categoriesSignal.update((current) =>
-        [...current, category].sort((a, b) => a.name.localeCompare(b.name)),
-      );
+      this.categoriesSignal.update((current) => this.sortCategories([...current, category]));
       return category;
     } catch (error) {
       this.errorSignal.set(this.mapError(error, 'Impossible de créer cette catégorie.'));
@@ -80,9 +78,7 @@ export class CategoriesStore {
         this.http.patch<Category>(`${this.apiBaseUrl}/categories/${id}`, changes),
       );
       this.categoriesSignal.update((current) =>
-        current
-          .map((item) => (item.id === id ? category : item))
-          .sort((a, b) => a.name.localeCompare(b.name)),
+        this.sortCategories(current.map((item) => (item.id === id ? category : item))),
       );
       return category;
     } catch (error) {
@@ -120,8 +116,7 @@ export class CategoriesStore {
   }
 
   private setCategories(categories: Category[]): void {
-    const sorted = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-    this.categoriesSignal.set(sorted);
+    this.categoriesSignal.set(this.sortCategories(categories));
   }
 
   private setLoading(value: boolean): void {
@@ -175,5 +170,16 @@ export class CategoriesStore {
     }
 
     return null;
+  }
+
+  private sortCategories(list: Category[]): Category[] {
+    return [...list].sort((a, b) => {
+      const orderA = a.sortOrder ?? 0;
+      const orderB = b.sortOrder ?? 0;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      return a.name.localeCompare(b.name);
+    });
   }
 }

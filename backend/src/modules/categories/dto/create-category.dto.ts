@@ -1,6 +1,6 @@
 import { CategoryKind } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({ description: 'Category label' })
@@ -21,4 +21,9 @@ export class CreateCategoryDto {
   @IsOptional()
   @IsString()
   parentCategoryId?: string | null;
+
+  @ApiPropertyOptional({ description: "Ordre d'affichage", example: 0 })
+  @IsOptional()
+  @IsInt()
+  sortOrder?: number;
 }
