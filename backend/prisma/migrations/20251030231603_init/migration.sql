@@ -38,6 +38,7 @@ CREATE TABLE "Account" (
     "currency" TEXT NOT NULL DEFAULT 'EUR',
     "initialBalance" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "currentBalance" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "reconciledBalance" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "archived" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

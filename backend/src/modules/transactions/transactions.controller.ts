@@ -10,7 +10,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
@@ -26,6 +26,10 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'Lister les transactions',
+    description: 'Retourne la liste paginée des transactions pour un compte donné, filtrable par période ou type.',
+  })
   @ApiOkResponse({ type: TransactionsListEntity })
   findMany(
     @Param('accountId') accountId: string,
@@ -35,6 +39,10 @@ export class TransactionsController {
   }
 
   @Get(':transactionId')
+  @ApiOperation({
+    summary: 'Consulter une transaction',
+    description: 'Récupère le détail d’une transaction spécifique appartenant au compte.',
+  })
   @ApiOkResponse({ type: TransactionEntity })
   findOne(
     @Param('accountId') accountId: string,
@@ -44,6 +52,10 @@ export class TransactionsController {
   }
 
   @Post()
+  @ApiOperation({
+    summary: 'Créer une transaction',
+    description: 'Crée une nouvelle transaction et met à jour les soldes du compte associé.',
+  })
   @ApiCreatedResponse({ type: TransactionEntity })
   create(
     @Param('accountId') accountId: string,
@@ -53,6 +65,10 @@ export class TransactionsController {
   }
 
   @Patch(':transactionId')
+  @ApiOperation({
+    summary: 'Mettre à jour une transaction',
+    description: 'Modifie une transaction existante et répercute les changements sur le solde du compte.',
+  })
   @ApiOkResponse({ type: TransactionEntity })
   update(
     @Param('accountId') accountId: string,
@@ -63,6 +79,10 @@ export class TransactionsController {
   }
 
   @Delete(':transactionId')
+  @ApiOperation({
+    summary: 'Supprimer une transaction',
+    description: 'Supprime une transaction puis recalcule le solde courant du compte.',
+  })
   @ApiOkResponse({ type: TransactionEntity })
   remove(
     @Param('accountId') accountId: string,

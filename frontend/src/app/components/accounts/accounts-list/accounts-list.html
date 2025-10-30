@@ -1,15 +1,48 @@
 <div class="flex flex-row">
-    <span class="font-bold text-gray-500 w-full text-sm uppercase pb-1 mb-1 border-b border-gray-200">Liste des comptes</span>
+    <span class="font-bold text-gray-500 w-full text-sm uppercase pb-1 mb-1 border-b border-gray-200">
+        Liste des comptes
+    </span>
 </div>
-<div class="flex flex-row h-8 hover:bg-yellow-50 cursor-pointer px-2">
-    <div class="basis-9/12 text-xs">Compte CIC</div>
-    <div class="basis-3/12 text-right text-xs" [class]="getAmountClass(300)">{{ formatCurrencyWithSign(300) }}</div>
-</div>
-<div class="flex flex-row h-8 hover:bg-yellow-50 cursor-pointer px-2">
-    <div class="basis-9/12 text-xs">Compte Crédit Agricole</div>
-    <div class="basis-3/12 text-right text-xs" [class]="getAmountClass(300)">{{ formatCurrencyWithSign(300) }}</div>
-</div>
-<div class="h-2"></div>
-<div class="flex flex-row h-8">
-    <button class="w-full text-xs hover:bg-gray-50 cursor-pointer border-dashed hover:border-solid border border-gray-300 rounded-xl p-2 h-8 flex items-center justify-center">Ajouter un compte</button>
-</div>
+
+<ng-container *ngIf="error(); else content">
+    <div class="px-2 py-2 text-xs text-rose-600">
+        {{ error() }}
+    </div>
+</ng-container>
+
+<ng-template #content>
+    <div *ngIf="loading(); else accountsContent" class="px-2 py-2 text-xs text-gray-500">
+        Chargement...
+    </div>
+
+    <ng-template #accountsContent>
+        <ng-container *ngIf="accounts().length; else emptyState">
+            <div
+                *ngFor="let account of accounts(); trackBy: trackByAccountId"
+                class="flex flex-row h-8 hover:bg-yellow-50 cursor-pointer px-2">
+                <div class="basis-9/12 text-xs">
+                    <a [routerLink]="['/accounts', account.id]" class="hover:underline">
+                        {{ account.name }}
+                    </a>
+                </div>
+                <div class="basis-3/12 text-right text-xs" [class]="amountClass(account.currentBalance)">
+                    {{ formatAmount(account.currentBalance) }}
+                </div>
+            </div>
+        </ng-container>
+
+        <div class="h-2"></div>
+        <div class="flex flex-row h-8">
+            <button
+                class="w-full text-xs hover:bg-gray-50 cursor-pointer border-dashed hover:border-solid border border-gray-300 rounded-xl p-2 h-8 flex items-center justify-center">
+                Ajouter un compte
+            </button>
+        </div>
+    </ng-template>
+</ng-template>
+
+<ng-template #emptyState>
+    <div class="px-2 py-2 text-xs text-gray-500">
+        Aucun compte bancaire.
+    </div>
+</ng-template>

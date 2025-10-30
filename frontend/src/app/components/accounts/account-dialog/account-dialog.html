@@ -1,0 +1,159 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4"
+  data-backdrop="true"
+  (click)="onBackdropClick($event)"
+>
+  <div
+    #dialog
+    class="w-full max-w-lg rounded-xl bg-white shadow-2xl border border-gray-200 dialog-enter"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="flex items-start justify-between gap-4 px-6 pt-6">
+      <div>
+        <h2 class="text-lg font-semibold text-slate-800">{{ title }}</h2>
+        <p class="text-sm text-gray-500">
+          Renseignez les informations du compte bancaire à créer.
+        </p>
+      </div>
+      <button
+        type="button"
+        class="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#58a9ff]"
+        (click)="onCancel()"
+        [disabled]="submitting"
+        aria-label="Fermer le dialogue"
+      >
+        <fa-icon [icon]="icClose"></fa-icon>
+      </button>
+    </header>
+
+    <form class="px-6 pb-6 pt-4 flex flex-col gap-4" (ngSubmit)="onSubmit()" [formGroup]="form">
+      <div *ngIf="serverError" class="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+        {{ serverError }}
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="account-name" class="text-sm font-medium text-slate-700">
+          Nom du compte
+        </label>
+        <input
+          id="account-name"
+          type="text"
+          class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#58a9ff] focus:outline-none focus:ring-1 focus:ring-[#58a9ff]"
+          formControlName="name"
+          autocomplete="off"
+          cdkFocusInitial
+          [attr.aria-invalid]="hasError('name', 'required') || hasError('name', 'maxlength')"
+          [maxlength]="120"
+          placeholder="Compte courant"
+        />
+        <p *ngIf="hasError('name', 'required')" class="text-xs text-rose-600">
+          Le nom du compte est obligatoire.
+        </p>
+        <p *ngIf="hasError('name', 'maxlength')" class="text-xs text-rose-600">
+          Maximum 120 caractères.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="account-type" class="text-sm font-medium text-slate-700">
+          Type de compte
+        </label>
+        <select
+          id="account-type"
+          class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#58a9ff] focus:outline-none focus:ring-1 focus:ring-[#58a9ff]"
+          formControlName="type"
+        >
+          <option *ngFor="let option of accountTypeOptions" [ngValue]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="account-institution" class="text-sm font-medium text-slate-700">
+          Institution bancaire (optionnel)
+        </label>
+        <input
+          id="account-institution"
+          type="text"
+          class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#58a9ff] focus:outline-none focus:ring-1 focus:ring-[#58a9ff]"
+          formControlName="institution"
+          autocomplete="off"
+          [maxlength]="120"
+          placeholder="Crédit Agricole"
+        />
+        <p *ngIf="hasError('institution', 'maxlength')" class="text-xs text-rose-600">
+          Maximum 120 caractères.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="account-currency" class="text-sm font-medium text-slate-700">
+          Devise (code ISO 4217)
+        </label>
+        <input
+          id="account-currency"
+          type="text"
+          class="w-24 rounded border border-gray-300 px-3 py-2 text-sm uppercase tracking-widest focus:border-[#58a9ff] focus:outline-none focus:ring-1 focus:ring-[#58a9ff]"
+          formControlName="currency"
+          autocomplete="off"
+          [maxlength]="3"
+        />
+        <p *ngIf="hasError('currency', 'required')" class="text-xs text-rose-600">
+          La devise est obligatoire.
+        </p>
+        <p *ngIf="hasError('currency', 'pattern')" class="text-xs text-rose-600">
+          Indiquez un code ISO sur 3 lettres (ex&nbsp;: EUR).
+        </p>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="flex flex-col gap-1">
+          <label for="account-initial" class="text-sm font-medium text-slate-700">
+            Solde initial
+          </label>
+          <input
+            id="account-initial"
+            type="number"
+            class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#58a9ff] focus:outline-none focus:ring-1 focus:ring-[#58a9ff]"
+            formControlName="initialBalance"
+            inputmode="decimal"
+            placeholder="0,00"
+          />
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="account-reconciled" class="text-sm font-medium text-slate-700">
+            Solde rapproché
+          </label>
+          <input
+            id="account-reconciled"
+            type="number"
+            class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#58a9ff] focus:outline-none focus:ring-1 focus:ring-[#58a9ff]"
+            formControlName="reconciledBalance"
+            inputmode="decimal"
+            placeholder="0,00"
+          />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-4">
+        <button
+          type="button"
+          class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#58a9ff]"
+          (click)="onCancel()"
+          [disabled]="submitting"
+        >
+          Annuler
+        </button>
+        <button
+          type="submit"
+          class="rounded-md bg-[#58a9ff] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#3f8ce2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58a9ff] disabled:opacity-60 disabled:cursor-not-allowed"
+          [disabled]="disableSubmit()"
+        >
+          {{ submitLabel }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

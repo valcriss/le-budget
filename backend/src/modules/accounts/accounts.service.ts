@@ -19,6 +19,7 @@ export class AccountsService {
   async create(dto: CreateAccountDto): Promise<AccountEntity> {
     const userId = this.userContext.getUserId();
     const initial = dto.initialBalance ?? 0;
+    const reconciled = dto.reconciledBalance ?? initial;
 
     const account = await this.prisma.account.create({
       data: {
@@ -30,6 +31,7 @@ export class AccountsService {
         archived: dto.archived ?? false,
         initialBalance: new Prisma.Decimal(initial),
         currentBalance: new Prisma.Decimal(initial),
+        reconciledBalance: new Prisma.Decimal(reconciled),
       },
     });
 
@@ -83,6 +85,10 @@ export class AccountsService {
       };
     }
 
+    if (dto.reconciledBalance !== undefined) {
+      data.reconciledBalance = new Prisma.Decimal(dto.reconciledBalance);
+    }
+
     const account = await this.prisma.account.update({
       where: { id },
       data,
@@ -117,6 +123,7 @@ export class AccountsService {
       ...account,
       initialBalance: Number(account.initialBalance),
       currentBalance: Number(account.currentBalance),
+      reconciledBalance: Number(account.reconciledBalance),
     });
   }
 }

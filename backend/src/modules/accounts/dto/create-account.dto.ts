@@ -40,6 +40,12 @@ export class CreateAccountDto {
   @IsNumber()
   initialBalance?: number;
 
+  @ApiPropertyOptional({ description: 'Reconciled balance with bank statements', example: 0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  reconciledBalance?: number;
+
   @ApiPropertyOptional({ description: 'Should the account be archived on creation?', default: false })
   @IsOptional()
   @IsBoolean()

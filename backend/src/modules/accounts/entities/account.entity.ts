@@ -31,6 +31,10 @@ export class AccountEntity {
   @Expose()
   currentBalance!: number;
 
+  @ApiProperty({ description: 'Balance reconciled with bank statements' })
+  @Expose()
+  reconciledBalance!: number;
+
   @ApiProperty({ default: false })
   @Expose()
   archived!: boolean;

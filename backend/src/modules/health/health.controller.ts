@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('health')
@@ -7,6 +7,7 @@ import { Public } from '../../common/decorators/public.decorator';
 export class HealthController {
   @Public()
   @Get()
+  @ApiOperation({ summary: 'Vérifier la disponibilité', description: 'Renvoie un statut simple confirmant que l’API est opérationnelle.' })
   check() {
     return { status: 'ok' };
   }

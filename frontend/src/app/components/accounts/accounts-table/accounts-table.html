@@ -12,16 +12,61 @@
         </div>
     </div>
 
-    <div class="flex flex-row px-2 h-8 text-sm font-semibold uppercase text-gray-500 mt-1">
-        <div class="basis-8/12 md:basis-4/12 flex items-center px-1 hover:underline cursor-pointer"><a href="/accounts/1">Compte CIC</a></div>
-        <div class="hidden basis-4/12 md:basis-4/12 md:flex items-center justify-end px-1 text-right">
-            1 203,00 €
+    <ng-container *ngIf="error(); else tableContent">
+        <div class="px-2 py-3 text-sm text-rose-600">
+            {{ error() }}
         </div>
-        <div class="basis-4/12 md:basis-4/12 flex items-center justify-end px-1 text-right">
-            1 203,00 €
+    </ng-container>
+
+    <ng-template #tableContent>
+        <div *ngIf="loading(); else accountsList" class="px-2 py-3 text-sm text-gray-500">
+            Chargement des comptes...
         </div>
-        <div class="w-8 flex items-center justify-end px-1 text-right">
-           <fa-icon [icon]="icEditAccount" class="text-gray-400 text-xs cursor-pointer hover:text-[#58a9ff]"></fa-icon>
-        </div>
-    </div>
+
+        <ng-template #accountsList>
+            <ng-container *ngIf="accounts().length; else emptyState">
+                <div
+                    *ngFor="let account of accounts(); trackBy: trackByAccountId"
+                    class="flex flex-row px-2 h-10 text-sm text-gray-700 mt-1 hover:bg-yellow-50 rounded">
+                    <div class="basis-8/12 md:basis-4/12 flex items-center px-1">
+                        <a [routerLink]="['/accounts', account.id]" class="font-medium hover:underline">
+                            {{ account.name }}
+                        </a>
+                    </div>
+                    <div class="hidden basis-4/12 md:basis-4/12 md:flex items-center justify-end px-1 text-right"
+                        [class]="amountClass(account.reconciledBalance)">
+                        {{ formatCurrency(account.reconciledBalance) }}
+                    </div>
+                    <div class="basis-4/12 md:basis-4/12 flex items-center justify-end px-1 text-right"
+                        [class]="amountClass(account.currentBalance)">
+                        {{ formatCurrency(account.currentBalance) }}
+                    </div>
+                    <div class="w-8 flex items-center justify-end px-1 text-right">
+                        <fa-icon [icon]="icEditAccount"
+                            class="text-gray-400 text-xs cursor-pointer hover:text-[#58a9ff]"></fa-icon>
+                    </div>
+                </div>
+
+                <div class="flex flex-row px-2 h-10 text-sm font-semibold text-gray-600 mt-3 border-t border-gray-200 pt-2">
+                    <div class="basis-8/12 md:basis-4/12 flex items-center px-1 uppercase">Total</div>
+                    <div class="hidden basis-4/12 md:basis-4/12 md:flex items-center justify-end px-1 text-right"
+                        [class]="amountClass(totals().reconciledBalance)">
+                        {{ formatCurrency(totals().reconciledBalance) }}
+                    </div>
+                    <div class="basis-4/12 md:basis-4/12 flex items-center justify-end px-1 text-right"
+                        [class]="amountClass(totals().currentBalance)">
+                        {{ formatCurrency(totals().currentBalance) }}
+                    </div>
+                    <div class="w-8 flex items-center justify-end px-1 text-right">
+                        &nbsp;
+                    </div>
+                </div>
+            </ng-container>
+            <ng-template #emptyState>
+                <div class="px-2 py-3 text-sm text-gray-500">
+                    Aucun compte bancaire pour le moment.
+                </div>
+            </ng-template>
+        </ng-template>
+    </ng-template>
 </div>
