@@ -38,12 +38,11 @@ CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "description" TEXT,
-    "color" TEXT,
-    "icon" TEXT,
     "kind" "CategoryKind" NOT NULL DEFAULT 'EXPENSE',
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "parentCategoryId" TEXT,
 
     CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
 );
@@ -80,8 +79,7 @@ CREATE TABLE "BudgetMonth" (
 CREATE TABLE "BudgetCategoryGroup" (
     "id" TEXT NOT NULL,
     "monthId" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "sortOrder" INTEGER NOT NULL,
+    "categoryId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -92,12 +90,10 @@ CREATE TABLE "BudgetCategoryGroup" (
 CREATE TABLE "BudgetCategory" (
     "id" TEXT NOT NULL,
     "groupId" TEXT NOT NULL,
-    "categoryId" TEXT,
-    "name" TEXT NOT NULL,
+    "categoryId" TEXT NOT NULL,
     "assigned" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "activity" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "available" DECIMAL(65,30) NOT NULL DEFAULT 0,
-    "sortOrder" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -120,16 +116,19 @@ CREATE INDEX "Transaction_accountId_date_createdAt_idx" ON "Transaction"("accoun
 CREATE UNIQUE INDEX "BudgetMonth_userId_month_key" ON "BudgetMonth"("userId", "month");
 
 -- CreateIndex
-CREATE INDEX "BudgetCategoryGroup_monthId_sortOrder_idx" ON "BudgetCategoryGroup"("monthId", "sortOrder");
+CREATE UNIQUE INDEX "BudgetCategoryGroup_monthId_categoryId_key" ON "BudgetCategoryGroup"("monthId", "categoryId");
 
 -- CreateIndex
-CREATE INDEX "BudgetCategory_groupId_sortOrder_idx" ON "BudgetCategory"("groupId", "sortOrder");
+CREATE UNIQUE INDEX "BudgetCategory_groupId_categoryId_key" ON "BudgetCategory"("groupId", "categoryId");
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Category" ADD CONSTRAINT "Category_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Category" ADD CONSTRAINT "Category_parentCategoryId_fkey" FOREIGN KEY ("parentCategoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -144,7 +143,10 @@ ALTER TABLE "BudgetMonth" ADD CONSTRAINT "BudgetMonth_userId_fkey" FOREIGN KEY (
 ALTER TABLE "BudgetCategoryGroup" ADD CONSTRAINT "BudgetCategoryGroup_monthId_fkey" FOREIGN KEY ("monthId") REFERENCES "BudgetMonth"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "BudgetCategoryGroup" ADD CONSTRAINT "BudgetCategoryGroup_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "BudgetCategory" ADD CONSTRAINT "BudgetCategory_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "BudgetCategoryGroup"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BudgetCategory" ADD CONSTRAINT "BudgetCategory_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "BudgetCategory" ADD CONSTRAINT "BudgetCategory_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -1,7 +1,7 @@
 meta {
-  name: Create Child Category
+  name: Create Eau Category
   type: http
-  seq: 3
+  seq: 4
 }
 
 post {
@@ -12,15 +12,15 @@ post {
 
 body:json {
   {
-    "name": "Cinema",
+    "name": "Eau",
     "kind": "EXPENSE",
-    "parentCategoryId": "{{PARENT_CATEGORY_ID}}"
+    "parentCategoryId": "{{FACTURE_CATEGORY_ID}}"
   }
 }
 
-script:post-response {
+tests {
   let data = res.getBody();
-  bru.setVar("CHILD_CATEGORY_ID", data.id, { persist: true });
+  bru.setEnvVar("CHILD_CATEGORY_ID", data.id, { persist: true });
 }
 
 settings {

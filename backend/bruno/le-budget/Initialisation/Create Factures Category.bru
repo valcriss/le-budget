@@ -1,5 +1,5 @@
 meta {
-  name: Create Parent Category
+  name: Create Factures Category
   type: http
   seq: 2
 }
@@ -12,14 +12,14 @@ post {
 
 body:json {
   {
-    "name": "Loisirs",
+    "name": "Factures",
     "kind": "EXPENSE"
   }
 }
 
 script:post-response {
   let data = res.getBody();
-  bru.setVar("PARENT_CATEGORY_ID", data.id, { persist: true });
+  bru.setVar("FACTURE_CATEGORY_ID", data.id, { persist: true });
 }
 
 settings {

@@ -31,25 +31,84 @@ async function main() {
     prisma.category.deleteMany({ where: { userId: demoUser.id } }),
   ]);
 
-  const categoriesSeed = [
-    { name: 'Salaire', kind: CategoryKind.INCOME },
-    { name: 'Logement', kind: CategoryKind.EXPENSE },
-    { name: 'Alimentation', kind: CategoryKind.EXPENSE },
-    { name: 'Loisirs', kind: CategoryKind.EXPENSE },
-    { name: 'Transports', kind: CategoryKind.EXPENSE },
-    { name: 'Catégorie', kind: CategoryKind.EXPENSE },
+  const categoryHierarchy: Array<{
+    name: string;
+    kind: CategoryKind;
+    children?: Array<{ name: string; kind?: CategoryKind }>;
+  }> = [
+    {
+      name: 'Revenus',
+      kind: CategoryKind.INCOME,
+      children: [{ name: 'Salaire', kind: CategoryKind.INCOME }],
+    },
+    {
+      name: 'Logement',
+      kind: CategoryKind.EXPENSE,
+      children: [
+        { name: 'Loyer' },
+        { name: 'Assurance habitation' },
+        { name: 'Électricité' },
+        { name: 'Gaz' },
+      ],
+    },
+    {
+      name: 'Alimentation',
+      kind: CategoryKind.EXPENSE,
+      children: [
+        { name: 'Supermarché' },
+        { name: 'Restaurants' },
+        { name: 'Cafés & Snacks' },
+      ],
+    },
+    {
+      name: 'Transport',
+      kind: CategoryKind.EXPENSE,
+      children: [
+        { name: 'Essence' },
+        { name: 'Abonnement transport' },
+        { name: 'Entretien' },
+      ],
+    },
+    {
+      name: 'Loisirs',
+      kind: CategoryKind.EXPENSE,
+      children: [
+        { name: 'Cinéma' },
+        { name: 'Abonnements' },
+        { name: 'Voyages' },
+      ],
+    },
+    {
+      name: 'Divers',
+      kind: CategoryKind.EXPENSE,
+      children: [{ name: 'Remboursements' }],
+    },
   ];
 
   const categories: Record<string, string> = {};
-  for (const cat of categoriesSeed) {
-    const created = await prisma.category.create({
+  for (const [parentIndex, parent] of categoryHierarchy.entries()) {
+    const parentCategory = await prisma.category.create({
       data: {
         userId: demoUser.id,
-        name: cat.name,
-        kind: cat.kind,
+        name: parent.name,
+        kind: parent.kind,
+        sortOrder: parentIndex,
       },
     });
-    categories[cat.name] = created.id;
+    categories[parent.name] = parentCategory.id;
+
+    for (const [childIndex, child] of (parent.children ?? []).entries()) {
+      const childCategory = await prisma.category.create({
+        data: {
+          userId: demoUser.id,
+          name: child.name,
+          kind: child.kind ?? parent.kind,
+          parentCategoryId: parentCategory.id,
+          sortOrder: childIndex,
+        },
+      });
+      categories[child.name] = childCategory.id;
+    }
   }
 
   const accountsSeed = [
@@ -70,31 +129,31 @@ async function main() {
           date: '2025-10-05',
           label: 'Loyer',
           amount: -900,
-          categoryName: 'Logement',
+          categoryName: 'Loyer',
         },
         {
           date: '2025-10-07',
           label: 'Supermarché',
           amount: -120.45,
-          categoryName: 'Alimentation',
+          categoryName: 'Supermarché',
         },
         {
           date: '2025-10-11',
           label: 'Essence',
           amount: -60,
-          categoryName: 'Transports',
+          categoryName: 'Essence',
         },
         {
           date: '2025-10-18',
           label: 'Sortie cinéma',
           amount: -35,
-          categoryName: 'Loisirs',
+          categoryName: 'Cinéma',
         },
         {
           date: '2025-10-20',
           label: 'Remboursement Trésor Public',
           amount: 150,
-          categoryName: 'Catégorie',
+          categoryName: 'Remboursements',
         },
       ],
     },
@@ -152,62 +211,70 @@ async function main() {
 
   const budgetGroupsSeed = [
     {
-      name: 'Logement',
-      categories: [
-        { name: 'Loyer', assigned: 900, activity: -900, available: 0 },
-        { name: 'Assurance habitation', assigned: 50, activity: -45, available: 5 },
-        { name: 'Électricité', assigned: 100, activity: -90, available: 10 },
-        { name: 'Gaz', assigned: 50, activity: -40, available: 10 },
+      parent: 'Logement',
+      items: [
+        { category: 'Loyer', assigned: 900, activity: -900, available: 0 },
+        { category: 'Assurance habitation', assigned: 50, activity: -45, available: 5 },
+        { category: 'Électricité', assigned: 100, activity: -90, available: 10 },
+        { category: 'Gaz', assigned: 50, activity: -40, available: 10 },
       ],
     },
     {
-      name: 'Alimentation',
-      categories: [
-        { name: 'Supermarché', assigned: 350, activity: -300, available: 50 },
-        { name: 'Restaurants', assigned: 150, activity: -80, available: 70 },
-        { name: 'Cafés & Snacks', assigned: 100, activity: -40, available: 60 },
+      parent: 'Alimentation',
+      items: [
+        { category: 'Supermarché', assigned: 350, activity: -300, available: 50 },
+        { category: 'Restaurants', assigned: 150, activity: -80, available: 70 },
+        { category: 'Cafés & Snacks', assigned: 100, activity: -40, available: 60 },
       ],
     },
     {
-      name: 'Transport',
-      categories: [
-        { name: 'Carburant', assigned: 100, activity: -90, available: 10 },
-        { name: 'Abonnement transport', assigned: 80, activity: -80, available: 0 },
-        { name: 'Entretien', assigned: 40, activity: -30, available: 10 },
+      parent: 'Transport',
+      items: [
+        { category: 'Essence', assigned: 100, activity: -90, available: 10 },
+        { category: 'Abonnement transport', assigned: 80, activity: -80, available: 0 },
+        { category: 'Entretien', assigned: 40, activity: -30, available: 10 },
       ],
     },
     {
-      name: 'Loisirs',
-      categories: [
-        { name: 'Cinéma', assigned: 30, activity: -10, available: 20 },
-        { name: 'Abonnements', assigned: 50, activity: -30, available: 20 },
-        { name: 'Voyages', assigned: 70, activity: -20, available: 50 },
+      parent: 'Loisirs',
+      items: [
+        { category: 'Cinéma', assigned: 30, activity: -10, available: 20 },
+        { category: 'Abonnements', assigned: 50, activity: -30, available: 20 },
+        { category: 'Voyages', assigned: 70, activity: -20, available: 50 },
       ],
     },
     {
-      name: 'Épargne / Divers',
-      categories: [],
+      parent: 'Divers',
+      items: [{ category: 'Remboursements', assigned: 0, activity: 150, available: 150 }],
+    },
+    {
+      parent: 'Revenus',
+      items: [{ category: 'Salaire', assigned: 2500, activity: 2500, available: 2500 }],
     },
   ];
 
-  for (const [groupIndex, groupSeed] of budgetGroupsSeed.entries()) {
+  for (const groupSeed of budgetGroupsSeed) {
+    const parentId = categories[groupSeed.parent];
+    if (!parentId) continue;
+
     const group = await prisma.budgetCategoryGroup.create({
       data: {
         monthId: budgetMonth.id,
-        name: groupSeed.name,
-        sortOrder: groupIndex,
+        categoryId: parentId,
       },
     });
 
-    for (const [categoryIndex, categorySeed] of groupSeed.categories.entries()) {
+    for (const categorySeed of groupSeed.items) {
+      const categoryId = categories[categorySeed.category];
+      if (!categoryId) continue;
+
       await prisma.budgetCategory.create({
         data: {
           groupId: group.id,
-          name: categorySeed.name,
+          categoryId,
           assigned: categorySeed.assigned,
           activity: categorySeed.activity,
           available: categorySeed.available,
-          sortOrder: categoryIndex,
         },
       });
     }

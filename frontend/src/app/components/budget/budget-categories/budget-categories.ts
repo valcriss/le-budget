@@ -3,7 +3,11 @@ import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDra
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { faChevronRight, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
-import { BUDGET_TEST_DATA, BudgetCategoryGroupData } from '../test-data/budget-test-data';
+import {
+  BUDGET_TEST_DATA,
+  BudgetCategoryGroupData,
+  BudgetCategoryItemData,
+} from '../test-data/budget-test-data';
 import { formatCurrencyWithSign, getAmountClass } from '../../../shared/formatters';
 import { InputAmount } from '../../ui/input-amount/input-amount';
 import { BadgeAmount } from '../../ui/badge-amount/badge-amount';
@@ -26,6 +30,14 @@ export class BudgetCategories implements OnInit {
 
   // groups with test data; we augment each group with UI state below
   groups: Array<BudgetCategoryGroupData & { collapsed?: boolean; animating?: boolean }> = [];
+
+  protected groupLabel(group: BudgetCategoryGroupData): string {
+    return group.category?.name ?? 'Sans nom';
+  }
+
+  protected itemLabel(item: BudgetCategoryItemData): string {
+    return item.category?.name ?? 'Sans nom';
+  }
 
   // preview sizing/state used for ghost previews
   previewWidthPx = 0;
@@ -262,16 +274,16 @@ export class BudgetCategories implements OnInit {
     const g = this.groups[groupIndex];
     if (!g || !g.items) return;
     let assignedSum = 0;
-    let paidSum = 0;
+    let activitySum = 0;
     for (const item of g.items) {
       assignedSum += Number(item.assigned ?? 0);
-      paidSum += Number(item.paid ?? 0);
+      activitySum += Number(item.activity ?? 0);
       // recalc item available
-      item.available = Number(item.assigned ?? 0) + Number(item.paid ?? 0);
+      item.available = Number(item.assigned ?? 0) + Number(item.activity ?? 0);
     }
     g.assigned = assignedSum;
-    g.paid = paidSum;
-    g.available = assignedSum + paidSum;
+    g.activity = activitySum;
+    g.available = assignedSum + activitySum;
   }
 
   // helper for template: return ids for all item drop lists
@@ -346,8 +358,19 @@ export class BudgetCategories implements OnInit {
     event?.stopPropagation();
     // append a new empty item for quick testing
     const g = this.groups[index];
-    if (!g.items) g.items = [];
-    g.items.push({ label: 'Nouvelle catégorie', assigned: 0, paid: 0, available: 0 });
+    const tempId = `temp-${Date.now()}`;
+    g.items.push({
+      categoryId: tempId,
+      category: {
+        id: tempId,
+        name: 'Nouvelle catégorie',
+        parentCategoryId: g.categoryId,
+        sortOrder: g.items.length,
+      },
+      assigned: 0,
+      activity: 0,
+      available: 0,
+    });
   }
 
   onItemAssignedChange(groupIndex: number, itemIndex: number, newAssigned: number) {
@@ -356,8 +379,9 @@ export class BudgetCategories implements OnInit {
     const it = g.items[itemIndex];
     it.assigned = newAssigned;
     // recalc available for the item
-    const paid = typeof it.paid === 'number' ? it.paid : 0;
-    it.available = (typeof newAssigned === 'number' ? newAssigned : 0) + (typeof paid === 'number' ? paid : 0);
+    const activity = typeof it.activity === 'number' ? it.activity : 0;
+    it.available =
+      (typeof newAssigned === 'number' ? newAssigned : 0) + (typeof activity === 'number' ? activity : 0);
     // recalc group totals
     this.recalcGroupTotals(groupIndex);
   }

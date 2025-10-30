@@ -32,11 +32,11 @@
             <div class="basis-0 flex items-center pr-2">
               <fa-icon [icon]="icChevronRight" class="text-gray-400 text-xs"></fa-icon>
             </div>
-            <div class="basis-6/12 md:basis-3/12 flex items-center px-1 font-bold">{{ g.label }}</div>
+            <div class="basis-6/12 md:basis-3/12 flex items-center px-1 font-bold">{{ groupLabel(g) }}</div>
             <div class="basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right font-bold">{{
               formatCurrencyWithSign(g.assigned) }}</div>
-            <div class="hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right font-bold">{{
-              formatCurrencyWithSign(g.paid) }}</div>
+    <div class="hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right font-bold">{{
+      formatCurrencyWithSign(g.activity) }}</div>
             <div class="basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right font-bold">{{
               formatCurrencyWithSign(g.available) }}</div>
           </div>
@@ -48,11 +48,11 @@
                   <div class="basis-0 flex items-center">
                     <div class="w-8"></div>
                   </div>
-                  <div class="h-8 basis-6/12 md:basis-3/12 flex items-center px-1 font-medium">{{ it.label }}</div>
+                  <div class="h-8 basis-6/12 md:basis-3/12 flex items-center px-1 font-medium">{{ itemLabel(it) }}</div>
                   <div class="h-8 basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right">{{
                     formatCurrencyWithSign(it.assigned) }}</div>
                   <div class="h-8 hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right">{{
-                    formatCurrencyWithSign(it.paid) }}</div>
+                    formatCurrencyWithSign(it.activity) }}</div>
                   <div class="h-8 basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right">{{
                     formatCurrencyWithSign(it.available) }}</div>
                 </div>
@@ -77,8 +77,8 @@
           </button>
         </div>
         <div class="basis-6/12 md:basis-3/12 flex items-center px-1 group">
-          <div class="flex items-center gap-2 font-bold">
-            <div class="text-gray-800 hover:underline cursor-pointer">{{ g.label }}</div>
+            <div class="flex items-center gap-2 font-bold">
+            <div class="text-gray-800 hover:underline cursor-pointer">{{ groupLabel(g) }}</div>
             <div class="relative">
               <button type="button" (click)="onAddCategory(i, $event)" aria-label="Ajouter une catégorie"
                 class="peer cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-150 text-gray-500 hover:text-[#58a9ff] focus:outline-none">
@@ -99,8 +99,8 @@
         </div>
         <div
           class="cursor-default hidden font-bold basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right"
-          [class]="getAmountClass(g.paid)">
-          {{ formatCurrencyWithSign(g.paid) }}
+          [class]="getAmountClass(g.activity)">
+          {{ formatCurrencyWithSign(g.activity) }}
         </div>
         <div class="cursor-default font-bold basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right"
           [class]="getAmountClass(g.available)">
@@ -128,11 +128,11 @@
                       <div class="basis-0 flex items-center">
                         <div class="w-6"></div>
                       </div>
-                      <div class="h-8 basis-6/12 md:basis-3/12 flex items-center px-1 font-medium">{{ it.label }}</div>
+                      <div class="h-8 basis-6/12 md:basis-3/12 flex items-center px-1 font-medium">{{ itemLabel(it) }}</div>
                       <div class="h-8 basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right">{{
                         formatCurrencyWithSign(it.assigned) }}</div>
                       <div class="h-8 hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right">
-                        {{ formatCurrencyWithSign(it.paid) }}</div>
+                        {{ formatCurrencyWithSign(it.activity) }}</div>
                       <div class="h-8 basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right">
                         <app-badge-amount [amount]="it.available" [needed]="0"></app-badge-amount></div>
                     </div>
@@ -147,7 +147,7 @@
                   </div>
                   <div class="h-8 basis-6/12 md:basis-3/12 flex items-center px-1 group">
                     <div class="flex items-center gap-2">
-                      <div class="text-gray-800 hover:underline cursor-pointer">{{ it.label }}</div>
+                      <div class="text-gray-800 hover:underline cursor-pointer">{{ itemLabel(it) }}</div>
                     </div>
                   </div>
                   <div class="h-8 basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right"
@@ -157,8 +157,8 @@
                   </div>
                   <div
                     class="h-8 hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right hover:underline cursor-pointer"
-                    [class]="getAmountClass(it.paid)">
-                    {{ formatCurrencyWithSign(it.paid) }}
+                    [class]="getAmountClass(it.activity)">
+                    {{ formatCurrencyWithSign(it.activity) }}
                   </div>
                   <div class="h-8 basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right">
                     <app-badge-amount [amount]="it.available" [needed]="0"></app-badge-amount>

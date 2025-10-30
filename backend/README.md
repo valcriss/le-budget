@@ -59,13 +59,8 @@ Prisma schema models the core budgeting entities:
 | `/accounts/:accountId/transactions/:transactionId` | `GET`, `PATCH`, `DELETE` |
 | `/categories` | `GET`, `POST` |
 | `/categories/:id` | `GET`, `PATCH`, `DELETE` |
-| `/budget/months` | `GET`, `POST` |
-| `/budget/months/:monthKey` | `GET` (by ID or `YYYY-MM` string) |
-| `/budget/months/:id` | `PATCH` |
-| `/budget/months/:monthId/groups` | `POST` |
-| `/budget/groups/:groupId` | `PATCH`, `DELETE` |
-| `/budget/groups/:groupId/categories` | `POST` |
-| `/budget/categories/:categoryId` | `PATCH`, `DELETE` |
+| `/budget/months/:monthKey` | `GET` (auto-crée la structure du mois) |
+| `/budget/months/:monthKey/categories/:categoryId` | `PATCH` – ajuste les montants d'une enveloppe |
 
 Automatic OpenAPI definitions are available at `/docs`.
 

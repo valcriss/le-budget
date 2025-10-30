@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
+import { CategoryEntity } from '../../categories/entities/category.entity';
 import { BudgetCategoryEntity } from './budget-category.entity';
 
 export class BudgetCategoryGroupEntity {
@@ -13,12 +14,15 @@ export class BudgetCategoryGroupEntity {
 
   @ApiProperty()
   @Expose()
-  name!: string;
+  categoryId!: string;
+
+  @ApiProperty({ type: () => CategoryEntity })
+  @Expose()
+  @Type(() => CategoryEntity)
+  category!: CategoryEntity;
 
   @ApiProperty()
   @Expose()
-  sortOrder!: number;
-
   @ApiProperty()
   @Expose()
   assigned!: number;

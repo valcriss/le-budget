@@ -24,12 +24,15 @@ export class CategoriesService {
       parentCategoryId = dto.parentCategoryId;
     }
 
+    const sortOrder = await this.resolveNextSortOrder(userId, parentCategoryId);
+
     const category = await this.prisma.category.create({
       data: {
         userId,
         name: dto.name,
         kind: dto.kind ?? CategoryKind.EXPENSE,
         parentCategoryId,
+        sortOrder,
       },
     });
 
@@ -42,7 +45,7 @@ export class CategoriesService {
     const userId = this.userContext.getUserId();
     const categories = await this.prisma.category.findMany({
       where: { userId },
-      orderBy: [{ kind: 'asc' }, { name: 'asc' }],
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
     return categories.map((category) => this.toEntity(category));
   }
@@ -124,5 +127,13 @@ export class CategoriesService {
     if (!parent) {
       throw new NotFoundException(`Catégorie parente ${parentId} introuvable`);
     }
+  }
+
+  private async resolveNextSortOrder(userId: string, parentCategoryId: string | null) {
+    const { _max } = await this.prisma.category.aggregate({
+      where: { userId, parentCategoryId },
+      _max: { sortOrder: true },
+    });
+    return (_max.sortOrder ?? -1) + 1;
   }
 }

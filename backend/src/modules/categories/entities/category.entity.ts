@@ -15,6 +15,10 @@ export class CategoryEntity {
   @Expose()
   kind!: CategoryKind;
 
+  @ApiProperty()
+  @Expose()
+  sortOrder!: number;
+
   @ApiProperty({ required: false, nullable: true, description: 'Identifiant de la catégorie parente' })
   @Expose()
   parentCategoryId?: string | null;

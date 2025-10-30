@@ -10,8 +10,8 @@ delete {
   auth: inherit
 }
 
-tests {
-  bru.setEnvVar("CHILD_CATEGORY_ID", "deleted", { persist: true });
+script:post-response {
+  bru.setVar("CHILD_CATEGORY_ID", "deleted", { persist: true });
 }
 
 settings {

@@ -61,6 +61,7 @@ model Category {
   userId      String
   name        String
   kind        CategoryKind     @default(EXPENSE)
+  sortOrder   Int              @default(0)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   parentCategoryId String?
@@ -69,6 +70,7 @@ model Category {
 
   transactions     Transaction[]
   budgetCategories BudgetCategory[]
+  budgetGroups     BudgetCategoryGroup[]
 
   @@unique([userId, name])
 }
@@ -108,29 +110,27 @@ model BudgetCategoryGroup {
   id        String       @id @default(uuid())
   month     BudgetMonth  @relation(fields: [monthId], references: [id], onDelete: Cascade)
   monthId   String
-  name      String
-  sortOrder Int
+  category   Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
   categories BudgetCategory[]
 
-  @@index([monthId, sortOrder])
+  @@unique([monthId, categoryId])
 }
 
 model BudgetCategory {
   id         String               @id @default(uuid())
   group      BudgetCategoryGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId    String
-  category   Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  categoryId String?
-  name       String
+  category   Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
   assigned   Decimal              @default(0)
   activity   Decimal              @default(0)
   available  Decimal              @default(0)
-  sortOrder  Int
   createdAt  DateTime             @default(now())
   updatedAt  DateTime             @updatedAt
 
-  @@index([groupId, sortOrder])
+  @@unique([groupId, categoryId])
 }

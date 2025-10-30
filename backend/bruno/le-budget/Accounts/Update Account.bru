@@ -1,0 +1,22 @@
+meta {
+  name: Update Account
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{API_URL}}/accounts/{{MAIN_ACCOUNT}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Compte Courant 2"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
