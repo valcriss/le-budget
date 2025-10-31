@@ -18,6 +18,10 @@ export class CategoriesService {
 
   async create(dto: CreateCategoryDto): Promise<CategoryEntity> {
     const userId = this.userContext.getUserId();
+
+    if ((dto.kind ?? CategoryKind.EXPENSE) === CategoryKind.TRANSFER) {
+      throw new BadRequestException('Les catégories de transfert sont gérées automatiquement.');
+    }
     let parentCategoryId: string | null = null;
     if (dto.parentCategoryId) {
       await this.assertParentBelongsToUser(dto.parentCategoryId, userId);
@@ -69,6 +73,14 @@ export class CategoriesService {
       throw new NotFoundException(`Category ${id} not found`);
     }
 
+    if (existing.kind === CategoryKind.TRANSFER) {
+      throw new BadRequestException('Les catégories de transfert ne peuvent pas être modifiées.');
+    }
+
+    if (dto.kind === CategoryKind.TRANSFER) {
+      throw new BadRequestException('Impossible de définir une catégorie utilisateur comme transfert.');
+    }
+
     const data: Prisma.CategoryUpdateInput = {
       name: dto.name ?? existing.name,
       kind: dto.kind ?? existing.kind,
@@ -105,6 +117,10 @@ export class CategoriesService {
     const existing = await this.prisma.category.findFirst({ where: { id, userId } });
     if (!existing) {
       throw new NotFoundException(`Category ${id} not found`);
+    }
+
+    if (existing.kind === CategoryKind.TRANSFER) {
+      throw new BadRequestException('Les catégories de transfert ne peuvent pas être supprimées.');
     }
 
     const childrenCount = await this.prisma.category.count({

@@ -23,6 +23,10 @@ export class CategoryEntity {
   @Expose()
   parentCategoryId?: string | null;
 
+  @ApiProperty({ required: false, nullable: true, description: 'Identifiant du compte lié (catégorie de transfert)' })
+  @Expose()
+  linkedAccountId?: string | null;
+
   @ApiProperty()
   @Expose()
   createdAt!: Date;

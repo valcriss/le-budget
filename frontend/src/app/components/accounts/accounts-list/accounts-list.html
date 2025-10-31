@@ -20,7 +20,7 @@
             <div
                 *ngFor="let account of accounts(); trackBy: trackByAccountId"
                 class="flex flex-row h-8 hover:bg-yellow-50 cursor-pointer px-2">
-                <div class="basis-9/12 text-xs">
+                <div class="basis-9/12 text-xs" [class.font-semibold]="account.id === highlightedAccountId()">
                     <a [routerLink]="['/accounts', account.id]" class="hover:underline">
                         {{ account.name }}
                     </a>

@@ -6,6 +6,7 @@ export interface Category {
   kind: CategoryKind;
   sortOrder: number;
   parentCategoryId: string | null;
+  linkedAccountId: string | null;
   createdAt: string;
   updatedAt: string;
 }

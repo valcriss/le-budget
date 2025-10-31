@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccountType, Prisma } from '@prisma/client';
+import { AccountType, CategoryKind, Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
@@ -43,6 +43,7 @@ export class AccountsService {
     });
 
     const entity = this.toEntity(account);
+    await this.createTransferCategory(userId, account);
     this.events.emit('account.created', entity);
     return entity;
   }
@@ -134,6 +135,23 @@ export class AccountsService {
       currentBalance: Number(account.currentBalance),
       reconciledBalance: Number(account.reconciledBalance),
       pointedBalance: Number(account.pointedBalance),
+    });
+  }
+
+  private async createTransferCategory(userId: string, account: { id: string; name: string }) {
+    const { _max } = await this.prisma.category.aggregate({
+      where: { userId, parentCategoryId: null },
+      _max: { sortOrder: true },
+    });
+
+    await this.prisma.category.create({
+      data: {
+        userId,
+        name: `Virement ${account.name}`,
+        kind: CategoryKind.TRANSFER,
+        sortOrder: (_max.sortOrder ?? -1) + 1,
+        linkedAccountId: account.id,
+      },
     });
   }
 }

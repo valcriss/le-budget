@@ -178,6 +178,21 @@ async function main() {
       } as any,
     });
 
+    const { _max } = await prisma.category.aggregate({
+      where: { userId: demoUser.id, parentCategoryId: null },
+      _max: { sortOrder: true },
+    });
+
+    await prisma.category.create({
+      data: {
+        userId: demoUser.id,
+        name: `Virement ${accountSeed.name}`,
+        kind: CategoryKind.TRANSFER,
+        sortOrder: (_max.sortOrder ?? -1) + 1,
+        linkedAccountId: account.id,
+      },
+    });
+
     let runningBalance = accountSeed.initialBalance;
     for (const tx of accountSeed.transactions) {
       await prisma.transaction.create({

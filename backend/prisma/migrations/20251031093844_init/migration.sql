@@ -73,6 +73,7 @@ CREATE TABLE "Category" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "parentCategoryId" TEXT,
+    "linkedAccountId" TEXT,
 
     CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
 );
@@ -145,6 +146,9 @@ CREATE INDEX "Account_userId_name_idx" ON "Account"("userId", "name");
 CREATE UNIQUE INDEX "UserSettings_userId_key" ON "UserSettings"("userId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Category_linkedAccountId_key" ON "Category"("linkedAccountId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Category_userId_name_key" ON "Category"("userId", "name");
 
 -- CreateIndex
@@ -182,6 +186,9 @@ ALTER TABLE "Category" ADD CONSTRAINT "Category_userId_fkey" FOREIGN KEY ("userI
 
 -- AddForeignKey
 ALTER TABLE "Category" ADD CONSTRAINT "Category_parentCategoryId_fkey" FOREIGN KEY ("parentCategoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Category" ADD CONSTRAINT "Category_linkedAccountId_fkey" FOREIGN KEY ("linkedAccountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;

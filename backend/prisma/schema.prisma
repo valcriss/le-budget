@@ -78,6 +78,7 @@ model Account {
   updatedAt      DateTime     @updatedAt
 
   transactions   Transaction[]
+  transferCategory Category?   @relation("AccountTransferCategory")
 
   @@index([userId, name])
 }
@@ -103,6 +104,8 @@ model Category {
   parentCategoryId String?
   parentCategory   Category?   @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
   subCategories    Category[]  @relation("CategoryHierarchy")
+  linkedAccountId  String?     @unique
+  linkedAccount    Account?    @relation("AccountTransferCategory", fields: [linkedAccountId], references: [id], onDelete: Cascade)
 
   transactions     Transaction[]
   budgetCategories BudgetCategory[]
