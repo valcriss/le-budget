@@ -165,8 +165,7 @@
                   </div>
                   <div class="h-8 basis-3/12 md:basis-3/12 flex items-center justify-end px-1 text-right"
                     [class]="getAmountClass(it.assigned)">
-                    <app-input-amount [value]="it.assigned"
-                      (valueChange)="onItemAssignedChange(i, j, $event)"></app-input-amount>
+                    <app-input-amount [value]="it.assigned" (valueChange)="onItemAssignedChange(i, j, $event)"></app-input-amount>
                   </div>
                   <div
                     class="h-8 hidden basis-3/12 md:basis-3/12 md:flex items-center justify-end px-1 text-right hover:underline cursor-pointer"

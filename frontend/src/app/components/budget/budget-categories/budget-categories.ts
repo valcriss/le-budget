@@ -452,6 +452,7 @@ export class BudgetCategories {
       (typeof newAssigned === 'number' ? newAssigned : 0) + (typeof activity === 'number' ? activity : 0);
     // recalc group totals
     this.recalcGroupTotals(groupIndex);
+    this.schedulePersistence(() => this.persistAssignedChange(groupIndex, itemIndex));
   }
 
   private schedulePersistence(task: () => Promise<void>): void {
@@ -572,6 +573,36 @@ export class BudgetCategories {
       await this.budgetStore.reloadCurrentMonth();
     } catch (error) {
       console.error('Failed to reload budget after reordering', error);
+    }
+  }
+
+  private async persistAssignedChange(groupIndex: number, itemIndex: number): Promise<void> {
+    const group = this.groups[groupIndex];
+    const item = group?.items?.[itemIndex];
+    if (!group || !item) {
+      return;
+    }
+
+    const categoryId = item.categoryId;
+    if (!categoryId) {
+      return;
+    }
+
+    const monthKey = this.budgetStore.monthKey();
+    if (!monthKey) {
+      return;
+    }
+
+    this.errorMessage = null;
+
+    try {
+      const assignedValue = typeof item.assigned === 'number' ? item.assigned : Number(item.assigned ?? 0);
+      await this.budgetStore.updateCategoryAssigned(monthKey, categoryId, assignedValue);
+    } catch (error) {
+      console.error('Failed to persist assigned change', error);
+      this.errorMessage =
+        this.budgetStore.error() ?? 'Impossible de mettre à jour le montant assigné.';
+      await this.reloadBudgetSilently();
     }
   }
 }

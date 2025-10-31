@@ -241,6 +241,16 @@ export class TransactionsService {
     return this.toEntity(transaction, runningMap.get(transaction.id) ?? 0);
   }
 
+  async recalculateBudgetMonthForUser(month: Date, userId?: string): Promise<BudgetMonth> {
+    const actualUserId = userId ?? this.userContext.getUserId();
+    const baseStart = this.getMonthStart(month);
+    const updated = await this.prisma.$transaction((tx) =>
+      this.recalculateBudgetMonthSummary(tx, actualUserId, baseStart),
+    );
+    this.emitBudgetMonthUpdates([this.formatMonthKey(baseStart)]);
+    return updated;
+  }
+
   async update(
     accountId: string,
     transactionId: string,

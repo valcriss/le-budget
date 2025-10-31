@@ -61,6 +61,27 @@ export class BudgetStore {
     await this.loadMonth(currentKey, true);
   }
 
+  async updateCategoryAssigned(monthKey: string, categoryId: string, assigned: number): Promise<void> {
+    const normalizedMonth = normalizeMonthKey(monthKey);
+    const encodedMonth = encodeURIComponent(normalizedMonth);
+    const encodedCategory = encodeURIComponent(categoryId);
+
+    try {
+      await firstValueFrom(
+        this.http.patch<BudgetCategory>(
+          `${this.apiBaseUrl}/budget/months/${encodedMonth}/categories/${encodedCategory}`,
+          { assigned },
+        ),
+      );
+      await this.loadMonth(normalizedMonth, true);
+    } catch (error) {
+      this.errorSignal.set(
+        this.mapError(error, 'Impossible de mettre à jour le montant assigné.'),
+      );
+      throw error;
+    }
+  }
+
   reset(): void {
     this.monthSignal.set(null);
     this.monthKeySignal.set(null);

@@ -3,6 +3,7 @@ import { BudgetMonth, Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
+import { TransactionsService } from '../transactions/transactions.service';
 import { UserContextService } from '../../common/services/user-context.service';
 import { UpdateBudgetCategoryDto } from './dto/update-budget-category.dto';
 import { BudgetMonthEntity } from './entities/budget-month.entity';
@@ -23,6 +24,7 @@ export class BudgetService {
     private readonly prisma: PrismaService,
     private readonly events: EventsService,
     private readonly userContext: UserContextService,
+    private readonly transactions: TransactionsService,
   ) {}
 
   async getMonth(monthKey: string): Promise<BudgetMonthEntity> {
@@ -41,19 +43,11 @@ export class BudgetService {
     const month = await this.getOrCreateMonth(monthKey, userId);
     await this.ensureMonthStructure(month, userId);
 
-    const group = await this.prisma.budgetCategoryGroup.findFirst({
-      where: { monthId: month.id, categoryId },
-      select: { id: true },
-    });
-
-    if (!group) {
-      throw new NotFoundException(
-        `Budget category group for month ${monthKey} and category ${categoryId} not found`,
-      );
-    }
-
     const budgetCategory = await this.prisma.budgetCategory.findFirst({
-      where: { groupId: group.id, categoryId },
+      where: {
+        categoryId,
+        group: { monthId: month.id },
+      },
       include: { category: true },
     });
 
@@ -90,11 +84,13 @@ export class BudgetService {
 
     const entity = this.toCategoryEntity(updated);
     this.events.emit('budget.category.updated', entity);
+    await this.transactions.recalculateBudgetMonthForUser(month.month, userId);
     return entity;
   }
 
   private async buildMonthEntity(month: BudgetMonth): Promise<BudgetMonthEntity> {
-    const monthSlug = `${month.month.getFullYear()}-${(month.month.getMonth() + 1)
+    const monthDate = month.month;
+    const monthSlug = `${monthDate.getUTCFullYear()}-${(monthDate.getUTCMonth() + 1)
       .toString()
       .padStart(2, '0')}`;
 
@@ -178,21 +174,36 @@ export class BudgetService {
       return byId;
     }
 
-    const date = this.monthStringToDate(monthKey);
+    const monthStart = this.monthStringToDate(monthKey);
+    const rangeStart = monthStart;
+    const rangeEnd = this.getNextMonth(monthStart);
+
     let month = await this.prisma.budgetMonth.findFirst({
-      where: { userId, month: date },
+      where: {
+        userId,
+        month: {
+          gte: rangeStart,
+          lt: rangeEnd,
+        },
+      },
     });
+
     if (!month) {
       month = await this.prisma.budgetMonth.create({
         data: {
           userId,
-          month: date,
+          month: monthStart,
           availableCarryover: new Prisma.Decimal(0),
           income: new Prisma.Decimal(0),
           assigned: new Prisma.Decimal(0),
           available: new Prisma.Decimal(0),
           activity: new Prisma.Decimal(0),
         },
+      });
+    } else if (!this.isSameMonth(month.month, monthStart)) {
+      month = await this.prisma.budgetMonth.update({
+        where: { id: month.id },
+        data: { month: monthStart },
       });
     }
     return month;
@@ -266,5 +277,13 @@ export class BudgetService {
     const yearNum = Number(year);
     const monthIndex = Number(monthPart) - 1;
     return new Date(Date.UTC(yearNum, monthIndex, 1));
+  }
+
+  private getNextMonth(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1));
+  }
+
+  private isSameMonth(a: Date, b: Date): boolean {
+    return a.getUTCFullYear() === b.getUTCFullYear() && a.getUTCMonth() === b.getUTCMonth();
   }
 }
