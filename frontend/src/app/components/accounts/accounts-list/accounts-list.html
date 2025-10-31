@@ -34,7 +34,9 @@
         <div class="h-2"></div>
         <div class="flex flex-row h-8">
             <button
-                class="w-full text-xs hover:bg-gray-50 cursor-pointer border-dashed hover:border-solid border border-gray-300 rounded-xl p-2 h-8 flex items-center justify-center">
+                type="button"
+                class="w-full text-xs hover:bg-gray-50 cursor-pointer border-dashed hover:border-solid border border-gray-300 rounded-xl p-2 h-8 flex items-center justify-center"
+                (click)="openDialog()">
                 Ajouter un compte
             </button>
         </div>
@@ -46,3 +48,14 @@
         Aucun compte bancaire.
     </div>
 </ng-template>
+
+<app-account-dialog
+    *ngIf="dialogOpen()"
+    title="Nouveau compte bancaire"
+    submitLabel="Créer le compte"
+    [submitting]="dialogSubmitting()"
+    [serverError]="dialogError()"
+    [currencyCode]="defaultCurrency()"
+    (cancelled)="closeDialog()"
+    (submitted)="handleCreate($event)"
+></app-account-dialog>
