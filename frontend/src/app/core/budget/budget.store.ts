@@ -4,11 +4,13 @@ import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../config/api-base-url.token';
 import { BudgetCategory, BudgetCategoryGroup, BudgetMonth } from './budget.models';
 import { getCurrentMonthKey, normalizeMonthKey } from './budget.utils';
+import { EventsGateway } from '../events/events.service';
 
 @Injectable({ providedIn: 'root' })
 export class BudgetStore {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
+  private readonly eventsGateway = inject(EventsGateway);
 
   private readonly monthSignal = signal<BudgetMonth | null>(null);
   private readonly loadingSignal = signal(false);
@@ -21,6 +23,10 @@ export class BudgetStore {
   readonly monthKey = this.monthKeySignal.asReadonly();
   readonly hasData = computed(() => this.monthSignal() !== null);
   readonly groups = computed(() => this.monthSignal()?.groups ?? []);
+
+  constructor() {
+    this.registerEventListeners();
+  }
 
   async loadMonth(monthKey: string, force = false): Promise<void> {
     const normalizedKey = normalizeMonthKey(monthKey);
@@ -72,6 +78,9 @@ export class BudgetStore {
       ...data,
       availableCarryover: Number(data.availableCarryover ?? 0),
       income: Number(data.income ?? 0),
+      assigned: Number(data.assigned ?? 0),
+      activity: Number(data.activity ?? 0),
+      available: Number(data.available ?? 0),
       totalAssigned: Number(data.totalAssigned ?? 0),
       totalActivity: Number(data.totalActivity ?? 0),
       totalAvailable: Number(data.totalAvailable ?? 0),
@@ -109,6 +118,42 @@ export class BudgetStore {
       activity: Number(category.activity ?? 0),
       available: Number(category.available ?? 0),
     };
+  }
+
+  private registerEventListeners(): void {
+    this.eventsGateway.on('budget.category.updated', (payload) => {
+      const currentKey = this.monthKeySignal();
+      if (!currentKey) {
+        return;
+      }
+
+      const month = (payload as { month?: string }).month;
+      if (!month) {
+        return;
+      }
+
+      const normalizedMonth = normalizeMonthKey(month);
+      if (normalizedMonth === normalizeMonthKey(currentKey)) {
+        void this.loadMonth(normalizedMonth, true).catch(() => undefined);
+      }
+    });
+
+    this.eventsGateway.on('budget.month.updated', (payload) => {
+      const currentKey = this.monthKeySignal();
+      if (!currentKey) {
+        return;
+      }
+
+      const month = (payload as { month?: string }).month;
+      if (!month) {
+        return;
+      }
+
+      const normalizedMonth = normalizeMonthKey(month);
+      if (normalizedMonth === normalizeMonthKey(currentKey)) {
+        void this.loadMonth(normalizedMonth, true).catch(() => undefined);
+      }
+    });
   }
 
   private setLoading(value: boolean): void {

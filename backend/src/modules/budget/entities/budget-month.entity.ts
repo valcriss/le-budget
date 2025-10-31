@@ -19,6 +19,18 @@ export class BudgetMonthEntity {
   @Expose()
   income!: number;
 
+  @ApiProperty({ description: 'Assigned total for the month' })
+  @Expose()
+  assigned!: number;
+
+  @ApiProperty({ description: 'Activity (spending) for the month' })
+  @Expose()
+  activity!: number;
+
+  @ApiProperty({ description: 'Available funds for the month (income + carryover)' })
+  @Expose()
+  available!: number;
+
   @ApiProperty({ description: 'Total assigned across all categories' })
   @Expose()
   totalAssigned!: number;

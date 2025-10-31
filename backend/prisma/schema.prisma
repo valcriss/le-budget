@@ -33,6 +33,7 @@ enum CategoryKind {
   INCOME
   TRANSFER
   INITIAL
+  INCOME_PLUS_ONE
 }
 
 model User {
@@ -143,6 +144,9 @@ model BudgetMonth {
   month                DateTime
   income               Decimal              @default(0)
   availableCarryover   Decimal              @default(0)
+  assigned             Decimal              @default(0)
+  activity             Decimal              @default(0)
+  available            Decimal              @default(0)
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
 

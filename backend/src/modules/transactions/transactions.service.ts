@@ -1,5 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Account, Prisma, Transaction, TransactionStatus, TransactionType } from '@prisma/client';
+import {
+  Account,
+  BudgetCategory,
+  BudgetMonth,
+  CategoryKind,
+  Prisma,
+  Transaction,
+  TransactionStatus,
+  TransactionType,
+} from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
@@ -10,6 +19,8 @@ import { TransactionsQueryDto } from './dto/transactions-query.dto';
 import { TransactionEntity } from './entities/transaction.entity';
 import { TransactionsListEntity } from './entities/transactions-list.entity';
 import { AccountEntity } from '../accounts/entities/account.entity';
+import { BudgetCategoryEntity } from '../budget/entities/budget-category.entity';
+import { CategoryEntity } from '../categories/entities/category.entity';
 
 @Injectable()
 export class TransactionsService {
@@ -117,7 +128,7 @@ export class TransactionsService {
 
     const amount = new Prisma.Decimal(dto.amount);
 
-    const { transaction, account: updatedAccount } = await this.prisma.$transaction(async (tx) => {
+    const { transaction, account: updatedAccount, budget } = await this.prisma.$transaction(async (tx) => {
       const created = await tx.transaction.create({
         data: {
           accountId: account.id,
@@ -133,14 +144,81 @@ export class TransactionsService {
       });
 
       const accountRecord = await this.recalculateAccountBalances(tx, account.id);
+      const budgetImpact = await this.recalculateBudgetImpacts(tx, userId, [
+        { categoryId: dto.categoryId ?? null, date: new Date(dto.date) },
+      ]);
 
-      return { transaction: created, account: accountRecord };
+      return { transaction: created, account: accountRecord, budget: budgetImpact };
     });
 
     const runningMap = await this.recalculateRunningMap(account.id, Number(account.initialBalance));
     const entity = this.toEntity(transaction, runningMap.get(transaction.id) ?? 0);
     this.events.emit('transaction.created', entity);
     this.emitAccountUpdated(updatedAccount);
+    this.emitBudgetCategoryUpdates(budget.categories);
+    this.emitBudgetMonthUpdates(budget.months);
+    return entity;
+  }
+
+  async createInitialTransactionForAccount(
+    accountId: string,
+    options: {
+      amount: number;
+      categoryId: string;
+      label?: string;
+      date?: Date;
+      status?: TransactionStatus;
+    },
+  ): Promise<TransactionEntity> {
+    const userId = this.userContext.getUserId();
+    const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
+    if (!account) {
+      throw new NotFoundException(`Account ${accountId} not found`);
+    }
+
+    if (!options.categoryId) {
+      throw new BadRequestException('Une catégorie initiale est requise.');
+    }
+
+    await this.ensureCategoryOwnership(options.categoryId, userId);
+
+    const label = options.label ?? 'Solde initial';
+    const status = options.status ?? TransactionStatus.RECONCILED;
+    const eventDate = options.date ? new Date(options.date) : new Date();
+    if (Number.isNaN(eventDate.getTime())) {
+      throw new BadRequestException('La date fournie pour la transaction initiale est invalide.');
+    }
+
+    const decimalAmount = new Prisma.Decimal(options.amount ?? 0);
+
+    const { transaction, account: updatedAccount, budget } = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.transaction.create({
+        data: {
+          accountId: account.id,
+          categoryId: options.categoryId,
+          date: eventDate,
+          label,
+          amount: decimalAmount,
+          status,
+          transactionType: TransactionType.INITIAL,
+        },
+        include: { category: { select: { id: true, name: true } } },
+      });
+
+      const accountRecord = await this.recalculateAccountBalances(tx, account.id);
+      const budgetImpact = await this.recalculateBudgetImpacts(tx, userId, [
+        { categoryId: options.categoryId, date: eventDate },
+      ]);
+
+      return { transaction: created, account: accountRecord, budget: budgetImpact };
+    });
+
+    const runningMap = await this.recalculateRunningMap(account.id, Number(account.initialBalance));
+    const entity = this.toEntity(transaction, runningMap.get(transaction.id) ?? 0);
+    this.events.emit('transaction.created', entity);
+    this.emitAccountUpdated(updatedAccount);
+    this.emitBudgetCategoryUpdates(budget.categories);
+    this.emitBudgetMonthUpdates(budget.months);
     return entity;
   }
 
@@ -217,32 +295,39 @@ export class TransactionsService {
 
     const newAmount = dto.amount !== undefined ? new Prisma.Decimal(dto.amount) : existing.amount;
 
-    const { transaction: updated, account: updatedAccount } = await this.prisma.$transaction(async (tx) => {
-      const txn = await tx.transaction.update({
-        where: { id: transactionId },
-        data: {
-          categoryId: dto.categoryId ?? existing.categoryId,
-          date: dto.date ? new Date(dto.date) : existing.date,
-          label: dto.label ?? existing.label,
-          amount: newAmount,
-          status: dto.status ?? existing.status,
-          transactionType: dto.transactionType ?? existing.transactionType,
-          linkedTransactionId:
-            dto.linkedTransactionId !== undefined
-              ? dto.linkedTransactionId
-              : existing.linkedTransactionId,
-        },
-        include: { category: { select: { id: true, name: true } } },
-      });
-      const accountRecord = await this.recalculateAccountBalances(tx, account.id);
+    const budgetChanges = this.buildBudgetChangeSet(existing, dto);
 
-      return { transaction: txn, account: accountRecord };
-    });
+    const { transaction: updated, account: updatedAccount, budget } =
+      await this.prisma.$transaction(async (tx) => {
+        const txn = await tx.transaction.update({
+          where: { id: transactionId },
+          data: {
+            categoryId: dto.categoryId ?? existing.categoryId,
+            date: dto.date ? new Date(dto.date) : existing.date,
+            label: dto.label ?? existing.label,
+            amount: newAmount,
+            status: dto.status ?? existing.status,
+            transactionType: dto.transactionType ?? existing.transactionType,
+            linkedTransactionId:
+              dto.linkedTransactionId !== undefined
+                ? dto.linkedTransactionId
+                : existing.linkedTransactionId,
+          },
+          include: { category: { select: { id: true, name: true } } },
+        });
+        const accountRecord = await this.recalculateAccountBalances(tx, account.id);
+
+        const budgetImpact = await this.recalculateBudgetImpacts(tx, userId, budgetChanges);
+
+        return { transaction: txn, account: accountRecord, budget: budgetImpact };
+      });
 
     const runningMap = await this.recalculateRunningMap(account.id, Number(account.initialBalance));
     const entity = this.toEntity(updated, runningMap.get(updated.id) ?? 0);
     this.events.emit('transaction.updated', entity);
     this.emitAccountUpdated(updatedAccount);
+    this.emitBudgetCategoryUpdates(budget.categories);
+    this.emitBudgetMonthUpdates(budget.months);
     return entity;
   }
 
@@ -271,15 +356,20 @@ export class TransactionsService {
     );
     const balance = runningBefore.get(existing.id) ?? 0;
 
-    const updatedAccount = await this.prisma.$transaction(async (tx) => {
+    const { account: updatedAccount, budget } = await this.prisma.$transaction(async (tx) => {
       await tx.transaction.delete({ where: { id: transactionId } });
       const accountRecord = await this.recalculateAccountBalances(tx, account.id);
-      return accountRecord;
+      const budgetImpact = await this.recalculateBudgetImpacts(tx, userId, [
+        { categoryId: existing.categoryId, date: existing.date },
+      ]);
+      return { account: accountRecord, budget: budgetImpact };
     });
 
     const entity = this.toEntity(existing, balance);
     this.events.emit('transaction.deleted', { accountId, transactionId });
     this.emitAccountUpdated(updatedAccount);
+    this.emitBudgetCategoryUpdates(budget.categories);
+    this.emitBudgetMonthUpdates(budget.months);
     return entity;
   }
 
@@ -333,6 +423,442 @@ export class TransactionsService {
       pointedBalance: Number(account.pointedBalance),
       reconciledBalance: Number(account.reconciledBalance),
     });
+  }
+
+  private buildBudgetChangeSet(
+    existing: Transaction,
+    dto: UpdateTransactionDto,
+  ): Array<{ categoryId: string | null; date: Date }> {
+    const changes: Array<{ categoryId: string | null; date: Date }> = [];
+    if (existing.categoryId) {
+      changes.push({ categoryId: existing.categoryId, date: existing.date });
+    }
+
+    const nextCategoryId = dto.categoryId !== undefined ? dto.categoryId : existing.categoryId;
+    const nextDate = dto.date ? new Date(dto.date) : existing.date;
+
+    changes.push({ categoryId: nextCategoryId ?? null, date: nextDate });
+    return changes;
+  }
+
+  private async recalculateBudgetImpacts(
+    client: Prisma.TransactionClient,
+    userId: string,
+    entries: Array<{ categoryId: string | null; date: Date }>,
+  ): Promise<{
+    categories: Array<{ month: string; category: BudgetCategoryEntity }>;
+    months: Array<string>;
+  }> {
+    const validEntries = entries.filter(
+      (entry) => entry.categoryId && entry.date && !Number.isNaN(entry.date.getTime()),
+    ) as Array<{ categoryId: string; date: Date }>;
+
+    if (validEntries.length === 0) {
+      return { categories: [], months: [] };
+    }
+
+    const uniqueCategoryIds = Array.from(new Set(validEntries.map((entry) => entry.categoryId)));
+    if (uniqueCategoryIds.length === 0) {
+      return { categories: [], months: [] };
+    }
+
+    const categories = await client.category.findMany({
+      where: { id: { in: uniqueCategoryIds }, userId },
+      select: { id: true, kind: true, parentCategoryId: true },
+    });
+
+    const categoryMap = new Map(categories.map((category) => [category.id, category]));
+    const monthsByExpenseCategory = new Map<string, Map<string, { start: Date }>>();
+    const incomeMonths = new Map<string, { baseStart: Date; nextStart: Date }>();
+    const monthsToProcess = new Map<string, Date>();
+
+    const addMonthToProcess = (start: Date) => {
+      const normalized = this.getMonthStart(start);
+      const key = this.formatMonthKey(normalized);
+      if (!monthsToProcess.has(key)) {
+        monthsToProcess.set(key, normalized);
+      }
+    };
+
+    for (const entry of validEntries) {
+      const info = categoryMap.get(entry.categoryId);
+      if (!info) {
+        continue;
+      }
+
+      const baseStart = this.getMonthStart(entry.date);
+      addMonthToProcess(baseStart);
+      if (info.kind === CategoryKind.EXPENSE) {
+        const monthKey = this.formatMonthKey(baseStart);
+        if (!monthsByExpenseCategory.has(entry.categoryId)) {
+          monthsByExpenseCategory.set(entry.categoryId, new Map());
+        }
+        monthsByExpenseCategory.get(entry.categoryId)!.set(monthKey, { start: baseStart });
+        continue;
+      }
+
+      if (info.kind === CategoryKind.INCOME_PLUS_ONE) {
+        const nextStart = this.getNextMonth(baseStart);
+        const nextMonthKey = this.formatMonthKey(nextStart);
+        incomeMonths.set(nextMonthKey, { baseStart, nextStart });
+      }
+    }
+
+    const resultMap = new Map<string, { month: string; category: BudgetCategoryEntity }>();
+    const topLevelCache = new Map<string, string>();
+
+    for (const [categoryId, months] of monthsByExpenseCategory.entries()) {
+      for (const [monthKey, { start }] of months.entries()) {
+        const budgetCategory = await this.ensureBudgetCategoryStructure(
+          client,
+          userId,
+          categoryId,
+          start,
+          topLevelCache,
+        );
+
+        const activity = await this.calculateCategoryActivity(client, userId, categoryId, start);
+        const updated = await client.budgetCategory.update({
+          where: { id: budgetCategory.id },
+          data: { activity },
+          include: { category: true, group: { include: { month: true } } },
+        });
+
+        const eventKey = `${updated.id}:${monthKey}`;
+        resultMap.set(eventKey, {
+          month: monthKey,
+          category: this.toBudgetCategoryEntity(updated),
+        });
+
+        addMonthToProcess(start);
+      }
+
+      const categoryBudgets = await client.budgetCategory.findMany({
+        where: { categoryId },
+        include: { category: true, group: { include: { month: true } } },
+      });
+
+      categoryBudgets.sort(
+        (a, b) => a.group.month.month.getTime() - b.group.month.month.getTime(),
+      );
+
+      let cumulativeAssigned = new Prisma.Decimal(0);
+      let cumulativeActivity = new Prisma.Decimal(0);
+
+      for (const budget of categoryBudgets) {
+        cumulativeAssigned = cumulativeAssigned.plus(budget.assigned);
+        cumulativeActivity = cumulativeActivity.plus(budget.activity);
+        const newAvailable = cumulativeAssigned.plus(cumulativeActivity);
+        const monthKey = this.formatMonthKey(budget.group.month.month);
+        if (!budget.available.equals(newAvailable)) {
+          const updated = await client.budgetCategory.update({
+            where: { id: budget.id },
+            data: { available: newAvailable },
+            include: { category: true, group: { include: { month: true } } },
+          });
+          resultMap.set(`${updated.id}:${monthKey}`, {
+            month: monthKey,
+            category: this.toBudgetCategoryEntity(updated),
+          });
+        } else if (months.has(monthKey)) {
+          resultMap.set(`${budget.id}:${monthKey}`, {
+            month: monthKey,
+            category: this.toBudgetCategoryEntity(budget),
+          });
+        }
+
+        addMonthToProcess(budget.group.month.month);
+      }
+    }
+
+    for (const info of incomeMonths.values()) {
+      addMonthToProcess(info.nextStart);
+    }
+
+    const processedMonths = new Set<string>();
+    const monthReloadSet = new Set<string>();
+
+    const queue = Array.from(monthsToProcess.values()).sort(
+      (a, b) => a.getTime() - b.getTime(),
+    );
+
+    while (queue.length > 0) {
+      const currentStart = queue.shift()!;
+      const key = this.formatMonthKey(currentStart);
+      if (processedMonths.has(key)) {
+        continue;
+      }
+
+      await this.recalculateBudgetMonthSummary(client, userId, currentStart);
+      processedMonths.add(key);
+      monthReloadSet.add(key);
+
+      const nextStart = this.getNextMonth(currentStart);
+      const nextKey = this.formatMonthKey(nextStart);
+      if (!processedMonths.has(nextKey) && !monthsToProcess.has(nextKey)) {
+        const nextMonth = await client.budgetMonth.findUnique({
+          where: { userId_month: { userId, month: nextStart } },
+        });
+        if (nextMonth) {
+          monthsToProcess.set(nextKey, nextStart);
+          queue.push(nextStart);
+          queue.sort((a, b) => a.getTime() - b.getTime());
+        }
+      }
+    }
+
+    return {
+      categories: Array.from(resultMap.values()),
+      months: Array.from(monthReloadSet),
+    };
+  }
+
+  private async ensureBudgetCategoryStructure(
+    client: Prisma.TransactionClient,
+    userId: string,
+    categoryId: string,
+    monthStart: Date,
+    topLevelCache: Map<string, string>,
+  ): Promise<BudgetCategory> {
+    const month = await client.budgetMonth.upsert({
+      where: { userId_month: { userId, month: monthStart } },
+      update: {},
+      create: {
+        userId,
+        month: monthStart,
+        availableCarryover: new Prisma.Decimal(0),
+        income: new Prisma.Decimal(0),
+        assigned: new Prisma.Decimal(0),
+        available: new Prisma.Decimal(0),
+        activity: new Prisma.Decimal(0),
+      },
+    });
+
+    const topLevelId = await this.resolveTopLevelCategoryId(
+      client,
+      categoryId,
+      topLevelCache,
+    );
+
+    const group = await client.budgetCategoryGroup.upsert({
+      where: { monthId_categoryId: { monthId: month.id, categoryId: topLevelId } },
+      update: {},
+      create: { monthId: month.id, categoryId: topLevelId },
+    });
+
+    const budgetCategory = await client.budgetCategory.upsert({
+      where: { groupId_categoryId: { groupId: group.id, categoryId } },
+      update: {},
+      create: {
+        groupId: group.id,
+        categoryId,
+        assigned: new Prisma.Decimal(0),
+        activity: new Prisma.Decimal(0),
+        available: new Prisma.Decimal(0),
+      },
+    });
+
+    return budgetCategory;
+  }
+
+  private async recalculateBudgetMonthSummary(
+    client: Prisma.TransactionClient,
+    userId: string,
+    monthStart: Date,
+  ): Promise<BudgetMonth> {
+    const baseStart = this.getMonthStart(monthStart);
+    const nextStart = this.getNextMonth(baseStart);
+    const previousStart = this.getPreviousMonth(baseStart);
+
+    const month = await client.budgetMonth.upsert({
+      where: { userId_month: { userId, month: baseStart } },
+      update: {},
+      create: {
+        userId,
+        month: baseStart,
+        availableCarryover: new Prisma.Decimal(0),
+        income: new Prisma.Decimal(0),
+        assigned: new Prisma.Decimal(0),
+        available: new Prisma.Decimal(0),
+        activity: new Prisma.Decimal(0),
+      },
+    });
+
+    const incomeCurrent = await client.transaction.aggregate({
+      where: {
+        account: { userId },
+        date: { gte: baseStart, lt: nextStart },
+        category: { kind: { in: [CategoryKind.INCOME, CategoryKind.INITIAL] } },
+      },
+      _sum: { amount: true },
+    });
+
+    const incomeNext = await client.transaction.aggregate({
+      where: {
+        account: { userId },
+        date: { gte: previousStart, lt: baseStart },
+        category: { kind: CategoryKind.INCOME_PLUS_ONE },
+      },
+      _sum: { amount: true },
+    });
+
+    const incomeTotal = new Prisma.Decimal(incomeCurrent._sum.amount ?? 0).plus(
+      new Prisma.Decimal(incomeNext._sum.amount ?? 0),
+    );
+
+    const previousMonth = await client.budgetMonth.findUnique({
+      where: { userId_month: { userId, month: previousStart } },
+    });
+    const carryover = previousMonth
+      ? new Prisma.Decimal(previousMonth.available)
+      : new Prisma.Decimal(0);
+
+    const activityAggregate = await client.transaction.aggregate({
+      where: {
+        account: { userId },
+        date: { gte: baseStart, lt: nextStart },
+        transactionType: TransactionType.NONE,
+        category: { kind: CategoryKind.EXPENSE },
+      },
+      _sum: { amount: true },
+    });
+    const activity = new Prisma.Decimal(activityAggregate._sum.amount ?? 0);
+
+    const assignedAggregate = await client.budgetCategory.aggregate({
+      where: { group: { monthId: month.id } },
+      _sum: { assigned: true },
+    });
+    const assigned = new Prisma.Decimal(assignedAggregate._sum.assigned ?? 0);
+
+    const available = incomeTotal.plus(carryover).minus(assigned);
+
+    const updatedMonth = await client.budgetMonth.update({
+      where: { id: month.id },
+      data: {
+        income: incomeTotal,
+        availableCarryover: carryover,
+        assigned,
+        available,
+        activity,
+      },
+    });
+
+    return updatedMonth;
+  }
+
+  private async resolveTopLevelCategoryId(
+    client: Prisma.TransactionClient,
+    categoryId: string,
+    cache: Map<string, string>,
+  ): Promise<string> {
+    if (cache.has(categoryId)) {
+      return cache.get(categoryId)!;
+    }
+
+    let currentId = categoryId;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const category = await client.category.findUnique({
+        where: { id: currentId },
+        select: { parentCategoryId: true },
+      });
+
+      if (!category || !category.parentCategoryId) {
+        cache.set(categoryId, currentId);
+        return currentId;
+      }
+
+      currentId = category.parentCategoryId;
+    }
+  }
+
+  private async calculateCategoryActivity(
+    client: Prisma.TransactionClient,
+    userId: string,
+    categoryId: string,
+    monthStart: Date,
+  ): Promise<Prisma.Decimal> {
+    const nextMonth = this.getNextMonth(monthStart);
+
+    const aggregate = await client.transaction.aggregate({
+      where: {
+        categoryId,
+        date: { gte: monthStart, lt: nextMonth },
+        category: { kind: CategoryKind.EXPENSE },
+        account: { userId },
+      },
+      _sum: { amount: true },
+    });
+
+    return new Prisma.Decimal(aggregate._sum.amount ?? 0);
+  }
+
+  private emitBudgetCategoryUpdates(
+    categories: Array<{ month: string; category: BudgetCategoryEntity }>,
+  ) {
+    const dedup = new Map<string, { month: string; category: BudgetCategoryEntity }>();
+    for (const entry of categories) {
+      dedup.set(`${entry.month}:${entry.category.id}`, entry);
+    }
+    dedup.forEach((payload) => this.events.emit('budget.category.updated', payload));
+  }
+
+  private emitBudgetMonthUpdates(months: Array<string>) {
+    const unique = Array.from(new Set(months));
+    unique.forEach((month) => this.events.emit('budget.month.updated', { month }));
+  }
+
+  private toBudgetCategoryEntity(category: {
+    [key: string]: any;
+  }): BudgetCategoryEntity {
+    const {
+      id,
+      groupId,
+      categoryId,
+      assigned,
+      activity,
+      available,
+      createdAt,
+      updatedAt,
+      category: relatedCategory,
+    } = category;
+
+    const categoryEntity = relatedCategory
+      ? plainToInstance(CategoryEntity, {
+          ...relatedCategory,
+          sortOrder: Number(relatedCategory.sortOrder ?? 0),
+        })
+      : undefined;
+
+    return plainToInstance(BudgetCategoryEntity, {
+      id,
+      groupId,
+      categoryId,
+      category: categoryEntity,
+      assigned: Number(assigned ?? 0),
+      activity: Number(activity ?? 0),
+      available: Number(available ?? 0),
+      createdAt,
+      updatedAt,
+    });
+  }
+
+  private getMonthStart(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  }
+
+  private getNextMonth(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1));
+  }
+
+  private getPreviousMonth(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1));
+  }
+
+  private formatMonthKey(date: Date): string {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
   }
 
   private computeRunningBalances(

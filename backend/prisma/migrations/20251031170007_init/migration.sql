@@ -8,7 +8,7 @@ CREATE TYPE "TransactionStatus" AS ENUM ('NONE', 'POINTED', 'RECONCILED');
 CREATE TYPE "TransactionType" AS ENUM ('NONE', 'INITIAL', 'TRANSFERT');
 
 -- CreateEnum
-CREATE TYPE "CategoryKind" AS ENUM ('EXPENSE', 'INCOME', 'TRANSFER', 'INITIAL');
+CREATE TYPE "CategoryKind" AS ENUM ('EXPENSE', 'INCOME', 'TRANSFER', 'INITIAL', 'INCOME_PLUS_ONE');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -102,6 +102,9 @@ CREATE TABLE "BudgetMonth" (
     "month" TIMESTAMP(3) NOT NULL,
     "income" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "availableCarryover" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "assigned" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "activity" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "available" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

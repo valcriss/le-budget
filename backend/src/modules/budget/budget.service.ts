@@ -126,6 +126,9 @@ export class BudgetService {
       month: monthSlug,
       availableCarryover: Number(month.availableCarryover),
       income: Number(month.income),
+      assigned: Number(month.assigned),
+      activity: Number(month.activity),
+      available: Number(month.available),
       totalAssigned,
       totalActivity,
       totalAvailable,
@@ -186,6 +189,9 @@ export class BudgetService {
           month: date,
           availableCarryover: new Prisma.Decimal(0),
           income: new Prisma.Decimal(0),
+          assigned: new Prisma.Decimal(0),
+          available: new Prisma.Decimal(0),
+          activity: new Prisma.Decimal(0),
         },
       });
     }
@@ -257,6 +263,8 @@ export class BudgetService {
       throw new BadRequestException(`Format de mois invalide: ${month}`);
     }
     const [, year, monthPart] = match;
-    return new Date(Number(year), Number(monthPart) - 1, 1);
+    const yearNum = Number(year);
+    const monthIndex = Number(monthPart) - 1;
+    return new Date(Date.UTC(yearNum, monthIndex, 1));
   }
 }

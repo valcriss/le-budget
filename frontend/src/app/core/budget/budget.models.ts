@@ -28,6 +28,9 @@ export interface BudgetMonth {
   month: string;
   availableCarryover: number;
   income: number;
+  assigned: number;
+  activity: number;
+  available: number;
   totalAssigned: number;
   totalActivity: number;
   totalAvailable: number;

@@ -48,12 +48,31 @@ export class BudgetPage {
 
   readonly monthSummary = computed(() => {
     const monthData = this.month();
+    const carryover = monthData?.availableCarryover ?? 0;
+    const income = monthData?.income ?? 0;
+    const assigned =
+      monthData?.assigned !== undefined && monthData?.assigned !== null
+        ? monthData.assigned
+        : monthData?.totalAssigned ?? 0;
+    const activity =
+      monthData?.activity !== undefined && monthData?.activity !== null
+        ? monthData.activity
+        : monthData?.totalActivity ?? 0;
+    const available =
+      monthData?.available !== undefined && monthData?.available !== null
+        ? monthData.available
+        : monthData?.totalAvailable ?? 0;
     return {
-      availableCarryover: monthData?.availableCarryover ?? 0,
-      income: monthData?.income ?? 0,
-      totalAssigned: monthData?.totalAssigned ?? 0,
-      totalActivity: monthData?.totalActivity ?? 0,
-      totalAvailable: monthData?.totalAvailable ?? 0,
+      availableCarryover: carryover,
+      income,
+      assigned,
+      activity,
+      available,
+      resourcesTotal: carryover + income,
+      totalCharges: assigned + activity,
+      totalAssigned: assigned,
+      totalActivity: activity,
+      totalAvailable: available,
     };
   });
 

@@ -1,4 +1,4 @@
-export type CategoryKind = 'EXPENSE' | 'INCOME' | 'TRANSFER' | 'INITIAL';
+export type CategoryKind = 'EXPENSE' | 'INCOME' | 'TRANSFER' | 'INITIAL' | 'INCOME_PLUS_ONE';
 
 export interface Category {
   id: string;

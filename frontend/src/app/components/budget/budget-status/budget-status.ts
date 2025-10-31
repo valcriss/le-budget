@@ -56,14 +56,19 @@ export class BudgetStatus implements AfterViewInit, OnDestroy {
   }
 
   get displayedAvailable(): number {
+    if (typeof this.totalAvailable === 'string') {
+      const parsed = Number(this.totalAvailable);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
     if (typeof this.totalAvailable === 'number') {
       return this.totalAvailable;
     }
+    if (typeof this.available === 'string') {
+      const parsed = Number(this.available);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
     if (typeof this.available === 'number') {
       return this.available;
-    }
-    if (typeof this.available === 'string') {
-      return Number(this.available);
     }
     return 0;
   }

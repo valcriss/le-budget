@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccountType, CategoryKind, Prisma, TransactionStatus, TransactionType } from '@prisma/client';
+import { AccountType, CategoryKind, Prisma, TransactionType } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
+import { TransactionsService } from '../transactions/transactions.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { AccountEntity } from './entities/account.entity';
@@ -13,6 +14,7 @@ export class AccountsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: EventsService,
+    private readonly transactions: TransactionsService,
     private readonly userContext: UserContextService,
   ) {}
 
@@ -45,7 +47,11 @@ export class AccountsService {
     const entity = this.toEntity(account);
     const initialCategoryId = await this.ensureInitialCategory(userId);
     await this.createTransferCategory(userId, account);
-    await this.createInitialTransaction(account.id, initial, initialCategoryId);
+    await this.transactions.createInitialTransactionForAccount(account.id, {
+      amount: initial,
+      categoryId: initialCategoryId,
+      label: 'Solde initial',
+    });
     this.events.emit('account.created', entity);
     return entity;
   }
@@ -189,17 +195,4 @@ export class AccountsService {
     });
   }
 
-  private async createInitialTransaction(accountId: string, amount: number, categoryId: string) {
-    await this.prisma.transaction.create({
-      data: {
-        accountId,
-        categoryId,
-        date: new Date(),
-        label: 'Solde initial',
-        amount: new Prisma.Decimal(amount),
-        status: TransactionStatus.RECONCILED,
-        transactionType: TransactionType.INITIAL,
-      },
-    });
-  }
 }
