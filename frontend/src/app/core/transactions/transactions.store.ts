@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../config/api-base-url.token';
+import { AccountsStore } from '../accounts/accounts.store';
 import {
   Transaction,
   TransactionsListResponse,
@@ -28,6 +29,7 @@ function createInitialState(): TransactionsState {
 export class TransactionsStore {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
+  private readonly accountsStore = inject(AccountsStore);
 
   private readonly stateSignal = signal<TransactionsState>(createInitialState());
   private readonly loadingSignal = signal(false);
@@ -58,7 +60,7 @@ export class TransactionsStore {
 
       this.stateSignal.set({
         accountId,
-        items: response.items,
+        items: this.sortTransactions(response.items),
         meta: response.meta,
       });
     } catch (error) {
@@ -91,10 +93,13 @@ export class TransactionsStore {
         }
         return {
           ...state,
-          items: state.items.map((item) => (item.id === transactionId ? transaction : item)),
+          items: this.sortTransactions(
+            state.items.map((item) => (item.id === transactionId ? transaction : item)),
+          ),
         };
       });
 
+      await this.accountsStore.refreshAccount(accountId).catch(() => undefined);
       return transaction;
     } catch (error) {
       this.errorSignal.set(this.mapError(error, 'Impossible de mettre à jour la transaction.'));
@@ -122,7 +127,7 @@ export class TransactionsStore {
         }
         return {
           ...state,
-          items: [transaction, ...state.items],
+          items: this.sortTransactions([transaction, ...state.items]),
           meta: {
             ...state.meta,
             total: state.meta.total + 1,
@@ -130,6 +135,7 @@ export class TransactionsStore {
         };
       });
 
+      await this.accountsStore.refreshAccount(accountId).catch(() => undefined);
       return transaction;
     } catch (error) {
       this.errorSignal.set(this.mapError(error, 'Impossible de créer la transaction.'));
@@ -211,5 +217,16 @@ export class TransactionsStore {
     }
 
     return null;
+  }
+
+  private sortTransactions(list: Transaction[]): Transaction[] {
+    return [...list].sort((a, b) => {
+      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateDiff !== 0) {
+        return dateDiff;
+      }
+      const createdDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return createdDiff;
+    });
   }
 }

@@ -10,12 +10,7 @@ import {
   AccountTransactionUpdateEvent,
 } from '../account-transaction/account-transaction';
 import { TransactionsStore } from '../../../core/transactions/transactions.store';
-import {
-  Transaction,
-  TransactionStatus,
-  TransactionType,
-  CreateTransactionPayload,
-} from '../../../core/transactions/transactions.models';
+import { Transaction, CreateTransactionPayload } from '../../../core/transactions/transactions.models';
 
 @Component({
   selector: 'app-account-table',

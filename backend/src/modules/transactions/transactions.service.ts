@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Transaction, TransactionStatus, TransactionType } from '@prisma/client';
+import { Account, Prisma, Transaction, TransactionStatus, TransactionType } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
@@ -9,6 +9,7 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionsQueryDto } from './dto/transactions-query.dto';
 import { TransactionEntity } from './entities/transaction.entity';
 import { TransactionsListEntity } from './entities/transactions-list.entity';
+import { AccountEntity } from '../accounts/entities/account.entity';
 
 @Injectable()
 export class TransactionsService {
@@ -116,7 +117,7 @@ export class TransactionsService {
 
     const amount = new Prisma.Decimal(dto.amount);
 
-    const transaction = await this.prisma.$transaction(async (tx) => {
+    const { transaction, account: updatedAccount } = await this.prisma.$transaction(async (tx) => {
       const created = await tx.transaction.create({
         data: {
           accountId: account.id,
@@ -131,17 +132,15 @@ export class TransactionsService {
         include: { category: { select: { id: true, name: true } } },
       });
 
-      await tx.account.update({
-        where: { id: account.id },
-        data: { currentBalance: { increment: amount } },
-      });
+      const accountRecord = await this.recalculateAccountBalances(tx, account.id);
 
-      return created;
+      return { transaction: created, account: accountRecord };
     });
 
     const runningMap = await this.recalculateRunningMap(account.id, Number(account.initialBalance));
     const entity = this.toEntity(transaction, runningMap.get(transaction.id) ?? 0);
     this.events.emit('transaction.created', entity);
+    this.emitAccountUpdated(updatedAccount);
     return entity;
   }
 
@@ -217,9 +216,8 @@ export class TransactionsService {
     }
 
     const newAmount = dto.amount !== undefined ? new Prisma.Decimal(dto.amount) : existing.amount;
-    const diff = newAmount.minus(existing.amount);
 
-    const updated = await this.prisma.$transaction(async (tx) => {
+    const { transaction: updated, account: updatedAccount } = await this.prisma.$transaction(async (tx) => {
       const txn = await tx.transaction.update({
         where: { id: transactionId },
         data: {
@@ -236,20 +234,15 @@ export class TransactionsService {
         },
         include: { category: { select: { id: true, name: true } } },
       });
+      const accountRecord = await this.recalculateAccountBalances(tx, account.id);
 
-      if (!diff.isZero()) {
-        await tx.account.update({
-          where: { id: account.id },
-          data: { currentBalance: { increment: diff } },
-        });
-      }
-
-      return txn;
+      return { transaction: txn, account: accountRecord };
     });
 
     const runningMap = await this.recalculateRunningMap(account.id, Number(account.initialBalance));
     const entity = this.toEntity(updated, runningMap.get(updated.id) ?? 0);
     this.events.emit('transaction.updated', entity);
+    this.emitAccountUpdated(updatedAccount);
     return entity;
   }
 
@@ -278,17 +271,68 @@ export class TransactionsService {
     );
     const balance = runningBefore.get(existing.id) ?? 0;
 
-    await this.prisma.$transaction(async (tx) => {
+    const updatedAccount = await this.prisma.$transaction(async (tx) => {
       await tx.transaction.delete({ where: { id: transactionId } });
-      await tx.account.update({
-        where: { id: account.id },
-        data: { currentBalance: { decrement: existing.amount } },
-      });
+      const accountRecord = await this.recalculateAccountBalances(tx, account.id);
+      return accountRecord;
     });
 
     const entity = this.toEntity(existing, balance);
     this.events.emit('transaction.deleted', { accountId, transactionId });
+    this.emitAccountUpdated(updatedAccount);
     return entity;
+  }
+
+  private async recalculateAccountBalances(
+    client: Prisma.TransactionClient,
+    accountId: string,
+  ): Promise<Account> {
+    const total = await client.transaction.aggregate({
+      where: { accountId },
+      _sum: { amount: true },
+    });
+
+    const pointed = await client.transaction.aggregate({
+      where: {
+        accountId,
+        status: { in: [TransactionStatus.POINTED, TransactionStatus.RECONCILED] },
+      },
+      _sum: { amount: true },
+    });
+
+    const reconciled = await client.transaction.aggregate({
+      where: { accountId, status: TransactionStatus.RECONCILED },
+      _sum: { amount: true },
+    });
+
+    const account = await client.account.update({
+      where: { id: accountId },
+      data: {
+        currentBalance: new Prisma.Decimal(total._sum.amount ?? 0),
+        pointedBalance: new Prisma.Decimal(pointed._sum.amount ?? 0),
+        reconciledBalance: new Prisma.Decimal(reconciled._sum.amount ?? 0),
+      },
+    });
+
+    return account;
+  }
+
+  private emitAccountUpdated(account: Account | null) {
+    if (!account) {
+      return;
+    }
+    const entity = this.toAccountEntity(account);
+    this.events.emit('account.updated', entity);
+  }
+
+  private toAccountEntity(account: Account): AccountEntity {
+    return plainToInstance(AccountEntity, {
+      ...account,
+      initialBalance: Number(account.initialBalance),
+      currentBalance: Number(account.currentBalance),
+      pointedBalance: Number(account.pointedBalance),
+      reconciledBalance: Number(account.reconciledBalance),
+    });
   }
 
   private computeRunningBalances(

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccountType, CategoryKind, Prisma, TransactionType } from '@prisma/client';
+import { AccountType, CategoryKind, Prisma, TransactionStatus, TransactionType } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
@@ -197,6 +197,7 @@ export class AccountsService {
         date: new Date(),
         label: 'Solde initial',
         amount: new Prisma.Decimal(amount),
+        status: TransactionStatus.RECONCILED,
         transactionType: TransactionType.INITIAL,
       },
     });

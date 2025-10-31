@@ -9,6 +9,7 @@ import {
   CreateAccountInput,
 } from './accounts.models';
 import { AuthStore } from '../auth/auth.store';
+import { EventsGateway } from '../events/events.service';
 
 type AccountResponse = {
   id: string;
@@ -29,6 +30,7 @@ export class AccountsStore {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
   private readonly authStore = inject(AuthStore);
+  private readonly eventsGateway = inject(EventsGateway);
 
   private readonly accountsSignal = signal<Account[]>([]);
   private readonly loadingSignal = signal(false);
@@ -59,6 +61,10 @@ export class AccountsStore {
     );
   });
 
+  constructor() {
+    this.registerEventListeners();
+  }
+
   async loadAccounts(force = false): Promise<void> {
     if (this.loadingSignal()) {
       return;
@@ -86,6 +92,25 @@ export class AccountsStore {
 
   async reload(): Promise<void> {
     await this.loadAccounts(true);
+  }
+
+  async refreshAccount(id: string): Promise<void> {
+    if (!id) {
+      return;
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.http.get<AccountResponse>(`${this.apiBaseUrl}/accounts/${encodeURIComponent(id)}`),
+      );
+      this.applyAccountUpdate(response);
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 404) {
+        this.accountsSignal.update((current) => current.filter((account) => account.id !== id));
+        return;
+      }
+      console.warn('Impossible de rafraîchir le compte', error);
+    }
   }
 
   reset(): void {
@@ -164,6 +189,32 @@ export class AccountsStore {
     } finally {
       this.mutationLoadingSignal.set(false);
     }
+  }
+
+  private registerEventListeners(): void {
+    this.eventsGateway.on('account.updated', (payload) => {
+      this.applyAccountUpdate(payload as AccountResponse);
+    });
+    this.eventsGateway.on('account.created', (payload) => {
+      this.applyAccountUpdate(payload as AccountResponse);
+    });
+    this.eventsGateway.on('account.archived', (payload) => {
+      this.applyAccountUpdate(payload as AccountResponse);
+    });
+  }
+
+  private applyAccountUpdate(payload: AccountResponse): void {
+    if (!payload?.id) {
+      return;
+    }
+    const account = this.normalizeAccount(payload);
+    this.accountsSignal.update((current) =>
+      this.sortAccounts(
+        current.some((item) => item.id === account.id)
+          ? current.map((item) => (item.id === account.id ? account : item))
+          : [...current, account],
+      ),
+    );
   }
 
   private normalizeAccount(data: AccountResponse): Account {
