@@ -46,3 +46,13 @@ export type UpdateTransactionPayload = Partial<{
   categoryId: string | null;
   linkedTransactionId: string | null;
 }>;
+
+export interface CreateTransactionPayload {
+  date: string;
+  label: string;
+  amount: number;
+  status?: TransactionStatus;
+  transactionType?: TransactionType;
+  categoryId?: string | null;
+  linkedTransactionId?: string | null;
+}

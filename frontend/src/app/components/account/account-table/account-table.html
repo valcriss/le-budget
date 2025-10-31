@@ -29,11 +29,14 @@
             <div class="px-2 py-4 text-xs text-gray-400">Chargement des transactions…</div>
         </ng-container>
         <ng-template #transactionsList>
-            <ng-container *ngIf="transactions().length; else emptyState">
+        <ng-container *ngIf="rows().length; else emptyState">
                 <app-account-transaction
-                    *ngFor="let transaction of transactions(); trackBy: trackByTransactionId"
+                    *ngFor="let transaction of rows(); trackBy: trackByTransactionId"
                     [transaction]="transaction"
-                    (save)="handleSave($event)"
+                    [autoEditKey]="autoEditKeyFor(transaction)"
+                    [isNew]="isDraft(transaction)"
+                    (save)="handleSave(transaction, $event)"
+                    (cancel)="handleCancel(transaction)"
                 ></app-account-transaction>
             </ng-container>
         </ng-template>

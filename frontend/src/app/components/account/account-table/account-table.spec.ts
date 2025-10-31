@@ -11,6 +11,7 @@ class TransactionsStoreStub {
   readonly error = signal<string | null>(null);
   readonly load = jasmine.createSpy('load').and.returnValue(Promise.resolve());
   readonly update = jasmine.createSpy('update').and.returnValue(Promise.resolve(null));
+  readonly create = jasmine.createSpy('create').and.returnValue(Promise.resolve(null));
   readonly reset = jasmine.createSpy('reset');
 }
 

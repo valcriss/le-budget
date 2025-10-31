@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, EventEmitter, Output, computed, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenToSquare, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
@@ -17,6 +17,8 @@ export class AccountMenu {
   protected readonly icTransactionAdd = faPlusSquare;
   private readonly accountsStore = inject(AccountsStore);
   private readonly route = inject(ActivatedRoute);
+
+  @Output() readonly addTransaction = new EventEmitter<void>();
 
   private readonly accountId = computed(() => this.route.snapshot.paramMap.get('id'));
   protected readonly account = computed(() => {
@@ -43,6 +45,10 @@ export class AccountMenu {
 
   constructor(library: FaIconLibrary) {
     library.addIcons(faPenToSquare, faPlusSquare);
+  }
+
+  protected onAddTransaction(): void {
+    this.addTransaction.emit();
   }
 
   private roundToCents(value: number): number {

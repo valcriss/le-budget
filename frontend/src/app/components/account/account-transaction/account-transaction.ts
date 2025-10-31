@@ -1,5 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, computed, inject } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  computed,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -44,7 +53,7 @@ export interface AccountTransactionUpdateEvent {
   templateUrl: './account-transaction.html',
   styleUrl: './account-transaction.css',
 })
-export class AccountTransaction {
+export class AccountTransaction implements OnChanges {
   @Input()
   transaction: Transaction = {
     id: 'transaction-demo',
@@ -62,7 +71,11 @@ export class AccountTransaction {
     updatedAt: new Date().toISOString(),
   };
 
+  @Input() autoEditKey: number | null = null;
+  @Input() isNew = false;
+
   @Output() readonly save = new EventEmitter<AccountTransactionUpdateEvent>();
+  @Output() readonly cancel = new EventEmitter<void>();
 
   protected readonly icCircle = faCircle;
   protected readonly icTimes = faTimes;
@@ -127,14 +140,28 @@ export class AccountTransaction {
     return transaction.amount > 0 ? transaction.amount : 0;
   }
 
-  protected onDoubleClick(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (
+      (changes['autoEditKey'] && this.autoEditKey != null) ||
+      (changes['transaction'] && this.autoEditKey != null)
+    ) {
+      this.startEditing();
+    }
+  }
+
+  private startEditing(): void {
     this.editing = true;
     this.editModel = this.createEditModel();
+  }
+
+  protected onDoubleClick(): void {
+    this.startEditing();
   }
 
   protected onCancel(): void {
     this.editing = false;
     this.editModel = null;
+    this.cancel.emit();
   }
 
   protected onSave(): void {

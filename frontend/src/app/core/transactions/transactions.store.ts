@@ -7,6 +7,7 @@ import {
   TransactionsListResponse,
   TransactionsQuery,
   UpdateTransactionPayload,
+  CreateTransactionPayload,
 } from './transactions.models';
 
 interface TransactionsState {
@@ -97,6 +98,41 @@ export class TransactionsStore {
       return transaction;
     } catch (error) {
       this.errorSignal.set(this.mapError(error, 'Impossible de mettre à jour la transaction.'));
+      return null;
+    } finally {
+      this.setLoading(false);
+    }
+  }
+
+  async create(accountId: string, payload: CreateTransactionPayload): Promise<Transaction | null> {
+    this.setLoading(true);
+    this.clearError();
+
+    try {
+      const transaction = await firstValueFrom(
+        this.http.post<Transaction>(
+          `${this.apiBaseUrl}/accounts/${encodeURIComponent(accountId)}/transactions`,
+          payload,
+        ),
+      );
+
+      this.stateSignal.update((state) => {
+        if (state.accountId !== accountId) {
+          return state;
+        }
+        return {
+          ...state,
+          items: [transaction, ...state.items],
+          meta: {
+            ...state.meta,
+            total: state.meta.total + 1,
+          },
+        };
+      });
+
+      return transaction;
+    } catch (error) {
+      this.errorSignal.set(this.mapError(error, 'Impossible de créer la transaction.'));
       return null;
     } finally {
       this.setLoading(false);
