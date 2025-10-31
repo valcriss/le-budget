@@ -1,9 +1,10 @@
-import { Component, signal, HostListener, ElementRef, inject } from '@angular/core';
+import { Component, signal, HostListener, ElementRef, inject, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIf } from '@angular/common';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { NavItem } from '../nav-item/nav-item';
 import { AuthStore } from '../../../core/auth/auth.store';
+import { AccountsStore } from '../../../core/accounts/accounts.store';
 import {
   faGauge,
   faList,
@@ -45,7 +46,20 @@ export class Header {
     this.userMenuOpen.set(false);
   }
 
-  constructor(library: FaIconLibrary, private el: ElementRef, private readonly authStore: AuthStore = inject(AuthStore)) {
+  private readonly accountsStore = inject(AccountsStore);
+  protected readonly desktopAccountsLink = computed(() => {
+    const list = this.accountsStore.accounts();
+    if (!list.length) {
+      return '/accounts';
+    }
+    return `/accounts/${encodeURIComponent(list[0].id)}`;
+  });
+
+  constructor(
+    library: FaIconLibrary,
+    private el: ElementRef,
+    private readonly authStore: AuthStore = inject(AuthStore),
+  ) {
     library.addIcons(faGauge, faList, faCog, faUser, faWallet, faRightFromBracket);
   }
 

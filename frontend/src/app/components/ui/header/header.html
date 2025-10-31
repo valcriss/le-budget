@@ -9,7 +9,7 @@
       <!-- center: nav (hidden on small) -->
       <nav class="hidden md:flex space-x-6">
         <app-nav-item link="/budget" [icon]="icDashboard">Mon Budget</app-nav-item>
-        <app-nav-item link="/accounts/1" [icon]="icAccounts">Mes comptes</app-nav-item>
+        <app-nav-item [link]="desktopAccountsLink()" [icon]="icAccounts">Mes comptes</app-nav-item>
       </nav>
 
       <!-- right: controls -->
