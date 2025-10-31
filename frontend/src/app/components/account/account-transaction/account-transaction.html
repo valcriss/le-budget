@@ -1,17 +1,27 @@
-<div (dblclick)="onDoubleClick()" class="flex flex-row px-2 h-8 text-xs text-gray-500 border-b border-gray-100">
+<div
+  (dblclick)="onDoubleClick()"
+  class="flex flex-row px-2 h-8 text-xs text-gray-500 border-b border-gray-100">
   <div class="basis-0 flex items-center"><app-checkbox></app-checkbox></div>
   <!-- Read mode -->
   <ng-container *ngIf="!editing">
-    <div class="basis-6/12 md:basis-2/12 flex items-center px-1">{{ transaction.date }}</div>
-    <div class="basis-3/12 md:basis-2/12 flex items-center px-1">{{ transaction.label }}</div>
-    <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">{{ transaction.category }}</div>
-    <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right"
-      [class]="getAmountClass(transaction.debit)">
-      {{ formatCurrencyWithSign(transaction.debit, false, true) }}
+    <div class="basis-6/12 md:basis-2/12 flex items-center px-1">
+      {{ formatDisplayDate(transaction.date) }}
     </div>
-    <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right"
-      [class]="getAmountClass(transaction.credit)">
-      {{ formatCurrencyWithSign(transaction.credit, false, true) }}
+    <div class="basis-3/12 md:basis-2/12 flex items-center px-1">{{ transaction.label }}</div>
+    <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">
+      {{ transaction.categoryName || '—' }}
+    </div>
+    <div
+      class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right"
+      [class]="getAmountClass(debitAmount(transaction))"
+    >
+      {{ formatCurrencyWithSign(debitAmount(transaction), false, true) }}
+    </div>
+    <div
+      class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right"
+      [class]="getAmountClass(creditAmount(transaction))"
+    >
+      {{ formatCurrencyWithSign(creditAmount(transaction), false, true) }}
     </div>
     <div class="basis-0 flex items-center  cursor-pointer">
       <fa-icon [icon]="icCircle" class="w-4 h-4 mx-2 text-gray-300"></fa-icon>
@@ -23,31 +33,42 @@
   </ng-container>
 
   <!-- Edit mode -->
-  <ng-container *ngIf="editing">
+  <ng-container *ngIf="editing && editModel as model">
     <div class="basis-6/12 md:basis-2/12 flex items-center px-1">
-      <app-date-picker class="w-full text-xs" [(ngModel)]="editModel.date"></app-date-picker>
+      <app-date-picker class="w-full text-xs" [(ngModel)]="model.date"></app-date-picker>
     </div>
     <div class="basis-3/12 md:basis-2/12 flex items-center px-1">
-      <ng-select class="w-full text-xs transaction-select" [items]="labels" [(ngModel)]="editModel.label"
-        [clearable]="false" [searchable]="true" [addTag]="true" dropdownPosition="bottom"></ng-select>
+      <ng-select
+        class="w-full text-xs transaction-select"
+        [items]="labels"
+        [(ngModel)]="model.label"
+        [disabled]="transaction.transactionType === 'INITIAL'"
+        [clearable]="false"
+        [searchable]="true"
+        [addTag]="true"
+        dropdownPosition="bottom"
+      ></ng-select>
     </div>
     <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">
       <ng-select
         class="w-full text-xs transaction-select"
         [items]="categoryOptions()"
-        [(ngModel)]="editModel.category"
-        [clearable]="false"
+        bindLabel="name"
+        bindValue="id"
+        [(ngModel)]="model.categoryId"
+        [disabled]="transaction.transactionType === 'INITIAL'"
+        [clearable]="true"
         [searchable]="true"
         dropdownPosition="bottom"
       ></ng-select>
     </div>
     <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right">
       <input class="w-full text-xs p-1 text-right border rounded" type="number" step="0.01"
-        [(ngModel)]="editModel.debit">
+        [(ngModel)]="model.debit">
     </div>
     <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right">
       <input class="w-full text-xs p-1 text-right border rounded" type="number" step="0.01"
-        [(ngModel)]="editModel.credit">
+        [(ngModel)]="model.credit">
     </div>
         <div class="basis-0 flex items-center  cursor-pointer">
       <fa-icon [icon]="icCircle" class="w-4 h-4 mx-2 text-gray-300"></fa-icon>

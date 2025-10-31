@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccountType, CategoryKind, Prisma } from '@prisma/client';
+import { AccountType, CategoryKind, Prisma, TransactionType } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
@@ -43,8 +43,9 @@ export class AccountsService {
     });
 
     const entity = this.toEntity(account);
-    await this.ensureInitialCategory(userId);
+    const initialCategoryId = await this.ensureInitialCategory(userId);
     await this.createTransferCategory(userId, account);
+    await this.createInitialTransaction(account.id, initial, initialCategoryId);
     this.events.emit('account.created', entity);
     return entity;
   }
@@ -105,6 +106,13 @@ export class AccountsService {
       data,
     });
 
+    if (dto.initialBalance !== undefined) {
+      await this.prisma.transaction.updateMany({
+        where: { accountId: account.id, transactionType: TransactionType.INITIAL },
+        data: { amount: new Prisma.Decimal(dto.initialBalance) },
+      });
+    }
+
     const entity = this.toEntity(account);
     this.events.emit('account.updated', entity);
     return entity;
@@ -139,13 +147,13 @@ export class AccountsService {
     });
   }
 
-  private async ensureInitialCategory(userId: string) {
+  private async ensureInitialCategory(userId: string): Promise<string> {
     const existing = await this.prisma.category.findFirst({
       where: { userId, kind: CategoryKind.INITIAL },
       select: { id: true },
     });
     if (existing) {
-      return;
+      return existing.id;
     }
 
     const { _max } = await this.prisma.category.aggregate({
@@ -153,7 +161,7 @@ export class AccountsService {
       _max: { sortOrder: true },
     });
 
-    await this.prisma.category.create({
+    const category = await this.prisma.category.create({
       data: {
         userId,
         name: 'Solde initial',
@@ -161,6 +169,7 @@ export class AccountsService {
         sortOrder: (_max.sortOrder ?? -1) + 1,
       },
     });
+    return category.id;
   }
 
   private async createTransferCategory(userId: string, account: { id: string; name: string }) {
@@ -176,6 +185,19 @@ export class AccountsService {
         kind: CategoryKind.TRANSFER,
         sortOrder: (_max.sortOrder ?? -1) + 1,
         linkedAccountId: account.id,
+      },
+    });
+  }
+
+  private async createInitialTransaction(accountId: string, amount: number, categoryId: string) {
+    await this.prisma.transaction.create({
+      data: {
+        accountId,
+        categoryId,
+        date: new Date(),
+        label: 'Solde initial',
+        amount: new Prisma.Decimal(amount),
+        transactionType: TransactionType.INITIAL,
       },
     });
   }

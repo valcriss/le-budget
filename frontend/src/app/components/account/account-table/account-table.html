@@ -22,11 +22,23 @@
         </div>
     </div>
     <div>
-        <app-account-transaction></app-account-transaction>
-        <app-account-transaction></app-account-transaction>
-        <app-account-transaction></app-account-transaction>
-        <app-account-transaction></app-account-transaction>
-        <app-account-transaction></app-account-transaction>
-        <app-account-transaction></app-account-transaction>
+        <div *ngIf="error()" class="px-2 py-2 text-xs text-rose-600">
+            {{ error() }}
+        </div>
+        <ng-container *ngIf="loading(); else transactionsList">
+            <div class="px-2 py-4 text-xs text-gray-400">Chargement des transactions…</div>
+        </ng-container>
+        <ng-template #transactionsList>
+            <ng-container *ngIf="transactions().length; else emptyState">
+                <app-account-transaction
+                    *ngFor="let transaction of transactions(); trackBy: trackByTransactionId"
+                    [transaction]="transaction"
+                    (save)="handleSave($event)"
+                ></app-account-transaction>
+            </ng-container>
+        </ng-template>
+        <ng-template #emptyState>
+            <div class="px-2 py-4 text-xs text-gray-400">Aucune transaction à afficher.</div>
+        </ng-template>
     </div>
 </div>

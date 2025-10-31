@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Transaction, TransactionStatus, TransactionType } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -74,7 +74,7 @@ export class TransactionsService {
       this.prisma.transaction.count({ where }),
       this.prisma.transaction.findMany({
         where: { accountId: account.id },
-        select: { id: true, amount: true, date: true, createdAt: true },
+        select: { id: true, amount: true, date: true, createdAt: true, transactionType: true },
         orderBy: [
           { date: 'asc' },
           { createdAt: 'asc' },
@@ -100,6 +100,10 @@ export class TransactionsService {
     const account = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
     if (!account) {
       throw new NotFoundException(`Account ${accountId} not found`);
+    }
+
+    if (dto.transactionType === TransactionType.INITIAL) {
+      throw new BadRequestException('Les transactions initiales sont gérées automatiquement.');
     }
 
     if (dto.categoryId) {
@@ -179,12 +183,37 @@ export class TransactionsService {
       throw new NotFoundException(`Transaction ${transactionId} not found`);
     }
 
-    if (dto.categoryId) {
-      await this.ensureCategoryOwnership(dto.categoryId, userId);
+    const isInitial = existing.transactionType === TransactionType.INITIAL;
+
+    if (dto.categoryId !== undefined) {
+      if (isInitial && dto.categoryId !== existing.categoryId) {
+        throw new BadRequestException('La catégorie de la transaction initiale ne peut pas être modifiée.');
+      }
+      if (dto.categoryId) {
+        await this.ensureCategoryOwnership(dto.categoryId, userId);
+      }
     }
 
-    if (dto.linkedTransactionId) {
-      await this.ensureTransactionOwnership(dto.linkedTransactionId, userId);
+    if (dto.linkedTransactionId !== undefined) {
+      if (isInitial && dto.linkedTransactionId !== existing.linkedTransactionId) {
+        throw new BadRequestException('Les transactions initiales ne peuvent pas être liées.');
+      }
+      if (dto.linkedTransactionId) {
+        await this.ensureTransactionOwnership(dto.linkedTransactionId, userId);
+      }
+    }
+
+    if (dto.label !== undefined && isInitial && dto.label !== existing.label) {
+      throw new BadRequestException('Le libellé de la transaction initiale ne peut pas être modifié.');
+    }
+
+    if (dto.transactionType !== undefined) {
+      if (isInitial && dto.transactionType !== TransactionType.INITIAL) {
+        throw new BadRequestException('Le type de la transaction initiale ne peut pas être modifié.');
+      }
+      if (!isInitial && dto.transactionType === TransactionType.INITIAL) {
+        throw new BadRequestException('Impossible de définir une transaction initiale via cette API.');
+      }
     }
 
     const newAmount = dto.amount !== undefined ? new Prisma.Decimal(dto.amount) : existing.amount;
@@ -239,6 +268,10 @@ export class TransactionsService {
       throw new NotFoundException(`Transaction ${transactionId} not found`);
     }
 
+    if (existing.transactionType === TransactionType.INITIAL) {
+      throw new BadRequestException('Les transactions initiales sont gérées automatiquement.');
+    }
+
     const runningBefore = await this.recalculateRunningMap(
       account.id,
       Number(account.initialBalance),
@@ -259,13 +292,17 @@ export class TransactionsService {
   }
 
   private computeRunningBalances(
-    ledger: Array<Pick<Transaction, 'id' | 'amount' | 'date' | 'createdAt'>>,
+    ledger: Array<Pick<Transaction, 'id' | 'amount' | 'date' | 'createdAt' | 'transactionType'>>,
     initialBalance: number,
   ): Map<string, number> {
     const map = new Map<string, number>();
     let running = initialBalance;
     for (const entry of ledger) {
-      running += Number(entry.amount);
+      if (entry.transactionType === TransactionType.INITIAL) {
+        running = Number(entry.amount);
+      } else {
+        running += Number(entry.amount);
+      }
       map.set(entry.id, running);
     }
     return map;
@@ -274,7 +311,7 @@ export class TransactionsService {
   private async recalculateRunningMap(accountId: string, initialBalance: number) {
     const ledger = await this.prisma.transaction.findMany({
       where: { accountId },
-      select: { id: true, amount: true, date: true, createdAt: true },
+      select: { id: true, amount: true, date: true, createdAt: true, transactionType: true },
       orderBy: [
         { date: 'asc' },
         { createdAt: 'asc' },
