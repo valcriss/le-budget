@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
+import { TransactionStatus } from '@prisma/client';
 
 export class TransactionEntity {
   @ApiProperty()
@@ -42,9 +43,9 @@ export class TransactionEntity {
   @Expose()
   balance!: number;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ enum: TransactionStatus })
   @Expose()
-  memo?: string | null;
+  status!: TransactionStatus;
 
   @ApiProperty()
   @Expose()

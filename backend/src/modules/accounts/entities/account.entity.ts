@@ -31,6 +31,10 @@ export class AccountEntity {
   @Expose()
   reconciledBalance!: number;
 
+  @ApiProperty({ description: 'Balance with pointed transactions' })
+  @Expose()
+  pointedBalance!: number;
+
   @ApiProperty({ default: false })
   @Expose()
   archived!: boolean;

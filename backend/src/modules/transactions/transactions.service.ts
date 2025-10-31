@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Transaction } from '@prisma/client';
+import { Prisma, Transaction, TransactionStatus } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
@@ -49,10 +49,11 @@ export class TransactionsService {
     }
 
     if (query.search) {
-      where.OR = [
-        { label: { contains: query.search, mode: 'insensitive' } },
-        { memo: { contains: query.search, mode: 'insensitive' } },
-      ];
+      where.label = { contains: query.search, mode: 'insensitive' };
+    }
+
+    if (query.status) {
+      where.status = query.status;
     }
 
     const [items, total, ledger] = await this.prisma.$transaction([
@@ -111,7 +112,7 @@ export class TransactionsService {
           date: new Date(dto.date),
           label: dto.label,
           amount,
-          memo: dto.memo,
+          status: dto.status ?? TransactionStatus.NONE,
         },
         include: { category: { select: { id: true, name: true } } },
       });
@@ -183,7 +184,7 @@ export class TransactionsService {
           date: dto.date ? new Date(dto.date) : existing.date,
           label: dto.label ?? existing.label,
           amount: newAmount,
-          memo: dto.memo ?? existing.memo,
+          status: dto.status ?? existing.status,
         },
         include: { category: { select: { id: true, name: true } } },
       });
@@ -290,6 +291,7 @@ export class TransactionsService {
       balance: runningBalance,
       categoryId: transaction.category?.id ?? transaction.categoryId ?? null,
       categoryName: transaction.category?.name ?? null,
+      status: transaction.status,
     });
   }
 }

@@ -14,6 +14,7 @@ export interface Account {
   initialBalance: number;
   currentBalance: number;
   reconciledBalance: number;
+  pointedBalance: number;
   archived: boolean;
   createdAt: string | null;
   updatedAt: string | null;
@@ -30,6 +31,7 @@ export interface CreateAccountInput {
   currency?: string;
   initialBalance?: number;
   reconciledBalance?: number;
+  pointedBalance?: number;
   archived?: boolean;
 }
 

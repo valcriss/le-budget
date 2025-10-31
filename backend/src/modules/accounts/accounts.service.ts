@@ -38,7 +38,8 @@ export class AccountsService {
         initialBalance: new Prisma.Decimal(initial),
         currentBalance: new Prisma.Decimal(initial),
         reconciledBalance: new Prisma.Decimal(reconciled),
-      },
+        pointedBalance: new Prisma.Decimal(initial),
+      } as any,
     });
 
     const entity = this.toEntity(account);
@@ -88,6 +89,9 @@ export class AccountsService {
       data.currentBalance = {
         increment: diff,
       };
+      (data as Prisma.AccountUncheckedUpdateInput as any).pointedBalance = {
+        increment: diff,
+      };
     }
 
     if (dto.reconciledBalance !== undefined) {
@@ -129,6 +133,7 @@ export class AccountsService {
       initialBalance: Number(account.initialBalance),
       currentBalance: Number(account.currentBalance),
       reconciledBalance: Number(account.reconciledBalance),
+      pointedBalance: Number(account.pointedBalance),
     });
   }
 }

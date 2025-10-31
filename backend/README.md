@@ -42,7 +42,7 @@ Prisma schema models the core budgeting entities:
 
 - `User` – root owner, seeded with demo credentials
 - `Account` – supports multiple types, tracks initial/current balances
-- `Transaction` – signed amounts with optional category, memo, running balance calculations
+- `Transaction` – signed amounts with optional category, tracked status, running balance calculations
 - `Category` – scoped per user, typed (`EXPENSE`, `INCOME`, …)
 - `BudgetMonth` – monthly snapshot with carry-over and income
 - `BudgetCategoryGroup` / `BudgetCategory` – represent grouped “envelope” budgeting totals

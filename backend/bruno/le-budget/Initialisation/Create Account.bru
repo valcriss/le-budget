@@ -1,0 +1,31 @@
+meta {
+  name: Create Account
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{API_URL}}/accounts
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Compte Courant",
+    "type": "CHECKING",
+    "currency": "EUR",
+    "initialBalance": 2000,
+    "archived": false
+  }
+}
+
+script:post-response {
+  let data = res.getBody();
+  bru.setVar("MAIN_ACCOUNT", data.id, { persist: true });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

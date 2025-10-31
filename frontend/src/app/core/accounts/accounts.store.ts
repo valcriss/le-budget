@@ -18,6 +18,7 @@ type AccountResponse = {
   initialBalance?: number | string | null;
   currentBalance?: number | string | null;
   reconciledBalance?: number | string | null;
+  pointedBalance?: number | string | null;
   archived?: boolean | null;
   createdAt?: string | Date | null;
   updatedAt?: string | Date | null;
@@ -174,6 +175,7 @@ export class AccountsStore {
       initialBalance: this.toNumber(data.initialBalance),
       currentBalance: this.toNumber(data.currentBalance),
       reconciledBalance: this.toNumber(data.reconciledBalance),
+      pointedBalance: this.toNumber(data.pointedBalance),
       archived: Boolean(data.archived),
       createdAt: this.toIsoString(data.createdAt),
       updatedAt: this.toIsoString(data.updatedAt),

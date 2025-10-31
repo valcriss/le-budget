@@ -36,6 +36,7 @@ export class AccountsList {
   }
 
   protected openDialog(): void {
+    this.accountsStore.clearSaveError();
     this.dialogError.set(null);
     this.dialogSubmitting.set(false);
     this.dialogOpen.set(true);
@@ -63,6 +64,7 @@ export class AccountsList {
         reconciledBalance: initialBalance,
         currency: this.accountsStore.getDefaultCurrency(),
       });
+      this.accountsStore.clearSaveError();
       this.dialogOpen.set(false);
     } catch (error) {
       const message = this.accountsStore.saveError();

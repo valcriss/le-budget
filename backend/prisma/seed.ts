@@ -1,4 +1,4 @@
-import { AccountType, CategoryKind, PrismaClient } from '@prisma/client';
+import { AccountType, CategoryKind, PrismaClient, Prisma } from '@prisma/client';
 import { hash } from 'argon2';
 
 const prisma = new PrismaClient();
@@ -174,7 +174,8 @@ async function main() {
         currency: accountSeed.currency,
         initialBalance: accountSeed.initialBalance,
         currentBalance: accountSeed.initialBalance,
-      },
+        pointedBalance: accountSeed.initialBalance,
+      } as any,
     });
 
     let runningBalance = accountSeed.initialBalance;

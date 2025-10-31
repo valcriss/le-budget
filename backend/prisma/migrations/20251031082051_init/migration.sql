@@ -2,6 +2,9 @@
 CREATE TYPE "AccountType" AS ENUM ('CHECKING', 'SAVINGS', 'CREDIT_CARD', 'CASH', 'INVESTMENT', 'OTHER');
 
 -- CreateEnum
+CREATE TYPE "TransactionStatus" AS ENUM ('NONE', 'POINTED', 'RECONCILED');
+
+-- CreateEnum
 CREATE TYPE "CategoryKind" AS ENUM ('EXPENSE', 'INCOME', 'TRANSFER', 'GOAL');
 
 -- CreateTable
@@ -38,6 +41,7 @@ CREATE TABLE "Account" (
     "initialBalance" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "currentBalance" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "reconciledBalance" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "pointedBalance" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "archived" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -78,7 +82,7 @@ CREATE TABLE "Transaction" (
     "date" TIMESTAMP(3) NOT NULL,
     "label" TEXT NOT NULL,
     "amount" DECIMAL(65,30) NOT NULL,
-    "memo" TEXT,
+    "status" "TransactionStatus" NOT NULL DEFAULT 'NONE',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -140,6 +144,9 @@ CREATE UNIQUE INDEX "Category_userId_name_key" ON "Category"("userId", "name");
 
 -- CreateIndex
 CREATE INDEX "Transaction_accountId_date_createdAt_idx" ON "Transaction"("accountId", "date", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "Transaction_status_idx" ON "Transaction"("status");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "BudgetMonth_userId_month_key" ON "BudgetMonth"("userId", "month");

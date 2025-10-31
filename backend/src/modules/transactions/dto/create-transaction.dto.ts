@@ -7,7 +7,9 @@ import {
   IsString,
   IsUUID,
   MaxLength,
+  IsEnum,
 } from 'class-validator';
+import { TransactionStatus } from '@prisma/client';
 
 export class CreateTransactionDto {
   @ApiProperty({ description: 'Transaction date in ISO 8601 format' })
@@ -24,14 +26,13 @@ export class CreateTransactionDto {
   @IsNumber()
   amount!: number;
 
-  @ApiPropertyOptional({ description: 'Optional note' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  memo?: string;
-
   @ApiPropertyOptional({ description: 'Category identifier' })
   @IsOptional()
   @IsUUID()
   categoryId?: string;
+
+  @ApiPropertyOptional({ description: 'Transaction status', enum: TransactionStatus, default: TransactionStatus.NONE })
+  @IsOptional()
+  @IsEnum(TransactionStatus)
+  status?: TransactionStatus;
 }

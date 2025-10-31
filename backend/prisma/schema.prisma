@@ -16,6 +16,12 @@ enum AccountType {
   OTHER
 }
 
+enum TransactionStatus {
+  NONE
+  POINTED
+  RECONCILED
+}
+
 enum CategoryKind {
   EXPENSE
   INCOME
@@ -60,6 +66,7 @@ model Account {
   initialBalance Decimal      @default(0)
   currentBalance Decimal      @default(0)
   reconciledBalance Decimal   @default(0)
+  pointedBalance Decimal      @default(0)
   archived       Boolean      @default(false)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -107,11 +114,12 @@ model Transaction {
   date       DateTime
   label      String
   amount     Decimal
-  memo       String?
+  status     TransactionStatus @default(NONE)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   @@index([accountId, date, createdAt])
+  @@index([status])
 }
 
 model BudgetMonth {
