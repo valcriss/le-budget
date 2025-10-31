@@ -111,6 +111,24 @@ async function main() {
     }
   }
 
+  let initialCategory = await prisma.category.findFirst({
+    where: { userId: demoUser.id, kind: CategoryKind.INITIAL },
+  });
+  if (!initialCategory) {
+    const { _max } = await prisma.category.aggregate({
+      where: { userId: demoUser.id, parentCategoryId: null },
+      _max: { sortOrder: true },
+    });
+    initialCategory = await prisma.category.create({
+      data: {
+        userId: demoUser.id,
+        name: 'Solde initial',
+        kind: CategoryKind.INITIAL,
+        sortOrder: (_max.sortOrder ?? -1) + 1,
+      },
+    });
+  }
+
   const accountsSeed = [
     {
       name: 'Compte CIC',

@@ -8,7 +8,7 @@ CREATE TYPE "TransactionStatus" AS ENUM ('NONE', 'POINTED', 'RECONCILED');
 CREATE TYPE "TransactionType" AS ENUM ('NONE', 'INITIAL', 'TRANSFERT');
 
 -- CreateEnum
-CREATE TYPE "CategoryKind" AS ENUM ('EXPENSE', 'INCOME', 'TRANSFER', 'GOAL');
+CREATE TYPE "CategoryKind" AS ENUM ('EXPENSE', 'INCOME', 'TRANSFER', 'INITIAL');
 
 -- CreateTable
 CREATE TABLE "User" (

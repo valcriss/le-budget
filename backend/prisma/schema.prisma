@@ -32,7 +32,7 @@ enum CategoryKind {
   EXPENSE
   INCOME
   TRANSFER
-  GOAL
+  INITIAL
 }
 
 model User {

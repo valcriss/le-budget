@@ -43,6 +43,7 @@ export class AccountsService {
     });
 
     const entity = this.toEntity(account);
+    await this.ensureInitialCategory(userId);
     await this.createTransferCategory(userId, account);
     this.events.emit('account.created', entity);
     return entity;
@@ -135,6 +136,30 @@ export class AccountsService {
       currentBalance: Number(account.currentBalance),
       reconciledBalance: Number(account.reconciledBalance),
       pointedBalance: Number(account.pointedBalance),
+    });
+  }
+
+  private async ensureInitialCategory(userId: string) {
+    const existing = await this.prisma.category.findFirst({
+      where: { userId, kind: CategoryKind.INITIAL },
+      select: { id: true },
+    });
+    if (existing) {
+      return;
+    }
+
+    const { _max } = await this.prisma.category.aggregate({
+      where: { userId, parentCategoryId: null },
+      _max: { sortOrder: true },
+    });
+
+    await this.prisma.category.create({
+      data: {
+        userId,
+        name: 'Solde initial',
+        kind: CategoryKind.INITIAL,
+        sortOrder: (_max.sortOrder ?? -1) + 1,
+      },
     });
   }
 

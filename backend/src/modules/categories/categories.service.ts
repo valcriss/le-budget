@@ -19,8 +19,12 @@ export class CategoriesService {
   async create(dto: CreateCategoryDto): Promise<CategoryEntity> {
     const userId = this.userContext.getUserId();
 
-    if ((dto.kind ?? CategoryKind.EXPENSE) === CategoryKind.TRANSFER) {
+    const requestedKind = dto.kind ?? CategoryKind.EXPENSE;
+    if (requestedKind === CategoryKind.TRANSFER) {
       throw new BadRequestException('Les catégories de transfert sont gérées automatiquement.');
+    }
+    if (requestedKind === CategoryKind.INITIAL) {
+      throw new BadRequestException('Les catégories initiales sont gérées automatiquement.');
     }
     let parentCategoryId: string | null = null;
     if (dto.parentCategoryId) {
@@ -76,9 +80,15 @@ export class CategoriesService {
     if (existing.kind === CategoryKind.TRANSFER) {
       throw new BadRequestException('Les catégories de transfert ne peuvent pas être modifiées.');
     }
+    if (existing.kind === CategoryKind.INITIAL) {
+      throw new BadRequestException('Les catégories initiales ne peuvent pas être modifiées.');
+    }
 
     if (dto.kind === CategoryKind.TRANSFER) {
       throw new BadRequestException('Impossible de définir une catégorie utilisateur comme transfert.');
+    }
+    if (dto.kind === CategoryKind.INITIAL) {
+      throw new BadRequestException('Impossible de définir une catégorie utilisateur comme initial.');
     }
 
     const data: Prisma.CategoryUpdateInput = {
@@ -121,6 +131,9 @@ export class CategoriesService {
 
     if (existing.kind === CategoryKind.TRANSFER) {
       throw new BadRequestException('Les catégories de transfert ne peuvent pas être supprimées.');
+    }
+    if (existing.kind === CategoryKind.INITIAL) {
+      throw new BadRequestException('Les catégories initiales ne peuvent pas être supprimées.');
     }
 
     const childrenCount = await this.prisma.category.count({
