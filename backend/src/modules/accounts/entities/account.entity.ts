@@ -15,10 +15,6 @@ export class AccountEntity {
   @Expose()
   type!: AccountType;
 
-  @ApiProperty({ required: false, nullable: true })
-  @Expose()
-  institution?: string | null;
-
   @ApiProperty({ default: 'EUR' })
   @Expose()
   currency!: string;

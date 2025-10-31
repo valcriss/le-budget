@@ -35,6 +35,7 @@ model User {
   categories     Category[]
   budgetMonths   BudgetMonth[]
   refreshTokens  RefreshToken[]
+  settings       UserSettings?
 }
 
 model RefreshToken {
@@ -55,7 +56,6 @@ model Account {
   userId         String
   name           String
   type           AccountType  @default(CHECKING)
-  institution    String?
   currency       String       @default("EUR")
   initialBalance Decimal      @default(0)
   currentBalance Decimal      @default(0)
@@ -67,6 +67,15 @@ model Account {
   transactions   Transaction[]
 
   @@index([userId, name])
+}
+
+model UserSettings {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @unique
+  currency  String   @default("EUR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Category {

@@ -1,15 +1,7 @@
 import { AccountType } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Length,
-  MaxLength,
-} from 'class-validator';
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Length, MaxLength } from 'class-validator';
 
 export class CreateAccountDto {
   @ApiProperty({ description: 'Human readable account name' })
@@ -21,12 +13,6 @@ export class CreateAccountDto {
   @IsOptional()
   @IsEnum(AccountType)
   type?: AccountType;
-
-  @ApiPropertyOptional({ description: 'Financial institution name' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  institution?: string;
 
   @ApiPropertyOptional({ description: 'Currency ISO code', default: 'EUR', minLength: 3, maxLength: 3 })
   @IsOptional()

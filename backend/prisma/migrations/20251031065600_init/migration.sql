@@ -34,7 +34,6 @@ CREATE TABLE "Account" (
     "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "type" "AccountType" NOT NULL DEFAULT 'CHECKING',
-    "institution" TEXT,
     "currency" TEXT NOT NULL DEFAULT 'EUR',
     "initialBalance" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "currentBalance" DECIMAL(65,30) NOT NULL DEFAULT 0,
@@ -44,6 +43,17 @@ CREATE TABLE "Account" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Account_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserSettings" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "currency" TEXT NOT NULL DEFAULT 'EUR',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "UserSettings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -123,6 +133,9 @@ CREATE INDEX "RefreshToken_userId_expiresAt_idx" ON "RefreshToken"("userId", "ex
 CREATE INDEX "Account_userId_name_idx" ON "Account"("userId", "name");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "UserSettings_userId_key" ON "UserSettings"("userId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Category_userId_name_key" ON "Category"("userId", "name");
 
 -- CreateIndex
@@ -142,6 +155,9 @@ ALTER TABLE "RefreshToken" ADD CONSTRAINT "RefreshToken_userId_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserSettings" ADD CONSTRAINT "UserSettings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Category" ADD CONSTRAINT "Category_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

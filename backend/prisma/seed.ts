@@ -115,7 +115,6 @@ async function main() {
     {
       name: 'Compte CIC',
       type: AccountType.CHECKING,
-      institution: 'CIC',
       currency: 'EUR',
       initialBalance: 500,
       transactions: [
@@ -160,7 +159,6 @@ async function main() {
     {
       name: 'Compte Crédit Agricole',
       type: AccountType.SAVINGS,
-      institution: 'Crédit Agricole',
       currency: 'EUR',
       initialBalance: 1500,
       transactions: [],
@@ -173,7 +171,6 @@ async function main() {
         userId: demoUser.id,
         name: accountSeed.name,
         type: accountSeed.type,
-        institution: accountSeed.institution,
         currency: accountSeed.currency,
         initialBalance: accountSeed.initialBalance,
         currentBalance: accountSeed.initialBalance,

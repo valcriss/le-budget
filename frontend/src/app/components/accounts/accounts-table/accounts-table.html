@@ -42,8 +42,14 @@
                         {{ formatCurrency(account.currentBalance) }}
                     </div>
                     <div class="w-8 flex items-center justify-end px-1 text-right">
-                        <fa-icon [icon]="icEditAccount"
-                            class="text-gray-400 text-xs cursor-pointer hover:text-[#58a9ff]"></fa-icon>
+                        <button
+                            type="button"
+                            class="text-gray-400 hover:text-[#58a9ff]"
+                            (click)="openEditDialog(account)"
+                            aria-label="Modifier le compte {{ account.name }}"
+                        >
+                            <fa-icon [icon]="icEditAccount" class="text-xs"></fa-icon>
+                        </button>
                     </div>
                 </div>
 
@@ -70,3 +76,16 @@
         </ng-template>
     </ng-template>
 </div>
+
+<app-account-dialog
+    *ngIf="dialogOpen()"
+    title="Modifier le compte"
+    submitLabel="Enregistrer"
+    [submitting]="dialogSubmitting()"
+    [serverError]="dialogError()"
+    [currencyCode]="defaultCurrency()"
+    [showAmountFields]="false"
+    [initialValue]="dialogInitialValue()"
+    (cancelled)="closeDialog()"
+    (submitted)="handleUpdate($event)"
+></app-account-dialog>

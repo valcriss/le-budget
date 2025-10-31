@@ -69,72 +69,26 @@
         </select>
       </div>
 
-      <div class="flex flex-col gap-1">
-        <label for="account-institution" class="text-sm font-medium text-slate-700">
-          Institution bancaire (optionnel)
+      <div class="rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        Devise appliquée&nbsp;: <span class="font-semibold">{{ currencyCode }}</span>. Tous les comptes
+        utiliseront cette monnaie par défaut.
+      </div>
+
+      <div class="flex flex-col gap-1" *ngIf="showAmountFields">
+        <label for="account-initial" class="text-sm font-medium text-slate-700">
+          Solde initial
         </label>
         <input
-          id="account-institution"
-          type="text"
+          id="account-initial"
+          type="number"
           class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#58a9ff] focus:outline-none focus:ring-1 focus:ring-[#58a9ff]"
-          formControlName="institution"
-          autocomplete="off"
-          [maxlength]="120"
-          placeholder="Crédit Agricole"
+          formControlName="initialBalance"
+          inputmode="decimal"
+          placeholder="0,00"
         />
-        <p *ngIf="hasError('institution', 'maxlength')" class="text-xs text-rose-600">
-          Maximum 120 caractères.
+        <p class="text-xs text-gray-500">
+          Le solde rapproché sera automatiquement initialisé avec ce montant.
         </p>
-      </div>
-
-      <div class="flex flex-col gap-1">
-        <label for="account-currency" class="text-sm font-medium text-slate-700">
-          Devise (code ISO 4217)
-        </label>
-        <input
-          id="account-currency"
-          type="text"
-          class="w-24 rounded border border-gray-300 px-3 py-2 text-sm uppercase tracking-widest focus:border-[#58a9ff] focus:outline-none focus:ring-1 focus:ring-[#58a9ff]"
-          formControlName="currency"
-          autocomplete="off"
-          [maxlength]="3"
-        />
-        <p *ngIf="hasError('currency', 'required')" class="text-xs text-rose-600">
-          La devise est obligatoire.
-        </p>
-        <p *ngIf="hasError('currency', 'pattern')" class="text-xs text-rose-600">
-          Indiquez un code ISO sur 3 lettres (ex&nbsp;: EUR).
-        </p>
-      </div>
-
-      <div class="grid gap-4 md:grid-cols-2">
-        <div class="flex flex-col gap-1">
-          <label for="account-initial" class="text-sm font-medium text-slate-700">
-            Solde initial
-          </label>
-          <input
-            id="account-initial"
-            type="number"
-            class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#58a9ff] focus:outline-none focus:ring-1 focus:ring-[#58a9ff]"
-            formControlName="initialBalance"
-            inputmode="decimal"
-            placeholder="0,00"
-          />
-        </div>
-
-        <div class="flex flex-col gap-1">
-          <label for="account-reconciled" class="text-sm font-medium text-slate-700">
-            Solde rapproché
-          </label>
-          <input
-            id="account-reconciled"
-            type="number"
-            class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#58a9ff] focus:outline-none focus:ring-1 focus:ring-[#58a9ff]"
-            formControlName="reconciledBalance"
-            inputmode="decimal"
-            placeholder="0,00"
-          />
-        </div>
       </div>
 
       <div class="flex justify-end gap-3 pt-4">

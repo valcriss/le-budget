@@ -17,6 +17,8 @@ describe('AccountsMenu', () => {
       saving: signal(false),
       createAccount: jasmine.createSpy('createAccount').and.resolveTo(undefined),
       clearSaveError: jasmine.createSpy('clearSaveError'),
+      defaultCurrency: signal('EUR'),
+      getDefaultCurrency: jasmine.createSpy('getDefaultCurrency').and.returnValue('EUR'),
     } satisfies Partial<AccountsStore>;
 
     await TestBed.configureTestingModule({

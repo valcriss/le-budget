@@ -15,6 +15,9 @@ describe('AccountsTable', () => {
       error: signal<string | null>(null),
       totals: computed(() => ({ currentBalance: 0, reconciledBalance: 0 })),
       loadAccounts: jasmine.createSpy('loadAccounts'),
+      defaultCurrency: signal('EUR'),
+      updateAccount: jasmine.createSpy('updateAccount').and.resolveTo(undefined),
+      saveError: signal<string | null>(null),
     } satisfies Partial<AccountsStore>;
 
     await TestBed.configureTestingModule({

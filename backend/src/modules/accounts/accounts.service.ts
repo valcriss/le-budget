@@ -20,14 +20,20 @@ export class AccountsService {
     const userId = this.userContext.getUserId();
     const initial = dto.initialBalance ?? 0;
     const reconciled = dto.reconciledBalance ?? initial;
+    const settings = await this.prisma.userSettings.upsert({
+      where: { userId },
+      update: {},
+      create: { userId },
+      select: { currency: true },
+    });
+    const currency = (dto.currency ?? settings.currency ?? 'EUR').toUpperCase();
 
     const account = await this.prisma.account.create({
       data: {
         userId,
         name: dto.name,
         type: dto.type ?? AccountType.CHECKING,
-        institution: dto.institution,
-        currency: (dto.currency ?? 'EUR').toUpperCase(),
+        currency,
         archived: dto.archived ?? false,
         initialBalance: new Prisma.Decimal(initial),
         currentBalance: new Prisma.Decimal(initial),
@@ -72,7 +78,6 @@ export class AccountsService {
     const data: Prisma.AccountUpdateInput = {
       name: dto.name ?? existing.name,
       type: dto.type ?? existing.type,
-      institution: dto.institution ?? existing.institution,
       currency: dto.currency ? dto.currency.toUpperCase() : existing.currency,
       archived: dto.archived ?? existing.archived,
     };

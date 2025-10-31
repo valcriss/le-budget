@@ -1,6 +1,5 @@
 import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -42,7 +41,7 @@ export class AuthService {
       },
     });
 
-    return this.createAuthResponse(user);
+    return this.createAuthResponse(user.id);
   }
 
   async login(dto: LoginDto): Promise<AuthTokenResponseDto> {
@@ -57,19 +56,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.createAuthResponse(user);
+    return this.createAuthResponse(user.id);
   }
 
   async getProfile(userId: string): Promise<AuthUserDto> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, displayName: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
+    const user = await this.fetchAuthUser(userId);
     return plainToInstance(AuthUserDto, user);
   }
 
@@ -91,10 +82,12 @@ export class AuthService {
     }
 
     await this.prisma.refreshToken.delete({ where: { id: tokenId } });
-    return this.createAuthResponse(stored.user);
+    return this.createAuthResponse(stored.user.id);
   }
 
-  private async createAuthResponse(user: User): Promise<AuthTokenResponseDto> {
+  private async createAuthResponse(userId: string): Promise<AuthTokenResponseDto> {
+    const user = await this.fetchAuthUser(userId);
+
     const payload: JwtPayload = { sub: user.id, email: user.email };
     const accessToken = this.jwt.sign(payload);
 
@@ -103,11 +96,7 @@ export class AuthService {
     return plainToInstance(AuthTokenResponseDto, {
       accessToken,
       refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        displayName: user.displayName ?? null,
-      },
+      user: plainToInstance(AuthUserDto, user),
     });
   }
 
@@ -169,5 +158,45 @@ export class AuthService {
               ? 1000 * 60 * 60 * 24
               : 1000; // default seconds
     return amount * multiplier;
+  }
+
+  private async fetchAuthUser(userId: string): Promise<{
+    id: string;
+    email: string;
+    displayName: string | null;
+    settings: { currency: string };
+  }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        settings: {
+          select: {
+            currency: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.settings) {
+      const settings = await this.prisma.userSettings.upsert({
+        where: { userId },
+        update: {},
+        create: { userId },
+        select: { currency: true },
+      });
+      return {
+        ...user,
+        settings,
+      };
+    }
+
+    return user;
   }
 }

@@ -99,11 +99,12 @@ export class AuthStore {
           context: new HttpContext().set(SKIP_AUTH_REFRESH, true),
         }),
       );
-      this.userSignal.set(user);
+      const normalizedUser = this.normalizeUser(user);
+      this.userSignal.set(normalizedUser);
       const accessToken = this.tokenSignal();
       const refreshToken = this.refreshTokenSignal();
       if (accessToken && refreshToken) {
-        this.saveSession({ accessToken, refreshToken, user });
+        this.saveSession({ accessToken, refreshToken, user: normalizedUser });
       }
     } catch (error) {
       if (error instanceof HttpErrorResponse && error.status === 401) {
@@ -191,10 +192,18 @@ export class AuthStore {
   }
 
   private saveSession(session: StoredSession): void {
-    this.userSignal.set(session.user);
+    const normalizedUser = this.normalizeUser(session.user);
+    this.userSignal.set(normalizedUser);
     this.tokenSignal.set(session.accessToken);
     this.refreshTokenSignal.set(session.refreshToken);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+        user: normalizedUser,
+      }),
+    );
   }
 
   private scheduleProfileRefresh(): void {
@@ -254,5 +263,15 @@ export class AuthStore {
     }
 
     return null;
+  }
+
+  private normalizeUser(user: AuthUser): AuthUser {
+    const currency = (user as AuthUser & { settings?: { currency?: string } }).settings?.currency ?? 'EUR';
+    return {
+      ...user,
+      settings: {
+        currency,
+      },
+    };
   }
 }

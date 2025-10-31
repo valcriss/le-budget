@@ -13,12 +13,12 @@ import { CreateAccountInput } from '../../../core/accounts/accounts.models';
   styleUrl: './accounts-menu.css'
 })
 export class AccountsMenu {
+  private readonly accountsStore = inject(AccountsStore);
   protected readonly icAddAccount = faPlusSquare;
   protected readonly dialogOpen = signal(false);
   protected readonly submitting = signal(false);
   protected readonly dialogError = signal<string | null>(null);
-
-  private readonly accountsStore = inject(AccountsStore);
+  protected readonly defaultCurrency = this.accountsStore.defaultCurrency;
 
   constructor(library: FaIconLibrary) {
     library.addIcons(faPlusSquare);
@@ -37,14 +37,25 @@ export class AccountsMenu {
     this.dialogOpen.set(false);
   }
 
-  protected async handleCreateAccount(payload: CreateAccountInput): Promise<void> {
+  protected async handleCreateAccount(
+    payload: Omit<CreateAccountInput, 'currency' | 'reconciledBalance' | 'archived'>,
+  ): Promise<void> {
     if (this.submitting()) {
       return;
     }
     this.submitting.set(true);
     this.dialogError.set(null);
     try {
-      await this.accountsStore.createAccount(payload);
+      const initialBalance = payload.initialBalance ?? 0;
+      const currency = this.accountsStore.defaultCurrency();
+      const next: CreateAccountInput = {
+        name: payload.name,
+        type: payload.type,
+        initialBalance,
+        reconciledBalance: initialBalance,
+        currency,
+      };
+      await this.accountsStore.createAccount(next);
       this.accountsStore.clearSaveError();
       this.dialogOpen.set(false);
     } catch (error) {

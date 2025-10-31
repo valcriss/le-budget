@@ -1,7 +1,12 @@
+export interface UserSettings {
+  currency: string;
+}
+
 export interface AuthUser {
   id: string;
   email: string;
   displayName: string | null;
+  settings: UserSettings;
 }
 
 export interface AuthResponse {

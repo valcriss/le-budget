@@ -20,7 +20,7 @@ import {
   CreateAccountInput,
 } from '../../../core/accounts/accounts.models';
 
-type AccountDialogValue = Omit<CreateAccountInput, 'archived'>;
+type AccountDialogValue = Pick<CreateAccountInput, 'name' | 'type' | 'initialBalance'>;
 
 @Component({
   selector: 'app-account-dialog',
@@ -34,6 +34,8 @@ export class AccountDialog implements AfterViewInit, OnDestroy {
   @Input() submitLabel = 'Créer le compte';
   @Input() submitting = false;
   @Input() serverError: string | null = null;
+  @Input() currencyCode = 'EUR';
+  @Input() showAmountFields = true;
 
   @Input()
   set initialValue(value: Partial<AccountDialogValue> | null) {
@@ -51,10 +53,7 @@ export class AccountDialog implements AfterViewInit, OnDestroy {
   protected readonly form = inject(FormBuilder).group({
     name: ['', [Validators.required, Validators.maxLength(120)]],
     type: ['CHECKING' as AccountType, Validators.required],
-    institution: ['', [Validators.maxLength(120)]],
-    currency: ['EUR', [Validators.required, Validators.pattern(/^[A-Za-z]{3}$/)]],
     initialBalance: [''],
-    reconciledBalance: [''],
   });
 
   private readonly focusTrapFactory = inject(FocusTrapFactory);
@@ -101,13 +100,11 @@ export class AccountDialog implements AfterViewInit, OnDestroy {
       return;
     }
     const value = this.form.value;
+    const initialBalance = this.normalizeNumberField(value.initialBalance);
     const payload: AccountDialogValue = {
       name: (value.name ?? '').trim(),
       type: (value.type ?? 'CHECKING') as AccountType,
-      institution: this.normalizeTextField(value.institution),
-      currency: (value.currency ?? 'EUR').toUpperCase(),
-      initialBalance: this.normalizeNumberField(value.initialBalance),
-      reconciledBalance: this.normalizeNumberField(value.reconciledBalance),
+      initialBalance,
     };
     this.submitted.emit(payload);
   }
@@ -125,20 +122,9 @@ export class AccountDialog implements AfterViewInit, OnDestroy {
     const snapshot = {
       name: value?.name ?? '',
       type: value?.type ?? ('CHECKING' as AccountType),
-      institution: value?.institution ?? '',
-      currency: (value?.currency ?? 'EUR').toUpperCase(),
       initialBalance: this.formatNumber(value?.initialBalance),
-      reconciledBalance: this.formatNumber(value?.reconciledBalance),
     };
     this.form.reset(snapshot);
-  }
-
-  private normalizeTextField(value: string | null | undefined): string | null {
-    if (!value) {
-      return null;
-    }
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : null;
   }
 
   private normalizeNumberField(value: unknown): number | undefined {

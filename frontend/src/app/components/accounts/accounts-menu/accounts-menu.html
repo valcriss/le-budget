@@ -19,6 +19,7 @@
   [serverError]="dialogError()"
   title="Nouveau compte bancaire"
   submitLabel="Créer le compte"
+  [currencyCode]="defaultCurrency()"
   (cancelled)="closeDialog()"
   (submitted)="handleCreateAccount($event)"
 ></app-account-dialog>

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { UserSettingsDto } from './user-settings.dto';
 
 export class AuthUserDto {
   @ApiProperty({ description: 'Identifiant unique du compte', format: 'uuid' })
@@ -13,4 +14,10 @@ export class AuthUserDto {
     nullable: true,
   })
   displayName!: string | null;
+
+  @ApiProperty({
+    description: 'Préférences utilisateur',
+    type: UserSettingsDto,
+  })
+  settings!: UserSettingsDto;
 }

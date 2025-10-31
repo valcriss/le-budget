@@ -8,12 +8,12 @@ import {
   AccountsTotals,
   CreateAccountInput,
 } from './accounts.models';
+import { AuthStore } from '../auth/auth.store';
 
 type AccountResponse = {
   id: string;
   name: string;
   type: AccountType | string;
-  institution?: string | null;
   currency?: string | null;
   initialBalance?: number | string | null;
   currentBalance?: number | string | null;
@@ -27,12 +27,18 @@ type AccountResponse = {
 export class AccountsStore {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
+  private readonly authStore = inject(AuthStore);
 
   private readonly accountsSignal = signal<Account[]>([]);
   private readonly loadingSignal = signal(false);
   private readonly errorSignal = signal<string | null>(null);
   private readonly mutationLoadingSignal = signal(false);
   private readonly mutationErrorSignal = signal<string | null>(null);
+  private readonly defaultCurrencySignal = computed(() => {
+    const user = this.authStore.user();
+    return user?.settings?.currency ?? 'EUR';
+  });
+  readonly defaultCurrency = this.defaultCurrencySignal;
 
   readonly accounts = this.accountsSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
@@ -95,6 +101,10 @@ export class AccountsStore {
     this.mutationErrorSignal.set(null);
   }
 
+  getDefaultCurrency(): string {
+    return this.defaultCurrencySignal();
+  }
+
   async createAccount(input: CreateAccountInput): Promise<Account> {
     if (this.mutationLoadingSignal()) {
       throw new Error('Une création est déjà en cours.');
@@ -103,9 +113,18 @@ export class AccountsStore {
     this.mutationLoadingSignal.set(true);
     this.mutationErrorSignal.set(null);
     try {
+      const initialBalance = input.initialBalance ?? 0;
+      const reconciledBalance = input.reconciledBalance ?? initialBalance;
+      const currency = (input.currency ?? this.defaultCurrencySignal()).toUpperCase();
+
       const response = await firstValueFrom(
         this.http.post<AccountResponse>(`${this.apiBaseUrl}/accounts`, {
-          ...input,
+          name: input.name,
+          type: input.type,
+          initialBalance,
+          reconciledBalance,
+          currency,
+          archived: input.archived ?? false,
         }),
       );
       const account = this.normalizeAccount(response);
@@ -119,12 +138,38 @@ export class AccountsStore {
     }
   }
 
+  async updateAccount(id: string, changes: Partial<Pick<Account, 'name' | 'type'>>): Promise<Account> {
+    if (this.mutationLoadingSignal()) {
+      throw new Error('Une opération est déjà en cours.');
+    }
+
+    this.mutationLoadingSignal.set(true);
+    this.mutationErrorSignal.set(null);
+    try {
+      const response = await firstValueFrom(
+        this.http.patch<AccountResponse>(`${this.apiBaseUrl}/accounts/${encodeURIComponent(id)}`, {
+          name: changes.name,
+          type: changes.type,
+        }),
+      );
+      const account = this.normalizeAccount(response);
+      this.accountsSignal.update((list) =>
+        this.sortAccounts(list.map((item) => (item.id === account.id ? account : item))),
+      );
+      return account;
+    } catch (error) {
+      this.mutationErrorSignal.set(this.mapError(error, 'Impossible de mettre à jour le compte.'));
+      throw error;
+    } finally {
+      this.mutationLoadingSignal.set(false);
+    }
+  }
+
   private normalizeAccount(data: AccountResponse): Account {
     return {
       id: data.id,
       name: data.name,
       type: this.toAccountType(data.type),
-      institution: data.institution ?? null,
       currency: this.normalizeCurrency(data.currency),
       initialBalance: this.toNumber(data.initialBalance),
       currentBalance: this.toNumber(data.currentBalance),
