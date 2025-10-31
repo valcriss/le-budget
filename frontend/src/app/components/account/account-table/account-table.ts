@@ -11,6 +11,7 @@ import {
 } from '../account-transaction/account-transaction';
 import { TransactionsStore } from '../../../core/transactions/transactions.store';
 import { Transaction, CreateTransactionPayload } from '../../../core/transactions/transactions.models';
+import { AccountTransactionStatusEvent } from '../account-transaction/account-transaction';
 
 @Component({
   selector: 'app-account-table',
@@ -114,6 +115,14 @@ export class AccountTable implements OnChanges {
       this.draftTransaction.set(null);
       this.draftAutoEditKey.set(null);
     }
+  }
+
+  protected async handleStatusChange(event: AccountTransactionStatusEvent): Promise<void> {
+    const accountId = this.currentAccountId ?? this.route.snapshot.paramMap.get('id');
+    if (!accountId) {
+      return;
+    }
+    await this.transactionsStore.update(accountId, event.id, { status: event.status });
   }
 
   protected async handleSave(

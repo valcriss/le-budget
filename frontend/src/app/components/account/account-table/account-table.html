@@ -36,6 +36,7 @@
                     [autoEditKey]="autoEditKeyFor(transaction)"
                     [isNew]="isDraft(transaction)"
                     (save)="handleSave(transaction, $event)"
+                    (changeStatus)="handleStatusChange($event)"
                     (cancel)="handleCancel(transaction)"
                 ></app-account-transaction>
             </ng-container>

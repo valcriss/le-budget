@@ -23,8 +23,16 @@
     >
       {{ formatCurrencyWithSign(creditAmount(transaction), false, true) }}
     </div>
-    <div class="basis-0 flex items-center  cursor-pointer">
-      <fa-icon [icon]="icCircle" class="w-4 h-4 mx-2 text-gray-300"></fa-icon>
+    <div class="basis-0 flex items-center">
+      <button
+        type="button"
+        class="cursor-pointer"
+        [title]="statusIconTitle()"
+        [disabled]="!canToggleStatus()"
+        (click)="onStatusToggle()"
+      >
+        <fa-icon [icon]="icCircle" class="w-4 h-4 mx-2" [ngClass]="statusIconClass()"></fa-icon>
+      </button>
     </div>
     <div class="basis-3/12 md:basis-2/12 flex items-center justify-end px-1 text-right"
       [class]="getAmountClass(transaction.balance)">
@@ -70,7 +78,7 @@
       <input class="w-full text-xs p-1 text-right border rounded" type="number" step="0.01"
         [(ngModel)]="model.credit">
     </div>
-        <div class="basis-0 flex items-center  cursor-pointer">
+        <div class="basis-0 flex items-center">
       <fa-icon [icon]="icCircle" class="w-4 h-4 mx-2 text-gray-300"></fa-icon>
     </div>
     <!-- last visible column reserved for action buttons in edit mode -->

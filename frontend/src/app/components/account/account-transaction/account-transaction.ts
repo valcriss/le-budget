@@ -25,6 +25,7 @@ import { Category } from '../../../core/categories/categories.models';
 import {
   Transaction,
   UpdateTransactionPayload,
+  TransactionStatus,
 } from '../../../core/transactions/transactions.models';
 
 interface EditModel {
@@ -38,6 +39,11 @@ interface EditModel {
 export interface AccountTransactionUpdateEvent {
   id: string;
   changes: UpdateTransactionPayload;
+}
+
+export interface AccountTransactionStatusEvent {
+  id: string;
+  status: TransactionStatus;
 }
 
 @Component({
@@ -76,6 +82,7 @@ export class AccountTransaction implements OnChanges {
 
   @Output() readonly save = new EventEmitter<AccountTransactionUpdateEvent>();
   @Output() readonly cancel = new EventEmitter<void>();
+  @Output() readonly changeStatus = new EventEmitter<AccountTransactionStatusEvent>();
 
   protected readonly icCircle = faCircle;
   protected readonly icTimes = faTimes;
@@ -138,6 +145,41 @@ export class AccountTransaction implements OnChanges {
 
   protected creditAmount(transaction: Transaction): number {
     return transaction.amount > 0 ? transaction.amount : 0;
+  }
+
+  protected statusIconClass(): string {
+    switch (this.transaction.status) {
+      case 'POINTED':
+        return 'text-emerald-500';
+      case 'RECONCILED':
+        return 'text-sky-600';
+      default:
+        return 'text-gray-300';
+    }
+  }
+
+  protected statusIconTitle(): string {
+    switch (this.transaction.status) {
+      case 'POINTED':
+        return 'Cliquez ici pour dépointer la transaction';
+      case 'RECONCILED':
+        return 'Transaction rapprochée';
+      default:
+        return 'Cliquez ici pour pointer la transaction';
+    }
+  }
+
+  protected canToggleStatus(): boolean {
+    return this.transaction.status === 'NONE' || this.transaction.status === 'POINTED';
+  }
+
+  protected onStatusToggle(): void {
+    if (!this.canToggleStatus()) {
+      return;
+    }
+    const nextStatus: TransactionStatus =
+      this.transaction.status === 'POINTED' ? 'NONE' : 'POINTED';
+    this.changeStatus.emit({ id: this.transaction.id, status: nextStatus });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
