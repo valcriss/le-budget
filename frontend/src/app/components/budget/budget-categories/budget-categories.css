@@ -86,9 +86,16 @@ fa-icon.chevron-icon.rotate-open svg,
 }
 
 .group-label:hover,
-.item-label:hover,
-.group-label:focus,
-.item-label:focus {
+.item-label:hover {
+    text-decoration: underline;
+    color: #0f172a;
+    /* remove hover outline that created a thick border */
+    outline: none;
+}
+
+/* keep a visible focus style for keyboard users only */
+.group-label:focus-visible,
+.item-label:focus-visible {
     text-decoration: underline;
     color: #0f172a;
     outline: 2px solid rgba(59, 130, 246, 0.35);
