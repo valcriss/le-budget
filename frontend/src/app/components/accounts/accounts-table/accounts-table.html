@@ -1,6 +1,9 @@
 <div>
     <div class="flex flex-row px-2 h-8 text-xs font-semibold uppercase text-gray-500 bg-gray-50">
         <div class="basis-8/12 md:basis-4/12 flex items-center px-1">Compte bancaire</div>
+        <div class="basis-0 flex items-center justify-center px-1 w-8">
+           <div class="w-8">&nbsp;</div>
+        </div>
         <div class="hidden basis-4/12 md:basis-4/12 md:flex items-center justify-end px-1 text-right">
             Solde rapproché
         </div>
@@ -33,6 +36,9 @@
                             {{ account.name }}
                         </a>
                     </div>
+                    <div class="basis-0 flex items-center justify-center px-1 w-8 text-gray-500">
+                        <fa-icon [icon]="iconFor(account)" class="text-sm"></fa-icon>
+                    </div>
                     <div class="hidden basis-4/12 md:basis-4/12 md:flex items-center justify-end px-1 text-right"
                         [class]="amountClass(account.reconciledBalance)">
                         {{ formatCurrency(account.reconciledBalance) }}
@@ -55,6 +61,9 @@
 
                 <div class="flex flex-row px-2 h-10 text-sm font-semibold text-gray-600 mt-3 border-t border-gray-200 pt-2">
                     <div class="basis-8/12 md:basis-4/12 flex items-center px-1 uppercase">Total</div>
+                    <div class="basis-0 flex items-center justify-center px-1 w-8">
+                        <div class="w-8">&nbsp;</div>
+                    </div>
                     <div class="hidden basis-4/12 md:basis-4/12 md:flex items-center justify-end px-1 text-right"
                         [class]="amountClass(totals().reconciledBalance)">
                         {{ formatCurrency(totals().reconciledBalance) }}

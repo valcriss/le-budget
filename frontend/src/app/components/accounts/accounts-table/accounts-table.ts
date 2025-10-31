@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faCreditCard, faPiggyBank } from '@fortawesome/free-solid-svg-icons';
 import { AccountsStore } from '../../../core/accounts/accounts.store';
 import { Account } from '../../../core/accounts/accounts.models';
 import { formatCurrency, getAmountClass } from '../../../shared/formatters';
@@ -16,6 +16,8 @@ import { AccountDialog } from '../account-dialog/account-dialog';
 })
 export class AccountsTable {
   protected readonly icEditAccount = faPenToSquare;
+  protected readonly icChecking = faCreditCard;
+  protected readonly icSavings = faPiggyBank;
   protected readonly formatCurrency = formatCurrency;
   protected readonly amountClass = getAmountClass;
   protected readonly dialogOpen = signal(false);
@@ -34,7 +36,7 @@ export class AccountsTable {
   protected readonly trackByAccountId = (_: number, account: Account) => account.id;
 
   constructor(library: FaIconLibrary) {
-    library.addIcons(faPenToSquare);
+    library.addIcons(faPenToSquare, faCreditCard, faPiggyBank);
   }
 
   protected openEditDialog(account: Account): void {
@@ -78,4 +80,12 @@ export class AccountsTable {
     }
   }
 
+  protected iconFor(account: Account) {
+    switch (account.type) {
+      case 'SAVINGS':
+        return this.icSavings;
+      default:
+        return this.icChecking;
+    }
+  }
 }
