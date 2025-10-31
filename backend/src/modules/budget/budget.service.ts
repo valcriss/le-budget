@@ -194,9 +194,12 @@ export class BudgetService {
 
   private async ensureMonthStructure(month: BudgetMonth, userId: string): Promise<void> {
     const parentCategories = await this.prisma.category.findMany({
-      where: { userId, parentCategoryId: null },
+      where: { userId, parentCategoryId: null, kind: 'EXPENSE' },
       include: {
-        subCategories: { where: { userId }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] },
+        subCategories: {
+          where: { userId, kind: 'EXPENSE' },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        },
       },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });

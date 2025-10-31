@@ -5,6 +5,9 @@ CREATE TYPE "AccountType" AS ENUM ('CHECKING', 'SAVINGS', 'CREDIT_CARD', 'CASH',
 CREATE TYPE "TransactionStatus" AS ENUM ('NONE', 'POINTED', 'RECONCILED');
 
 -- CreateEnum
+CREATE TYPE "TransactionType" AS ENUM ('NONE', 'INITIAL', 'TRANSFERT');
+
+-- CreateEnum
 CREATE TYPE "CategoryKind" AS ENUM ('EXPENSE', 'INCOME', 'TRANSFER', 'GOAL');
 
 -- CreateTable
@@ -83,6 +86,8 @@ CREATE TABLE "Transaction" (
     "label" TEXT NOT NULL,
     "amount" DECIMAL(65,30) NOT NULL,
     "status" "TransactionStatus" NOT NULL DEFAULT 'NONE',
+    "transactionType" "TransactionType" NOT NULL DEFAULT 'NONE',
+    "linkedTransactionId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -143,10 +148,16 @@ CREATE UNIQUE INDEX "UserSettings_userId_key" ON "UserSettings"("userId");
 CREATE UNIQUE INDEX "Category_userId_name_key" ON "Category"("userId", "name");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Transaction_linkedTransactionId_key" ON "Transaction"("linkedTransactionId");
+
+-- CreateIndex
 CREATE INDEX "Transaction_accountId_date_createdAt_idx" ON "Transaction"("accountId", "date", "createdAt");
 
 -- CreateIndex
 CREATE INDEX "Transaction_status_idx" ON "Transaction"("status");
+
+-- CreateIndex
+CREATE INDEX "Transaction_transactionType_idx" ON "Transaction"("transactionType");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "BudgetMonth_userId_month_key" ON "BudgetMonth"("userId", "month");
@@ -177,6 +188,9 @@ ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_accountId_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_linkedTransactionId_fkey" FOREIGN KEY ("linkedTransactionId") REFERENCES "Transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "BudgetMonth" ADD CONSTRAINT "BudgetMonth_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

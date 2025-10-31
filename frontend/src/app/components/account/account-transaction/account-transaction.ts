@@ -32,6 +32,9 @@ export class AccountTransaction {
     debit: -2500,
     credit: 2500,
     balance: 10000,
+    status: 'NONE',
+    transactionType: 'NONE',
+    linkedTransactionId: null,
   };
 
   // Expose helpers so templates can call them directly.

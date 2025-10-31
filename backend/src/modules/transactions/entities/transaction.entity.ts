@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { TransactionStatus } from '@prisma/client';
+import { TransactionStatus, TransactionType } from '@prisma/client';
 
 export class TransactionEntity {
   @ApiProperty()
@@ -46,6 +46,14 @@ export class TransactionEntity {
   @ApiProperty({ enum: TransactionStatus })
   @Expose()
   status!: TransactionStatus;
+
+  @ApiProperty({ enum: TransactionType })
+  @Expose()
+  transactionType!: TransactionType;
+
+  @ApiProperty({ required: false, nullable: true, description: 'Identifiant de la transaction liée' })
+  @Expose()
+  linkedTransactionId?: string | null;
 
   @ApiProperty()
   @Expose()

@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsISO8601, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
-import { TransactionStatus } from '@prisma/client';
+import { TransactionStatus, TransactionType } from '@prisma/client';
 
 export class TransactionsQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: 'Filter transactions after this date (inclusive)' })
@@ -26,4 +26,9 @@ export class TransactionsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(TransactionStatus)
   status?: TransactionStatus;
+
+  @ApiPropertyOptional({ description: 'Filter by transaction type', enum: TransactionType })
+  @IsOptional()
+  @IsEnum(TransactionType)
+  transactionType?: TransactionType;
 }

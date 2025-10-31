@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Transaction, TransactionStatus } from '@prisma/client';
+import { Prisma, Transaction, TransactionStatus, TransactionType } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
@@ -56,6 +56,10 @@ export class TransactionsService {
       where.status = query.status;
     }
 
+    if (query.transactionType) {
+      where.transactionType = query.transactionType;
+    }
+
     const [items, total, ledger] = await this.prisma.$transaction([
       this.prisma.transaction.findMany({
         where,
@@ -102,6 +106,10 @@ export class TransactionsService {
       await this.ensureCategoryOwnership(dto.categoryId, userId);
     }
 
+    if (dto.linkedTransactionId) {
+      await this.ensureTransactionOwnership(dto.linkedTransactionId, userId);
+    }
+
     const amount = new Prisma.Decimal(dto.amount);
 
     const transaction = await this.prisma.$transaction(async (tx) => {
@@ -113,6 +121,8 @@ export class TransactionsService {
           label: dto.label,
           amount,
           status: dto.status ?? TransactionStatus.NONE,
+          transactionType: dto.transactionType ?? TransactionType.NONE,
+          linkedTransactionId: dto.linkedTransactionId ?? null,
         },
         include: { category: { select: { id: true, name: true } } },
       });
@@ -173,6 +183,10 @@ export class TransactionsService {
       await this.ensureCategoryOwnership(dto.categoryId, userId);
     }
 
+    if (dto.linkedTransactionId) {
+      await this.ensureTransactionOwnership(dto.linkedTransactionId, userId);
+    }
+
     const newAmount = dto.amount !== undefined ? new Prisma.Decimal(dto.amount) : existing.amount;
     const diff = newAmount.minus(existing.amount);
 
@@ -185,6 +199,11 @@ export class TransactionsService {
           label: dto.label ?? existing.label,
           amount: newAmount,
           status: dto.status ?? existing.status,
+          transactionType: dto.transactionType ?? existing.transactionType,
+          linkedTransactionId:
+            dto.linkedTransactionId !== undefined
+              ? dto.linkedTransactionId
+              : existing.linkedTransactionId,
         },
         include: { category: { select: { id: true, name: true } } },
       });
@@ -274,6 +293,19 @@ export class TransactionsService {
     }
   }
 
+  private async ensureTransactionOwnership(transactionId: string, userId: string) {
+    const txn = await this.prisma.transaction.findFirst({
+      where: {
+        id: transactionId,
+        account: { userId },
+      },
+      select: { id: true },
+    });
+    if (!txn) {
+      throw new NotFoundException(`Linked transaction ${transactionId} not found`);
+    }
+  }
+
   private toEntity(
     transaction: Transaction & { category?: { id: string | null; name: string | null } | null },
     runningBalance: number,
@@ -292,6 +324,8 @@ export class TransactionsService {
       categoryId: transaction.category?.id ?? transaction.categoryId ?? null,
       categoryName: transaction.category?.name ?? null,
       status: transaction.status,
+      transactionType: transaction.transactionType,
+      linkedTransactionId: transaction.linkedTransactionId ?? null,
     });
   }
 }

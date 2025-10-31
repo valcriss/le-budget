@@ -22,6 +22,12 @@ enum TransactionStatus {
   RECONCILED
 }
 
+enum TransactionType {
+  NONE
+  INITIAL
+  TRANSFERT
+}
+
 enum CategoryKind {
   EXPENSE
   INCOME
@@ -115,11 +121,16 @@ model Transaction {
   label      String
   amount     Decimal
   status     TransactionStatus @default(NONE)
+  transactionType TransactionType @default(NONE)
+  linkedTransactionId String? @unique
+  linkedTransaction Transaction? @relation("LinkedTransaction", fields: [linkedTransactionId], references: [id])
+  linkedBy Transaction? @relation("LinkedTransaction")
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   @@index([accountId, date, createdAt])
   @@index([status])
+  @@index([transactionType])
 }
 
 model BudgetMonth {
