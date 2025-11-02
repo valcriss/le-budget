@@ -29,9 +29,15 @@ export class BudgetService {
 
   async getMonth(monthKey: string): Promise<BudgetMonthEntity> {
     const userId = this.userContext.getUserId();
-    const month = await this.getOrCreateMonth(monthKey, userId);
+    const { month } = await this.getOrCreateMonth(monthKey, userId);
     await this.ensureMonthStructure(month, userId);
-    return this.buildMonthEntity(month);
+
+    const updatedMonth = await this.transactions.recalculateBudgetMonthForUser(
+      month.month,
+      userId,
+    );
+
+    return this.buildMonthEntity(updatedMonth);
   }
 
   async updateCategory(
@@ -40,7 +46,7 @@ export class BudgetService {
     dto: UpdateBudgetCategoryDto,
   ): Promise<BudgetCategoryEntity> {
     const userId = this.userContext.getUserId();
-    const month = await this.getOrCreateMonth(monthKey, userId);
+    const { month } = await this.getOrCreateMonth(monthKey, userId);
     await this.ensureMonthStructure(month, userId);
 
     const budgetCategory = await this.prisma.budgetCategory.findFirst({
@@ -166,12 +172,15 @@ export class BudgetService {
     });
   }
 
-  private async getOrCreateMonth(monthKey: string, userId: string): Promise<BudgetMonth> {
+  private async getOrCreateMonth(
+    monthKey: string,
+    userId: string,
+  ): Promise<{ month: BudgetMonth; created: boolean }> {
     const byId = await this.prisma.budgetMonth.findFirst({
       where: { id: monthKey, userId },
     });
     if (byId) {
-      return byId;
+      return { month: byId, created: false };
     }
 
     const monthStart = this.monthStringToDate(monthKey);
@@ -188,6 +197,7 @@ export class BudgetService {
       },
     });
 
+    let created = false;
     if (!month) {
       month = await this.prisma.budgetMonth.create({
         data: {
@@ -200,13 +210,14 @@ export class BudgetService {
           activity: new Prisma.Decimal(0),
         },
       });
+      created = true;
     } else if (!this.isSameMonth(month.month, monthStart)) {
       month = await this.prisma.budgetMonth.update({
         where: { id: month.id },
         data: { month: monthStart },
       });
     }
-    return month;
+    return { month, created };
   }
 
   private async ensureMonthStructure(month: BudgetMonth, userId: string): Promise<void> {
@@ -227,6 +238,7 @@ export class BudgetService {
     });
 
     const groupByCategory = new Map(existingGroups.map((group) => [group.categoryId, group]));
+    const createdCategoryIds = new Set<string>();
 
     for (const parent of parentCategories) {
       let group = groupByCategory.get(parent.id);
@@ -263,8 +275,13 @@ export class BudgetService {
               available: new Prisma.Decimal(0),
             },
           });
+          createdCategoryIds.add(child.id);
         }
       }
+    }
+
+    if (createdCategoryIds.size > 0) {
+      await this.transactions.recalculateBudgetMonthForUser(month.month, userId);
     }
   }
 

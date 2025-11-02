@@ -14,7 +14,8 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:create-init":"prisma migrate reset && prisma migrate dev --name init",
     "prisma:init": "npm run prisma:generate && npm run prisma:migrate",
-    "prisma:seed": "ts-node --project tsconfig.json prisma/seed.ts"
+    "prisma:seed": "ts-node --project tsconfig.json prisma/seed.ts",
+    "test": "ts-node --project tsconfig.test.json test/budget-calculation.spec.ts"
   },
   "keywords": [],
   "author": "",

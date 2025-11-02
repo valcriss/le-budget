@@ -90,7 +90,8 @@ export class BudgetPage {
             replaceUrl: true,
           });
         }
-        void this.budgetStore.loadMonth(monthKey).catch(() => undefined);
+        const alreadyLoaded = this.budgetStore.hasData();
+        void this.budgetStore.loadMonth(monthKey, alreadyLoaded).catch(() => undefined);
       });
   }
 
