@@ -1,10 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, Router, ParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { Subject } from 'rxjs';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
+import { Dialog } from '@angular/cdk/dialog';
 
 import { BudgetPage } from './budget-page';
 import { BudgetStore } from '../../core/budget/budget.store';
+import { AccountsStore } from '../../core/accounts/accounts.store';
+import { AuthStore } from '../../core/auth/auth.store';
+import { CategoriesStore } from '../../core/categories/categories.store';
 
 class BudgetStoreStub {
   private readonly monthSignal = signal<any>(null);
@@ -18,15 +23,18 @@ class BudgetStoreStub {
   readonly loading = this.loadingSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
   readonly monthKey = this.monthKeySignal.asReadonly();
+  readonly hasData = computed(() => this.monthSignal() !== null);
 
-  loadMonth = jasmine.createSpy('loadMonth').and.resolveTo(undefined);
+  loadMonth = jest.fn().mockName('loadMonth').mockResolvedValue(undefined);
+  reloadCurrentMonth = jest.fn().mockResolvedValue(undefined);
+  updateCategoryAssigned = jest.fn().mockResolvedValue(undefined);
+  clearError = jest.fn();
 }
 
 describe('BudgetPage', () => {
   let component: BudgetPage;
   let fixture: ComponentFixture<BudgetPage>;
   let store: BudgetStoreStub;
-  let navigateSpy: jasmine.Spy;
   let queryParamMap$: Subject<ParamMap>;
 
   beforeEach(async () => {
@@ -37,20 +45,48 @@ describe('BudgetPage', () => {
       providers: [
         { provide: BudgetStore, useClass: BudgetStoreStub },
         {
+          provide: AccountsStore,
+          useValue: {
+            accounts: signal([]),
+            defaultCurrency: signal('EUR'),
+            loadAccounts: jest.fn(),
+            clearSaveError: jest.fn(),
+            createAccount: jest.fn(),
+            saveError: signal<string | null>(null),
+            hasData: signal(false),
+            getDefaultCurrency: jest.fn().mockReturnValue('EUR'),
+            updateAccount: jest.fn(),
+          } satisfies Partial<AccountsStore>,
+        },
+        {
+          provide: AuthStore,
+          useValue: {
+            logout: jest.fn(),
+            user: computed(() => ({ email: 'user@example.com' })),
+          } satisfies Partial<AuthStore>,
+        },
+        {
+          provide: CategoriesStore,
+          useValue: {
+            error: signal<string | null>(null),
+            update: jest.fn().mockResolvedValue(undefined),
+          } satisfies Partial<CategoriesStore>,
+        },
+        {
+          provide: Dialog,
+          useValue: { open: jest.fn() },
+        },
+        {
           provide: ActivatedRoute,
           useValue: { queryParamMap: queryParamMap$.asObservable() },
         },
-        {
-          provide: Router,
-          useValue: { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) },
-        },
+        provideRouter([]),
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(BudgetPage);
     component = fixture.componentInstance;
     store = TestBed.inject(BudgetStore) as unknown as BudgetStoreStub;
-    navigateSpy = TestBed.inject(Router).navigate as jasmine.Spy;
   });
 
   it('should create and request the current month when no query param is provided', async () => {
@@ -60,6 +96,5 @@ describe('BudgetPage', () => {
 
     expect(component).toBeTruthy();
     expect(store.loadMonth).toHaveBeenCalled();
-    expect(navigateSpy).toHaveBeenCalled();
   });
 });

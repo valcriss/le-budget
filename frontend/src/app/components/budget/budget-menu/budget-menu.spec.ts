@@ -13,7 +13,7 @@ describe('BudgetMenu', () => {
       providers: [
         {
           provide: Dialog,
-          useValue: { open: jasmine.createSpy('open') },
+          useValue: { open: jest.fn().mockName('open') },
         },
       ],
     }).compileComponents();

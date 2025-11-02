@@ -14,11 +14,11 @@ describe('AccountsList', () => {
       loading: signal(false),
       error: signal<string | null>(null),
       totals: computed(() => ({ currentBalance: 0, reconciledBalance: 0 })),
-      loadAccounts: jasmine.createSpy('loadAccounts'),
+      loadAccounts: jest.fn().mockName('loadAccounts').mockResolvedValue(undefined),
       hasData: signal(false),
       defaultCurrency: signal('EUR'),
-      getDefaultCurrency: jasmine.createSpy('getDefaultCurrency').and.returnValue('EUR'),
-      createAccount: jasmine.createSpy('createAccount').and.resolveTo(undefined),
+      getDefaultCurrency: jest.fn().mockName('getDefaultCurrency').mockReturnValue('EUR'),
+      createAccount: jest.fn().mockName('createAccount').mockResolvedValue(undefined),
       saveError: signal<string | null>(null),
     } satisfies Partial<AccountsStore>;
 

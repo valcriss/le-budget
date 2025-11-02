@@ -15,10 +15,10 @@ describe('AccountsMenu', () => {
       error: signal<string | null>(null),
       saveError: signal<string | null>(null),
       saving: signal(false),
-      createAccount: jasmine.createSpy('createAccount').and.resolveTo(undefined),
-      clearSaveError: jasmine.createSpy('clearSaveError'),
+      createAccount: jest.fn().mockName('createAccount').mockResolvedValue(undefined),
+      clearSaveError: jest.fn().mockName('clearSaveError'),
       defaultCurrency: signal('EUR'),
-      getDefaultCurrency: jasmine.createSpy('getDefaultCurrency').and.returnValue('EUR'),
+      getDefaultCurrency: jest.fn().mockName('getDefaultCurrency').mockReturnValue('EUR'),
     } satisfies Partial<AccountsStore>;
 
     await TestBed.configureTestingModule({

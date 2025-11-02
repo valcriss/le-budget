@@ -675,7 +675,6 @@ export class TransactionsService {
     }
 
     let currentId = categoryId;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const category = await client.category.findUnique({
         where: { id: currentId },

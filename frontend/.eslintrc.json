@@ -19,5 +19,14 @@
         "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
       }
     }
+    ,
+    {
+      "files": ["*.spec.ts"],
+      "env": {
+        "jest": true
+      },
+      "plugins": ["jest"],
+      "extends": ["plugin:jest/recommended"]
+    }
   ]
 }

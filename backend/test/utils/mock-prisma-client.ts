@@ -69,13 +69,6 @@ function toNumber(value: DecimalValue | null | undefined): number {
   return value;
 }
 
-function toDecimal(value: DecimalValue): Prisma.Decimal {
-  if (value instanceof Prisma.Decimal) {
-    return value;
-  }
-  return new Prisma.Decimal(value ?? 0);
-}
-
 export class MockPrismaClient {
   private readonly monthsById = new Map<string, MockBudgetMonth>();
   private readonly groupsById = new Map<string, MockBudgetCategoryGroup>();

@@ -14,9 +14,9 @@ describe('AccountsTable', () => {
       loading: signal(false),
       error: signal<string | null>(null),
       totals: computed(() => ({ currentBalance: 0, reconciledBalance: 0 })),
-      loadAccounts: jasmine.createSpy('loadAccounts'),
+      loadAccounts: jest.fn().mockName('loadAccounts'),
       defaultCurrency: signal('EUR'),
-      updateAccount: jasmine.createSpy('updateAccount').and.resolveTo(undefined),
+      updateAccount: jest.fn().mockName('updateAccount').mockResolvedValue(undefined),
       saveError: signal<string | null>(null),
     } satisfies Partial<AccountsStore>;
 

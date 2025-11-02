@@ -9,10 +9,10 @@ class TransactionsStoreStub {
   readonly transactions = signal([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
-  readonly load = jasmine.createSpy('load').and.returnValue(Promise.resolve());
-  readonly update = jasmine.createSpy('update').and.returnValue(Promise.resolve(null));
-  readonly create = jasmine.createSpy('create').and.returnValue(Promise.resolve(null));
-  readonly reset = jasmine.createSpy('reset');
+  readonly load = jest.fn().mockName('load').mockResolvedValue(undefined);
+  readonly update = jest.fn().mockName('update').mockResolvedValue(null);
+  readonly create = jest.fn().mockName('create').mockResolvedValue(null);
+  readonly reset = jest.fn().mockName('reset');
 }
 
 describe('AccountTable', () => {

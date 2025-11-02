@@ -7,7 +7,7 @@ class CategoriesStoreStub {
   readonly categories = signal([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
-  readonly ensureLoaded = jasmine.createSpy('ensureLoaded').and.returnValue(Promise.resolve());
+  readonly ensureLoaded = jest.fn().mockName('ensureLoaded').mockResolvedValue(undefined);
 }
 
 describe('AccountTransaction', () => {
