@@ -9,7 +9,7 @@
   "format:html": "prettier --write \"src/**/*.html\" && node tools/collapse-html-openings.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test --watch=false --browsers=ChromeHeadless"
   },
   "prettier": {
     "printWidth": 100,
@@ -31,6 +31,7 @@
   "@angular/core": "^20.3.6",
   "@angular/forms": "^20.3.6",
   "@angular/platform-browser": "^20.3.6",
+  "@angular/animations": "20.3.6",
   "@angular/router": "^20.3.6",
     "@fortawesome/angular-fontawesome": "^3.0.0",
     "@fortawesome/fontawesome-free": "^7.1.0",
