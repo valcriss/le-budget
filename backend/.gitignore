@@ -3,6 +3,7 @@
 
 # Build output
 /dist/
+/coverage/
 
 # Environment files
 .env
