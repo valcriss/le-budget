@@ -6,12 +6,35 @@
 :host ::ng-deep ng-select.transaction-select .ng-select-container {
   border: 1px solid #d1d5db;
   border-radius: 0.25rem;
-  min-height: auto;
+  min-height: 1.5rem;
+  height: auto;
   padding: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 :host ::ng-deep ng-select.transaction-select .ng-select-container .ng-value-container {
   padding: 0.25rem 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 100%;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  line-height: 1.2;
+}
+
+:host ::ng-deep ng-select.transaction-select .ng-select-container .ng-value-container .ng-placeholder,
+:host ::ng-deep ng-select.transaction-select .ng-select-container .ng-value-container .ng-value {
+  display: flex;
+  align-items: center;
+}
+
+:host ::ng-deep ng-select.transaction-select .ng-select-container .ng-arrow-wrapper {
+  padding-right: 0.5rem;
+  display: flex;
+  align-items: center;
 }
 
 :host ::ng-deep ng-select.transaction-select .ng-select-container .ng-input > input {
