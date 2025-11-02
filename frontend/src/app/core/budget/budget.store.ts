@@ -16,6 +16,7 @@ export class BudgetStore {
   private readonly loadingSignal = signal(false);
   private readonly errorSignal = signal<string | null>(null);
   private readonly monthKeySignal = signal<string | null>(null);
+  private refreshPromise: Promise<void> | null = null;
 
   readonly month = this.monthSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
@@ -40,11 +41,7 @@ export class BudgetStore {
     this.setLoading(true);
     this.clearError();
     try {
-      const month = await firstValueFrom(
-        this.http.get<BudgetMonth>(
-          `${this.apiBaseUrl}/budget/months/${encodeURIComponent(normalizedKey)}`,
-        ),
-      );
+      const month = await this.fetchMonth(normalizedKey);
       this.monthKeySignal.set(normalizedKey);
       this.monthSignal.set(this.normalizeMonth(month));
     } catch (error) {
@@ -73,7 +70,7 @@ export class BudgetStore {
           { assigned },
         ),
       );
-      await this.loadMonth(normalizedMonth, true);
+      await this.refreshMonthInPlace(normalizedMonth).catch(() => undefined);
     } catch (error) {
       this.errorSignal.set(
         this.mapError(error, 'Impossible de mettre à jour le montant assigné.'),
@@ -141,6 +138,44 @@ export class BudgetStore {
     };
   }
 
+  private fetchMonth(normalizedKey: string): Promise<BudgetMonth> {
+    return firstValueFrom(
+      this.http.get<BudgetMonth>(
+        `${this.apiBaseUrl}/budget/months/${encodeURIComponent(normalizedKey)}`,
+      ),
+    );
+  }
+
+  private async refreshMonthInPlace(
+    normalizedKey: string,
+    options?: { silent?: boolean },
+  ): Promise<void> {
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = (async () => {
+      try {
+        const month = await this.fetchMonth(normalizedKey);
+        if (this.monthKeySignal() === normalizedKey) {
+          this.monthSignal.set(this.normalizeMonth(month));
+        }
+        if (!options?.silent) {
+          this.clearError();
+        }
+      } catch (error) {
+        if (!options?.silent) {
+          this.errorSignal.set(this.mapError(error, 'Impossible de rafraîchir le budget.'));
+        }
+        throw error;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
+  }
+
   private registerEventListeners(): void {
     this.eventsGateway.on('budget.category.updated', (payload) => {
       const currentKey = this.monthKeySignal();
@@ -155,7 +190,7 @@ export class BudgetStore {
 
       const normalizedMonth = normalizeMonthKey(month);
       if (normalizedMonth === normalizeMonthKey(currentKey)) {
-        void this.loadMonth(normalizedMonth, true).catch(() => undefined);
+        void this.refreshMonthInPlace(normalizedMonth, { silent: true }).catch(() => undefined);
       }
     });
 
@@ -172,7 +207,7 @@ export class BudgetStore {
 
       const normalizedMonth = normalizeMonthKey(month);
       if (normalizedMonth === normalizeMonthKey(currentKey)) {
-        void this.loadMonth(normalizedMonth, true).catch(() => undefined);
+        void this.refreshMonthInPlace(normalizedMonth, { silent: true }).catch(() => undefined);
       }
     });
   }
