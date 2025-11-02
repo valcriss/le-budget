@@ -1,14 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost } from '@nestjs/core';
+import { join } from 'node:path';
+import fastifyStatic from '@fastify/static';
 import { AppModule } from './app.module';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { PrismaService } from './prisma/prisma.service';
@@ -26,6 +25,12 @@ async function bootstrap() {
   await app.register(cors as any, {
     origin: true,
     credentials: true,
+  });
+  const fastifyInstance = app.getHttpAdapter().getInstance();
+  await (fastifyInstance as any).register(fastifyStatic, {
+    root: join(__dirname, '../public'),
+    prefix: '/',
+    index: ['index.html'],
   });
 
   app.useGlobalPipes(
@@ -64,6 +69,22 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document, {
     jsonDocumentUrl: 'docs-json',
+  });
+
+  fastifyInstance.setNotFoundHandler((request, reply) => {
+    const acceptHeader = request.headers.accept;
+    if (
+      request.method === 'GET' &&
+      typeof acceptHeader === 'string' &&
+      acceptHeader.includes('text/html')
+    ) {
+      return (reply as any).sendFile('index.html');
+    }
+    reply.status(404).send({
+      statusCode: 404,
+      message: 'Not Found',
+      error: 'Not Found',
+    });
   });
 
   const port = configService.get<number>('PORT', 3000);

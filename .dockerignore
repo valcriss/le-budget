@@ -1,0 +1,16 @@
+node_modules
+dist
+**/node_modules
+**/dist
+backend/postgres-data
+frontend/.angular
+frontend/.cache
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+.env
+.env.*
+npm-debug.log
+pnpm-lock.yaml
+yarn.lock
