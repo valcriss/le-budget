@@ -1,25 +1,24 @@
 <div>
     <div class="flex flex-col">
-        <div class="text-base font-semibold text-gray-600">Loisirs</div>
-
+        <div class="text-base font-semibold text-gray-600">{{ budgetCategory?.category?.name }}</div>
         <div class="flex flex-row justify-between text-sm text-gray-600">
             <div>Disponible du mois précédent</div>
-            <div [class]="getAmountClass(availableFromPreviousMonth)">{{
-                formatCurrencyWithSign(availableFromPreviousMonth) }}</div>
+            <div [class]="getAmountClass(getAvailableFromPreviousMonth())">{{
+                formatCurrencyWithSign(getAvailableFromPreviousMonth()) }}</div>
         </div>
         <div class="flex flex-row justify-between text-sm text-gray-600">
             <div>Assigné pendant le mois</div>
-            <div [class]="getAmountClass(assignedThisMonth)">{{ formatCurrencyWithSign(assignedThisMonth) }}</div>
+            <div [class]="getAmountClass(budgetCategory?.assigned)">{{ formatCurrencyWithSign(budgetCategory?.assigned) }}</div>
         </div>
 
         <div class="flex flex-row justify-between text-sm text-gray-600 pt-1 mt-1 border-t border-gray-200">
             <div>Payé ce mois</div>
-            <div [class]="getAmountClass(totalPaid)">{{ formatCurrencyWithSign(totalPaid) }}</div>
+            <div [class]="getAmountClass(budgetCategory?.activity)">{{ formatCurrencyWithSign(budgetCategory?.activity) }}</div>
         </div>
 
         <div class="flex flex-row justify-between font-bold text-sm text-gray-600 pt-1 mt-1 border-t border-gray-200">
             <div>Total Disponible</div>
-            <div [class]="getAmountClass(totalAvailable)">{{ formatCurrencyWithSign(totalAvailable) }}</div>
+            <div [class]="getAmountClass(budgetCategory?.available)">{{ formatCurrencyWithSign(budgetCategory?.available) }}</div>
         </div>
         <div class="h-4"></div>
         <div class="flex flex-row justify-between text-sm text-gray-600 pt-1 mt-1 border-t border-gray-200">

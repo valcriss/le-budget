@@ -65,10 +65,8 @@
                 [neededThisMonth]="0"
                 [neededForNextMonths]="0"
                 [totalAssigned]="summary.totalAssigned"
+                [budgetCategory]="cat"
               ></app-budget-category-summary>
-              <div class="mt-2 text-sm text-gray-600 font-medium" *ngIf="cat?.category?.name">
-                Catégorie sélectionnée : {{ cat.category.name }}
-              </div>
             </ng-container>
           </ng-container>
         </app-ui-card>
