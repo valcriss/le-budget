@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ${REGISTRY:-ghcr.io}/${REGISTRY_NAMESPACE:-silve}/le-budget-backend:${IMAGE_TAG:-latest}
+    image: ${REGISTRY:-ghcr.io}/${REGISTRY_NAMESPACE:-valcriss}/le-budget-backend:${IMAGE_TAG:-latest}
     env_file:
       - .env
     environment:
@@ -17,7 +17,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ${REGISTRY:-ghcr.io}/${REGISTRY_NAMESPACE:-silve}/le-budget-frontend:${IMAGE_TAG:-latest}
+    image: ${REGISTRY:-ghcr.io}/${REGISTRY_NAMESPACE:-valcriss}/le-budget-frontend:${IMAGE_TAG:-latest}
     depends_on:
       - backend
     ports:
