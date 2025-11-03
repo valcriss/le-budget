@@ -28,6 +28,14 @@ enum TransactionType {
   TRANSFERT
 }
 
+enum TransactionPeriodicity {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+}
+
 enum CategoryKind {
   EXPENSE
   INCOME
@@ -126,6 +134,7 @@ model Transaction {
   amount     Decimal
   status     TransactionStatus @default(NONE)
   transactionType TransactionType @default(NONE)
+  periodicity TransactionPeriodicity?
   linkedTransactionId String? @unique
   linkedTransaction Transaction? @relation("LinkedTransaction", fields: [linkedTransactionId], references: [id])
   linkedBy Transaction? @relation("LinkedTransaction")

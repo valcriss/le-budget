@@ -90,6 +90,7 @@ export class AccountTable implements OnChanges {
       balance: this.transactions()[0]?.balance ?? 0,
       status: 'NONE',
       transactionType: 'NONE',
+      periodicity: null,
       linkedTransactionId: null,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
@@ -139,6 +140,7 @@ export class AccountTable implements OnChanges {
         label: event.changes.label ?? transaction.label,
         amount: event.changes.amount ?? transaction.amount,
         categoryId: event.changes.categoryId ?? null,
+        periodicity: event.changes.periodicity ?? null,
         status: 'NONE',
         transactionType: 'NONE',
       };

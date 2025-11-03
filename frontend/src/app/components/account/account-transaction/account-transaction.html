@@ -7,7 +7,15 @@
     <div class="basis-6/12 md:basis-2/12 flex items-center px-1">
       {{ formatDisplayDate(transaction.date) }}
     </div>
-    <div class="basis-3/12 md:basis-2/12 flex items-center px-1">{{ transaction.label }}</div>
+    <div class="basis-3/12 md:basis-2/12 flex items-center px-1 space-x-2">
+      <span>{{ transaction.label }}</span>
+      <span
+        *ngIf="transaction.periodicity"
+        class="px-2 py-[1px] text-[10px] rounded bg-gray-100 text-gray-600 uppercase tracking-wide"
+      >
+        {{ periodicityLabel(transaction.periodicity) }}
+      </span>
+    </div>
     <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">
       {{ transaction.categoryName || '—' }}
     </div>
@@ -47,16 +55,29 @@
     </div>
     <div class="basis-3/12 md:basis-2/12 flex items-center px-1">
       @if (transaction.transactionType !== 'INITIAL') {
-      <ng-select
-        class="w-full text-xs transaction-select"
-        [items]="labels"
-        [(ngModel)]="model.label"
-        [clearable]="false"
-        [searchable]="true"
-        [addTag]="true"
-        dropdownPosition="bottom"
-      >      
-      </ng-select>
+      <div class="flex flex-col w-full gap-1">
+        <ng-select
+          class="w-full text-xs transaction-select"
+          [items]="labels"
+          [(ngModel)]="model.label"
+          [clearable]="false"
+          [searchable]="true"
+          [addTag]="true"
+          dropdownPosition="bottom"
+        >
+        </ng-select>
+        <ng-select
+          class="w-full text-xs transaction-select"
+          [items]="periodicityOptions"
+          bindLabel="label"
+          bindValue="value"
+          [(ngModel)]="model.periodicity"
+          [clearable]="false"
+          [searchable]="false"
+          dropdownPosition="bottom"
+        >
+        </ng-select>
+      </div>
       }
       @if (transaction.transactionType === 'INITIAL') {
       <span>Solde initial</span>

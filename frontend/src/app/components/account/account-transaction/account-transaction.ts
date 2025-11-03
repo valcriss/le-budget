@@ -24,6 +24,7 @@ import { CategoriesStore } from '../../../core/categories/categories.store';
 import { Category } from '../../../core/categories/categories.models';
 import {
   Transaction,
+  TransactionPeriodicity,
   UpdateTransactionPayload,
   TransactionStatus,
 } from '../../../core/transactions/transactions.models';
@@ -34,6 +35,7 @@ interface EditModel {
   categoryId: string | null;
   debit: string | number | null;
   credit: string | number | null;
+  periodicity: TransactionPeriodicity | null;
 }
 
 export interface AccountTransactionUpdateEvent {
@@ -72,6 +74,7 @@ export class AccountTransaction implements OnChanges {
     balance: 10000,
     status: 'NONE',
     transactionType: 'NONE',
+    periodicity: null,
     linkedTransactionId: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -130,6 +133,26 @@ export class AccountTransaction implements OnChanges {
     'Remboursement',
   ];
 
+  private readonly periodicityLabels: Record<TransactionPeriodicity, string> = {
+    WEEKLY: 'Hebdomadaire',
+    MONTHLY: 'Mensuel',
+    QUARTERLY: 'Tous les 3 mois',
+    SEMIANNUAL: 'Deux fois par an',
+    ANNUAL: 'Annuel',
+  };
+
+  protected readonly periodicityOptions: ReadonlyArray<{
+    value: TransactionPeriodicity | null;
+    label: string;
+  }> = [
+    { value: null, label: 'Jamais' },
+    { value: 'WEEKLY', label: this.periodicityLabels.WEEKLY },
+    { value: 'MONTHLY', label: this.periodicityLabels.MONTHLY },
+    { value: 'QUARTERLY', label: this.periodicityLabels.QUARTERLY },
+    { value: 'SEMIANNUAL', label: this.periodicityLabels.SEMIANNUAL },
+    { value: 'ANNUAL', label: this.periodicityLabels.ANNUAL },
+  ];
+
   constructor(library: FaIconLibrary) {
     library.addIcons(faSave, faTimes, faCircle);
     void this.categoriesStore.ensureLoaded();
@@ -156,6 +179,13 @@ export class AccountTransaction implements OnChanges {
       return value;
     }
     return new Intl.DateTimeFormat('fr-FR').format(parsed);
+  }
+
+  protected periodicityLabel(value: TransactionPeriodicity | null): string {
+    if (!value) {
+      return 'Jamais';
+    }
+    return this.periodicityLabels[value];
   }
 
   protected debitAmount(transaction: Transaction): number {
@@ -253,6 +283,10 @@ export class AccountTransaction implements OnChanges {
         ? this.transaction.label
         : (this.editModel.label ?? '').trim() || this.transaction.label;
     const date = this.sanitizeDate(this.editModel.date);
+    const periodicity =
+      this.transaction.transactionType === 'INITIAL'
+        ? this.transaction.periodicity ?? null
+        : this.editModel.periodicity ?? null;
 
     const changes: UpdateTransactionPayload = {
       label,
@@ -262,6 +296,7 @@ export class AccountTransaction implements OnChanges {
         this.transaction.transactionType === 'INITIAL'
           ? this.transaction.categoryId ?? null
           : this.editModel.categoryId ?? null,
+      periodicity,
     };
 
     this.save.emit({
@@ -281,6 +316,7 @@ export class AccountTransaction implements OnChanges {
       categoryId: this.transaction.categoryId ?? null,
       debit: amount < 0 ? Math.abs(amount) : null,
       credit: amount > 0 ? amount : null,
+      periodicity: this.transaction.periodicity ?? null,
     };
   }
 

@@ -9,7 +9,7 @@ import {
   MaxLength,
   IsEnum,
 } from 'class-validator';
-import { TransactionStatus, TransactionType } from '@prisma/client';
+import { TransactionPeriodicity, TransactionStatus, TransactionType } from '@prisma/client';
 
 export class CreateTransactionDto {
   @ApiProperty({ description: 'Transaction date in ISO 8601 format' })
@@ -40,6 +40,15 @@ export class CreateTransactionDto {
   @IsOptional()
   @IsEnum(TransactionType)
   transactionType?: TransactionType;
+
+  @ApiPropertyOptional({
+    description: 'Périodicité de la transaction',
+    enum: TransactionPeriodicity,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsEnum(TransactionPeriodicity)
+  periodicity?: TransactionPeriodicity | null;
 
   @ApiPropertyOptional({ description: 'Transaction liée', format: 'uuid', nullable: true })
   @IsOptional()

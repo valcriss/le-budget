@@ -141,6 +141,7 @@ export class TransactionsService {
           amount,
           status: dto.status ?? TransactionStatus.NONE,
           transactionType: dto.transactionType ?? TransactionType.NONE,
+          periodicity: dto.periodicity ?? null,
           linkedTransactionId: dto.linkedTransactionId ?? null,
         },
         include: { category: { select: { id: true, name: true } } },
@@ -200,6 +201,7 @@ export class TransactionsService {
           amount: decimalAmount,
           status,
           transactionType: TransactionType.INITIAL,
+          periodicity: null,
         },
         include: { category: { select: { id: true, name: true } } },
       });
@@ -318,6 +320,8 @@ export class TransactionsService {
             amount: newAmount,
             status: dto.status ?? existing.status,
             transactionType: dto.transactionType ?? existing.transactionType,
+            periodicity:
+              dto.periodicity !== undefined ? dto.periodicity ?? null : existing.periodicity,
             linkedTransactionId:
               dto.linkedTransactionId !== undefined
                 ? dto.linkedTransactionId
@@ -829,6 +833,7 @@ export class TransactionsService {
       categoryName: transaction.category?.name ?? null,
       status: transaction.status,
       transactionType: transaction.transactionType,
+      periodicity: transaction.periodicity ?? null,
       linkedTransactionId: transaction.linkedTransactionId ?? null,
     });
   }

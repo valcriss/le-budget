@@ -2,6 +2,13 @@ export type TransactionStatus = 'NONE' | 'POINTED' | 'RECONCILED';
 
 export type TransactionType = 'NONE' | 'INITIAL' | 'TRANSFERT';
 
+export type TransactionPeriodicity =
+  | 'WEEKLY'
+  | 'MONTHLY'
+  | 'QUARTERLY'
+  | 'SEMIANNUAL'
+  | 'ANNUAL';
+
 export interface Transaction {
   id: string;
   accountId: string;
@@ -13,6 +20,7 @@ export interface Transaction {
   balance: number;
   status: TransactionStatus;
   transactionType: TransactionType;
+  periodicity: TransactionPeriodicity | null;
   linkedTransactionId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -44,6 +52,7 @@ export type UpdateTransactionPayload = Partial<{
   status: TransactionStatus;
   transactionType: TransactionType;
   categoryId: string | null;
+  periodicity: TransactionPeriodicity | null;
   linkedTransactionId: string | null;
 }>;
 
@@ -54,5 +63,6 @@ export interface CreateTransactionPayload {
   status?: TransactionStatus;
   transactionType?: TransactionType;
   categoryId?: string | null;
+  periodicity?: TransactionPeriodicity | null;
   linkedTransactionId?: string | null;
 }

@@ -8,6 +8,9 @@ CREATE TYPE "TransactionStatus" AS ENUM ('NONE', 'POINTED', 'RECONCILED');
 CREATE TYPE "TransactionType" AS ENUM ('NONE', 'INITIAL', 'TRANSFERT');
 
 -- CreateEnum
+CREATE TYPE "TransactionPeriodicity" AS ENUM ('WEEKLY', 'MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL');
+
+-- CreateEnum
 CREATE TYPE "CategoryKind" AS ENUM ('EXPENSE', 'INCOME', 'TRANSFER', 'INITIAL', 'INCOME_PLUS_ONE');
 
 -- CreateTable
@@ -88,6 +91,7 @@ CREATE TABLE "Transaction" (
     "amount" DECIMAL(65,30) NOT NULL,
     "status" "TransactionStatus" NOT NULL DEFAULT 'NONE',
     "transactionType" "TransactionType" NOT NULL DEFAULT 'NONE',
+    "periodicity" "TransactionPeriodicity",
     "linkedTransactionId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
