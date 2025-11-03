@@ -23,43 +23,60 @@
       <app-ui-card>
         <app-budget-menu></app-budget-menu>
         <ng-container *ngIf="!loading(); else categoriesLoading">
-          <app-budget-categories [budgetGroups]="groups()"></app-budget-categories>
+          <!-- Click handler at wrapper to allow outside click deselection; stop propagation inside item rows handled in component -->
+          <div (click)="clearSelectedCategory()">
+            <app-budget-categories
+              [budgetGroups]="groups()"
+              [selectedCategoryId]="selectedCategory()?.categoryId ?? null"
+              (categorySelected)="onCategorySelected($event)"
+            ></app-budget-categories>
+          </div>
         </ng-container>
       </app-ui-card>
     </div>
     <div class="hidden md:block md:basis-3/12">
-      <app-ui-card>
-        <ng-container *ngIf="!loading(); else summaryLoading">
-          <ng-container *ngIf="monthSummary() as summary">
-            <app-budget-month-summary [availableFromPreviousMonth]="summary.availableCarryover"
-                                      [incomesOfTheCurrentMonth]="summary.income"
-                                      [totalAssigned]="summary.totalAssigned"
-                                      [totalPaid]="summary.totalActivity"
-                                      [totalAvailable]="summary.totalAvailable"></app-budget-month-summary>
+  <div id="month-selected" *ngIf="!selectedCategory()">
+        <app-ui-card>
+          <ng-container *ngIf="!loading(); else summaryLoading">
+            <ng-container *ngIf="monthSummary() as summary">
+              <app-budget-month-summary
+                [availableFromPreviousMonth]="summary.availableCarryover"
+                [incomesOfTheCurrentMonth]="summary.income"
+                [totalAssigned]="summary.totalAssigned"
+                [totalPaid]="summary.totalActivity"
+                [totalAvailable]="summary.totalAvailable"
+              ></app-budget-month-summary>
+            </ng-container>
           </ng-container>
-        </ng-container>
-      </app-ui-card>
-
-      <app-ui-card>
-        <app-budget-month-actions></app-budget-month-actions>
-      </app-ui-card>
-
-      <app-ui-card>
-        <ng-container *ngIf="!loading(); else summaryLoading">
-          <ng-container *ngIf="monthSummary() as summary">
-            <app-budget-category-summary [availableFromPreviousMonth]="summary.availableCarryover"
-                                         [assignedThisMonth]="summary.totalAssigned"
-                                         [totalPaid]="summary.totalActivity"
-                                         [totalAvailable]="summary.totalAvailable"
-                                         [neededThisMonth]="0"
-                                         [neededForNextMonths]="0"></app-budget-category-summary>
+        </app-ui-card>
+        <app-ui-card>
+          <app-budget-month-actions></app-budget-month-actions>
+        </app-ui-card>
+      </div>
+      <div id="category-selected" *ngIf="selectedCategory() as cat">
+        <app-ui-card>
+          <ng-container *ngIf="!loading(); else summaryLoading">
+            <ng-container *ngIf="monthSummary() as summary">
+              <app-budget-category-summary
+                [availableFromPreviousMonth]="summary.availableCarryover"
+                [assignedThisMonth]="summary.totalAssigned"
+                [totalPaid]="summary.totalActivity"
+                [totalAvailable]="summary.totalAvailable"
+                [neededThisMonth]="0"
+                [neededForNextMonths]="0"
+                [totalAssigned]="summary.totalAssigned"
+              ></app-budget-category-summary>
+              <div class="mt-2 text-sm text-gray-600 font-medium" *ngIf="cat?.category?.name">
+                Catégorie sélectionnée : {{ cat.category.name }}
+              </div>
+            </ng-container>
           </ng-container>
-        </ng-container>
-      </app-ui-card>
+        </app-ui-card>
 
-           <app-ui-card>
-        <app-budget-category-actions></app-budget-category-actions>
-      </app-ui-card>
+        <app-ui-card>
+          <app-budget-category-actions></app-budget-category-actions>
+        </app-ui-card>
+      </div>
     </div>
   </div>
 </div>

@@ -148,7 +148,9 @@
                 <ng-template cdkDragPlaceholder>
                   <div class="drag-placeholder item-placeholder"></div>
                 </ng-template>
-                <div class="flex flex-row bg-white pl-0 pr-2 h-8 text-sm text-gray-500 hover:bg-yellow-50">
+       <div class="flex flex-row bg-white pl-0 pr-2 h-8 text-sm text-gray-500 hover:bg-yellow-50 cursor-pointer"
+         (click)="selectCategory(it, $event)"
+         [class.bg-yellow-100]="selectedCategoryId === it.categoryId">
                   <div class="basis-0 flex items-center">
                     <div class="w-8"></div>
                   </div>

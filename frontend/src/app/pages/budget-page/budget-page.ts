@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, computed, inject } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { BudgetCategory } from '../../core/budget/budget.models';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Header } from '../../components/ui/header/header';
@@ -75,6 +76,18 @@ export class BudgetPage {
       totalAvailable: available,
     };
   });
+
+  // Category selection ------------------------------------------------------
+  readonly selectedCategory = signal<BudgetCategory | null>(null);
+
+  onCategorySelected(cat: BudgetCategory) {
+    this.selectedCategory.set(cat);
+  }
+
+  // Called when user clicks outside categories list (budget area) to clear selection
+  clearSelectedCategory() {
+    this.selectedCategory.set(null);
+  }
 
   constructor() {
     this.route.queryParamMap

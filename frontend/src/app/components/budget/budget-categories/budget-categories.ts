@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, ViewChildren, QueryList, inject } from '@angular/core';
+import { Component, ElementRef, Input, ViewChildren, QueryList, inject, Output, EventEmitter } from '@angular/core';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDragStart, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
@@ -54,6 +54,16 @@ export class BudgetCategories {
     });
     this.groups = mapped;
     this.syncCollapsedState();
+  }
+
+  // Selection ---------------------------------------------------------------
+  @Output() categorySelected = new EventEmitter<BudgetCategory>();
+  @Input() selectedCategoryId: string | null = null; // controlled by parent
+
+  selectCategory(item: BudgetCategory, event?: MouseEvent) {
+    event?.stopPropagation();
+    // Emit to parent; parent updates selectedCategoryId input -> highlight
+    this.categorySelected.emit(item);
   }
 
   protected groupLabel(group: BudgetCategoryGroup): string {
