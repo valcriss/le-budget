@@ -46,29 +46,37 @@
       <app-date-picker class="w-full text-xs" [(ngModel)]="model.date"></app-date-picker>
     </div>
     <div class="basis-3/12 md:basis-2/12 flex items-center px-1">
-      <ng-select
+      @if (transaction.transactionType !== 'INITIAL') {
+      <ng-select ngIf="transaction.transactionType === 'INITIAL'"
         class="w-full text-xs transaction-select"
         [items]="labels"
         [(ngModel)]="model.label"
-        [disabled]="transaction.transactionType === 'INITIAL'"
         [clearable]="false"
         [searchable]="true"
         [addTag]="true"
         dropdownPosition="bottom"
       ></ng-select>
+      }
+      @if (transaction.transactionType === 'INITIAL') {
+      <span>Solde initial</span>
+      }
     </div>
     <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center px-1">
+       @if (transaction.transactionType !== 'INITIAL') {
       <ng-select
         class="w-full text-xs transaction-select"
         [items]="categoryOptions()"
         bindLabel="name"
         bindValue="id"
         [(ngModel)]="model.categoryId"
-        [disabled]="transaction.transactionType === 'INITIAL'"
         [clearable]="true"
         [searchable]="true"
         dropdownPosition="bottom"
       ></ng-select>
+      }
+      @if (transaction.transactionType === 'INITIAL') {
+  <span>Solde initial</span>
+      }
     </div>
     <div class="hidden basis-3/12 md:basis-2/12 md:flex items-center justify-end px-1 text-right">
       <input class="w-full text-xs p-1 text-right border rounded" type="number" step="0.01"
