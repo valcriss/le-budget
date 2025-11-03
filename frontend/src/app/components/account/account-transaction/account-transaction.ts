@@ -94,7 +94,12 @@ export class AccountTransaction implements OnChanges {
   private readonly categoriesStore = inject(CategoriesStore);
 
   protected readonly categoryOptions = computed<ReadonlyArray<Category>>(() =>
-    [...this.categoriesStore.categories()].sort((a, b) => a.name.localeCompare(b.name)),
+    [...this.categoriesStore.categories()]
+      .filter((c) =>
+        c.kind === 'INCOME' || c.kind === 'INCOME_PLUS_ONE' || c.kind === 'TRANSFER' ||
+        (c.kind === 'EXPENSE' && c.parentCategoryId != null),
+      )
+      .sort((a, b) => a.name.localeCompare(b.name)),
   );
   protected readonly categoriesLoading = this.categoriesStore.loading;
   protected readonly categoriesError = this.categoriesStore.error;

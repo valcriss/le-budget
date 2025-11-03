@@ -47,7 +47,7 @@
     </div>
     <div class="basis-3/12 md:basis-2/12 flex items-center px-1">
       @if (transaction.transactionType !== 'INITIAL') {
-      <ng-select ngIf="transaction.transactionType === 'INITIAL'"
+      <ng-select
         class="w-full text-xs transaction-select"
         [items]="labels"
         [(ngModel)]="model.label"
