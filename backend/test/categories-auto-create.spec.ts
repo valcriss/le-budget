@@ -1,7 +1,5 @@
 import { strict as assert } from 'assert';
 import { AccountsService } from '../src/modules/accounts/accounts.service';
-import { CategoriesService } from '../src/modules/categories/categories.service';
-import { CategoryKind } from '@prisma/client';
 
 // Minimal mock implementations for dependencies
 class MockEvents { emit() { /* noop */ } }
