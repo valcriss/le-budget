@@ -27,6 +27,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Ensure lightningcss binary
+        # If lightningcss prebuilt binary is missing for the runner/Node combo,
+        # force rebuild/update the optional native binary so the Angular build can use it.
+        run: npm rebuild lightningcss --update-binary || true
+
       - name: Lint
         run: npm run lint
 
@@ -60,6 +65,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Ensure lightningcss binary
+        # Rebuild lightningcss binary on linux runner
+        run: npm rebuild lightningcss --update-binary || true
 
       - name: Lint
         run: npm run lint
