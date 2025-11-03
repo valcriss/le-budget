@@ -5,8 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "lint": "eslint --ext .ts,.html src/ --max-warnings=0",
-  "format": "prettier --write \"src/**/*.{ts,html,css,json,md}\"",
-  "format:html": "prettier --write \"src/**/*.html\" && node tools/collapse-html-openings.js",
+    "format": "prettier --write \"src/**/*.{ts,html,css,json,md}\"",
+    "format:html": "prettier --write \"src/**/*.html\" && node tools/collapse-html-openings.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "jest --runInBand --coverage",
@@ -26,15 +26,15 @@
   },
   "private": true,
   "dependencies": {
-  "@angular/cdk": "^20.2.9",
-  "@angular/common": "^20.3.9",
-  "@angular/compiler": "^20.3.9",
-  "@angular/core": "^20.3.9",
-  "@angular/forms": "^20.3.9",
-  "@angular/platform-browser": "^20.3.9",
-  "@angular/platform-browser-dynamic": "^20.3.9",
-  "@angular/animations": "20.3.9",
-  "@angular/router": "^20.3.9",
+    "@angular/cdk": "^20.2.9",
+    "@angular/common": "^20.3.9",
+    "@angular/compiler": "^20.3.9",
+    "@angular/core": "^20.3.9",
+    "@angular/forms": "^20.3.9",
+    "@angular/platform-browser": "^20.3.9",
+    "@angular/platform-browser-dynamic": "^20.3.9",
+    "@angular/animations": "20.3.9",
+    "@angular/router": "^20.3.9",
     "@fortawesome/angular-fontawesome": "^3.0.0",
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
@@ -49,13 +49,13 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
-  "eslint": "^9.37.0",
-  "@typescript-eslint/parser": "^8.46.1",
-  "@typescript-eslint/eslint-plugin": "^8.46.1",
-  "eslint-config-prettier": "^10.1.8",
-  "prettier": "^3.6.2",
-  "rimraf": "^4.0.1",
-  "glob": "^9.3.5",
+    "eslint": "^9.37.0",
+    "@typescript-eslint/parser": "^8.46.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "rimraf": "^4.0.1",
+    "glob": "^9.3.5",
     "@angular/build": "^20.3.8",
     "@angular/cli": "^20.3.8",
     "@angular/compiler-cli": "^20.3.9",
@@ -67,10 +67,12 @@
     "jsdom": "^26.0.0",
     "ts-jest": "^29.4.5",
     "typescript": "~5.9.2"
-  }
-  ,
+  },
   "overrides": {
     "glob": "^9.3.5",
     "rimraf": "^4.0.1"
+  },
+  "volta": {
+    "node": "24.11.0"
   }
 }
