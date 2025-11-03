@@ -80,11 +80,21 @@ jobs:
         run: npm run build
 
   docker:
-    name: Publish Docker Image
+    name: Publish Docker Images
     runs-on: ubuntu-latest
     needs:
       - backend
       - frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            dockerfile: Dockerfile.backend
+            image: le-budget-backend
+          - name: frontend
+            dockerfile: Dockerfile.frontend
+            image: le-budget-frontend
     permissions:
       contents: read
       packages: write
@@ -102,11 +112,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push ${{ matrix.name }}
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/le-budget:${{ github.ref_name }}
-            ghcr.io/${{ github.repository_owner }}/le-budget:latest
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:latest

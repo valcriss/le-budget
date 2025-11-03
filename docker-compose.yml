@@ -1,14 +1,27 @@
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  backend:
+    image: ${REGISTRY:-ghcr.io}/${REGISTRY_NAMESPACE:-silve}/le-budget-backend:${IMAGE_TAG:-latest}
     env_file:
       - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/le-budget?schema=public}
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
     depends_on:
       - db
     ports:
       - "${PORT:-3000}:3000"
+    restart: unless-stopped
+
+  frontend:
+    image: ${REGISTRY:-ghcr.io}/${REGISTRY_NAMESPACE:-silve}/le-budget-frontend:${IMAGE_TAG:-latest}
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
     restart: unless-stopped
 
   db:
