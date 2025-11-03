@@ -72,9 +72,15 @@
         [(ngModel)]="model.categoryId"
         [clearable]="true"
         [searchable]="true"
-        groupBy="type"
+        [groupBy]="categoryGroupBy"
         dropdownPosition="bottom"
-      ></ng-select>
+      >
+        <ng-template ng-optgroup-tmp let-item="item" let-disabled="disabled">
+          <div class="py-1 px-2 text-[10px] uppercase tracking-wide font-semibold text-gray-500 bg-gray-50 border-b border-gray-200">
+            {{ categoryGroupLabel(item) }}
+          </div>
+        </ng-template>
+      </ng-select>
       }
       @if (transaction.transactionType === 'INITIAL') {
   <span>Solde initial</span>

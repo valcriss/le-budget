@@ -101,6 +101,20 @@ export class AccountTransaction implements OnChanges {
       )
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
+  // Clé de regroupement : fusionner INCOME et INCOME_PLUS_ONE sous un seul groupe
+  protected readonly categoryGroupBy = (item: Category) =>
+    item.kind === 'INCOME' || item.kind === 'INCOME_PLUS_ONE' ? 'INCOME' : item.kind;
+  // Libellé lisible du groupe (reçoit un objet { name: string })
+  protected readonly categoryGroupLabel = (groupKey: { name: string }) => {
+    switch (groupKey.name) {
+      case 'INCOME': return 'Revenus';
+      case 'INCOME_PLUS_ONE': return 'Revenus'; // ne devrait plus apparaître mais fallback
+      case 'TRANSFER': return 'Virements';
+      case 'INITIAL': return 'Initial';
+      case 'EXPENSE': return 'Dépenses';
+      default: return groupKey.name; // afficher la clé brute pour debug si non reconnu
+    }
+  };
   protected readonly categoriesLoading = this.categoriesStore.loading;
   protected readonly categoriesError = this.categoriesStore.error;
 
