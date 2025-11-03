@@ -45,7 +45,8 @@ export class AccountsService {
     });
 
     const entity = this.toEntity(account);
-    const initialCategoryId = await this.ensureInitialCategory(userId);
+  const initialCategoryId = await this.ensureInitialCategory(userId);
+  await this.ensureIncomeCategories(userId); // create income categories if missing
     await this.createTransferCategory(userId, account);
     await this.transactions.createInitialTransactionForAccount(account.id, {
       amount: initial,
@@ -176,6 +177,54 @@ export class AccountsService {
       },
     });
     return category.id;
+  }
+
+  private async ensureIncomeCategories(userId: string): Promise<void> {
+    // Names enforced in French as per requirements
+    const incomeDefinitions: Array<{ name: string; kind: CategoryKind }> = [
+      { name: 'Revenus du mois', kind: CategoryKind.INCOME },
+      { name: 'Revenus du mois suivant', kind: CategoryKind.INCOME_PLUS_ONE },
+    ];
+
+    // fetch existing categories for user for these kinds/names to minimize queries
+    const existing = await this.prisma.category.findMany({
+      where: {
+        userId,
+        OR: incomeDefinitions.map((d) => ({ name: d.name })),
+      },
+      select: { id: true, name: true },
+    });
+    const existingNames = new Set(existing.map((c) => c.name));
+
+    if (existingNames.size === incomeDefinitions.length) {
+      return; // both already exist
+    }
+
+    // Determine next sort order base (top-level categories only)
+    let nextSortOrderBase: number | null = null;
+    const resolveNext = async () => {
+      if (nextSortOrderBase === null) {
+        const { _max } = await this.prisma.category.aggregate({
+          where: { userId, parentCategoryId: null },
+          _max: { sortOrder: true },
+        });
+        nextSortOrderBase = (_max.sortOrder ?? -1) + 1;
+      }
+      return nextSortOrderBase++;
+    };
+
+    for (const def of incomeDefinitions) {
+      if (!existingNames.has(def.name)) {
+        await this.prisma.category.create({
+          data: {
+            userId,
+            name: def.name,
+            kind: def.kind,
+            sortOrder: await resolveNext(),
+          },
+        });
+      }
+    }
   }
 
   private async createTransferCategory(userId: string, account: { id: string; name: string }) {

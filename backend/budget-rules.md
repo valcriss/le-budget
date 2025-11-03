@@ -34,6 +34,11 @@ Autres règles structurelles :
 - Lors de la consultation d’un mois (`GET /budget/months/{monthKey}`), `recalculateBudgetMonthForUser` rejoue l’intégralité de la chronologie budgétaire : pour chaque mois de l’utilisateur (depuis le plus ancien jusqu’au plus récent), la fonction recalcule `income`, `availableCarryover`, `assigned`, `activity`, `available`, ainsi que les `activity`/`available` cumulés de chaque `BudgetCategory`.
 - Les dépenses de type `EXPENSE` alimentent également la somme `activity` du mois concerné, ce qui déclenche ensuite la recalculation des totaux `BudgetMonth`.
 - Les transactions associées à des catégories de type `INCOME_PLUS_ONE` marquent à recalcul le mois suivant pour refléter le décalage d’un mois des revenus.
+- À la création du premier compte (ou de tout compte si elles n'existent pas encore) trois catégories spéciales sont créées automatiquement pour l'utilisateur :
+	- `Solde initial` (`INITIAL`)
+	- `Revenus du mois` (`INCOME`)
+	- `Revenus du mois suivant` (`INCOME_PLUS_ONE`)
+	Ces trois catégories, ainsi que les catégories de transfert (`TRANSFER`), ne peuvent pas être créées, modifiées ou supprimées via l'API.
 
 ---
 

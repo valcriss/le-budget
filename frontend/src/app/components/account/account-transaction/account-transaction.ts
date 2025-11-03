@@ -54,7 +54,7 @@ export interface AccountTransactionStatusEvent {
     FontAwesomeModule,
     Checkbox,
     NgSelectModule,
-    DatePickerComponent,
+    DatePickerComponent
   ],
   templateUrl: './account-transaction.html',
   styleUrl: './account-transaction.css',

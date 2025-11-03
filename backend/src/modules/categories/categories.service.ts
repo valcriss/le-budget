@@ -26,6 +26,9 @@ export class CategoriesService {
     if (requestedKind === CategoryKind.INITIAL) {
       throw new BadRequestException('Les catégories initiales sont gérées automatiquement.');
     }
+    if (requestedKind === CategoryKind.INCOME || requestedKind === CategoryKind.INCOME_PLUS_ONE) {
+      throw new BadRequestException('Les catégories de revenus sont gérées automatiquement.');
+    }
     let parentCategoryId: string | null = null;
     if (dto.parentCategoryId) {
       await this.assertParentBelongsToUser(dto.parentCategoryId, userId);
@@ -83,12 +86,18 @@ export class CategoriesService {
     if (existing.kind === CategoryKind.INITIAL) {
       throw new BadRequestException('Les catégories initiales ne peuvent pas être modifiées.');
     }
+    if (existing.kind === CategoryKind.INCOME || existing.kind === CategoryKind.INCOME_PLUS_ONE) {
+      throw new BadRequestException('Les catégories de revenus ne peuvent pas être modifiées.');
+    }
 
     if (dto.kind === CategoryKind.TRANSFER) {
       throw new BadRequestException('Impossible de définir une catégorie utilisateur comme transfert.');
     }
     if (dto.kind === CategoryKind.INITIAL) {
       throw new BadRequestException('Impossible de définir une catégorie utilisateur comme initial.');
+    }
+    if (dto.kind === CategoryKind.INCOME || dto.kind === CategoryKind.INCOME_PLUS_ONE) {
+      throw new BadRequestException('Impossible de définir une catégorie utilisateur comme revenu.');
     }
 
     const data: Prisma.CategoryUpdateInput = {
@@ -134,6 +143,9 @@ export class CategoriesService {
     }
     if (existing.kind === CategoryKind.INITIAL) {
       throw new BadRequestException('Les catégories initiales ne peuvent pas être supprimées.');
+    }
+    if (existing.kind === CategoryKind.INCOME || existing.kind === CategoryKind.INCOME_PLUS_ONE) {
+      throw new BadRequestException('Les catégories de revenus ne peuvent pas être supprimées.');
     }
 
     const childrenCount = await this.prisma.category.count({

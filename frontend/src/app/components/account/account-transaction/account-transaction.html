@@ -55,7 +55,8 @@
         [searchable]="true"
         [addTag]="true"
         dropdownPosition="bottom"
-      ></ng-select>
+      >      
+      </ng-select>
       }
       @if (transaction.transactionType === 'INITIAL') {
       <span>Solde initial</span>
@@ -71,6 +72,7 @@
         [(ngModel)]="model.categoryId"
         [clearable]="true"
         [searchable]="true"
+        groupBy="type"
         dropdownPosition="bottom"
       ></ng-select>
       }
