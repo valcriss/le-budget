@@ -71,21 +71,13 @@ async function bootstrap() {
     jsonDocumentUrl: 'docs-json',
   });
 
-  fastifyInstance.setNotFoundHandler((request, reply) => {
-    const acceptHeader = request.headers.accept;
-    if (
-      request.method === 'GET' &&
-      typeof acceptHeader === 'string' &&
-      acceptHeader.includes('text/html')
-    ) {
-      return (reply as any).sendFile('index.html');
-    }
-    reply.status(404).send({
-      statusCode: 404,
-      message: 'Not Found',
-      error: 'Not Found',
-    });
-  });
+  // NOTE:
+  // Custom not found handler removed because Nest (Fastify adapter) registers its own
+  // 404 handler during initialization. Registering another one beforehand causes
+  // "Not found handler already set" errors and prevents application startup.
+  // If a SPA fallback is desired (serve index.html for unknown HTML GET requests),
+  // implement it via a global filter catching NotFoundException or a dedicated
+  // wildcard controller instead of calling fastifyInstance.setNotFoundHandler() here.
 
   const port = configService.get<number>('PORT', 3000);
   await app.listen({ port, host: '0.0.0.0' });
