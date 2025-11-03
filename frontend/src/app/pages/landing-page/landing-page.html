@@ -1,0 +1,240 @@
+<div class="landing-page min-h-screen bg-[#f7f7f7] text-slate-900 flex flex-col">
+  <header class="relative">
+    <div class="absolute inset-0 hero-glow pointer-events-none"></div>
+    <div class="relative max-w-6xl mx-auto px-6 py-6 flex items-center justify-between gap-6">
+      <a class="text-xl font-semibold text-white tracking-wide drop-shadow" routerLink="/">Le budget</a>
+      <nav class="hidden md:flex items-center gap-8 text-sm text-white/90">
+        <a class="hover:text-white transition" href="#fonctionnalites">Fonctionnalités</a>
+        <a class="hover:text-white transition" href="#comment-ca-marche">Comment ça marche</a>
+        <a class="hover:text-white transition" href="#temoignages">Témoignages</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <a
+          class="text-sm font-medium text-white/90 hover:text-white transition px-4 py-2 rounded-full border border-white/20 backdrop-blur"
+          routerLink="/login"
+          >Se connecter</a
+        >
+        <a
+          class="text-sm font-semibold text-[#1e2b6f] bg-white hover:bg-slate-100 transition px-4 py-2 rounded-full shadow-lg"
+          routerLink="/register"
+          >Créer un compte</a
+        >
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1">
+    <section class="relative overflow-hidden">
+      <div class="absolute inset-0 hero-gradient"></div>
+      <div class="relative max-w-6xl mx-auto px-6 py-24 lg:py-28 grid gap-16 lg:grid-cols-[1.1fr_0.9fr] items-center text-white">
+        <div class="space-y-8">
+          <div class="inline-flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur rounded-full text-xs uppercase tracking-[0.2em] text-white/80">
+            Gestion budgétaire réinventée
+          </div>
+          <div class="space-y-6">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-tight">
+              Prenez le contrôle de vos finances avec <span class="text-[#ffdd87]">Le budget</span>.
+            </h1>
+            <p class="text-base sm:text-lg text-white/85 leading-relaxed max-w-xl">
+              Planifiez vos dépenses, épargnez en toute sérénité et avancez vers vos objectifs. Une expérience moderne, inspirée des meilleures pratiques, pensée pour les ménages francophones.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-4">
+            <a
+              class="inline-flex items-center gap-2 bg-white text-[#1e2b6f] px-6 py-3 rounded-full font-semibold shadow-lg hover:-translate-y-0.5 hover:shadow-2xl transition"
+              routerLink="/register"
+            >
+              Commencer gratuitement
+              <span aria-hidden="true">→</span>
+            </a>
+            <a class="inline-flex items-center text-white/85 hover:text-white transition font-medium" href="#fonctionnalites"
+              >Découvrir les fonctionnalités</a
+            >
+          </div>
+          <dl class="grid grid-cols-2 sm:grid-cols-3 gap-6 text-sm text-white/80">
+            <div class="rounded-2xl bg-white/10 backdrop-blur p-5 shadow-inner border border-white/15">
+              <dt class="uppercase tracking-wider text-[0.65rem] text-white/65">Utilisateurs satisfaits</dt>
+              <dd class="mt-2 text-2xl font-semibold text-white">5 000+</dd>
+            </div>
+            <div class="rounded-2xl bg-white/10 backdrop-blur p-5 shadow-inner border border-white/15">
+              <dt class="uppercase tracking-wider text-[0.65rem] text-white/65">Budgets équilibrés</dt>
+              <dd class="mt-2 text-2xl font-semibold text-white">12 M€</dd>
+            </div>
+            <div class="rounded-2xl bg-white/10 backdrop-blur p-5 shadow-inner border border-white/15">
+              <dt class="uppercase tracking-wider text-[0.65rem] text-white/65">Satisfaction</dt>
+              <dd class="mt-2 text-2xl font-semibold text-white">4,9 / 5</dd>
+            </div>
+          </dl>
+        </div>
+        <div class="relative">
+          <div class="mockup-card rounded-[32px] bg-white shadow-2xl border border-white/40 overflow-hidden">
+            <div class="bg-gradient-to-r from-[#1e66ff] via-[#3a8eff] to-[#58a9ff] h-28"></div>
+            <div class="p-8 space-y-6 text-slate-800">
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-[#1e2b6f]">Vue mensuelle</h2>
+                <span class="text-sm text-slate-400">Septembre</span>
+              </div>
+              <ul class="space-y-4 text-sm">
+                <li class="flex items-center justify-between">
+                  <div>
+                    <p class="font-semibold text-slate-800">Budget Courses</p>
+                    <p class="text-slate-400">Plafond : 400 €</p>
+                  </div>
+                  <span class="rounded-full bg-[#e4f0ff] text-[#1e66ff] px-3 py-1 font-semibold">328 €</span>
+                </li>
+                <li class="flex items-center justify-between">
+                  <div>
+                    <p class="font-semibold text-slate-800">Épargne Vacances</p>
+                    <p class="text-slate-400">Objectif atteint à 82 %</p>
+                  </div>
+                  <span class="rounded-full bg-[#eaf7f0] text-[#239b5f] px-3 py-1 font-semibold">+240 €</span>
+                </li>
+                <li class="flex items-center justify-between">
+                  <div>
+                    <p class="font-semibold text-slate-800">Abonnements</p>
+                    <p class="text-slate-400">Prochaine échéance : Netflix</p>
+                  </div>
+                  <span class="rounded-full bg-[#fff4e4] text-[#e99523] px-3 py-1 font-semibold">-42 €</span>
+                </li>
+              </ul>
+              <div class="rounded-2xl bg-[#f5f8ff] p-4">
+                <p class="text-sm text-slate-600">
+                  Visualisez vos flux de trésorerie, détectez les écarts et ajustez votre budget en temps réel.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="absolute inset-x-10 -bottom-10 rounded-2xl border border-white/40 bg-white/70 backdrop-blur shadow-xl p-6 text-slate-800 hidden lg:block">
+            <p class="text-sm font-semibold text-[#1e2b6f]">Conseil du jour</p>
+            <p class="text-sm text-slate-500 mt-1">
+              Affectez chaque euro à une mission précise. C'est le cœur de la méthode Le budget pour garder une vision claire.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="fonctionnalites" class="max-w-6xl mx-auto px-6 py-20 space-y-12">
+      <div class="text-center max-w-3xl mx-auto space-y-4">
+        <h2 class="text-3xl font-semibold text-[#1e2b6f]">Une méthode éprouvée pour faire prospérer vos projets</h2>
+        <p class="text-base text-slate-600">
+          Le budget vous accompagne à chaque étape : de la planification quotidienne à la visualisation de votre horizon financier.
+        </p>
+      </div>
+      <div class="grid gap-6 lg:grid-cols-3">
+        <article class="feature-card">
+          <h3>Budgets clairs</h3>
+          <p>
+            Créez des catégories sur mesure, suivez vos plafonds et anticipez les imprévus grâce à des alertes intelligentes.
+          </p>
+        </article>
+        <article class="feature-card">
+          <h3>Objectifs visuels</h3>
+          <p>
+            Fixez des objectifs d'épargne, visualisez leur progression mois après mois et alimentez-les automatiquement.
+          </p>
+        </article>
+        <article class="feature-card">
+          <h3>Analyse proactive</h3>
+          <p>
+            Identifiez vos tendances en un clin d'œil avec des tableaux de bord colorés et des scénarios de projection.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="comment-ca-marche" class="bg-white">
+      <div class="max-w-6xl mx-auto px-6 py-20 grid gap-12 lg:grid-cols-2 items-center">
+        <div class="space-y-6">
+          <h2 class="text-3xl font-semibold text-[#1e2b6f]">Comment ça marche ?</h2>
+          <p class="text-base text-slate-600">
+            En quelques minutes, vous construisez un budget vivant qui reflète votre réalité. Le budget rend la démarche simple, motivante et durable.
+          </p>
+          <ul class="space-y-4">
+            <li class="step-item">
+              <span class="step-index">1</span>
+              <div>
+                <h3>Créez votre espace</h3>
+                <p>Configurez vos comptes, importez vos transactions ou saisissez-les manuellement.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <span class="step-index">2</span>
+              <div>
+                <h3>Allouez chaque euro</h3>
+                <p>Répartissez vos revenus selon vos priorités : charges fixes, plaisirs, projets d'épargne.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <span class="step-index">3</span>
+              <div>
+                <h3>Pilotez votre futur</h3>
+                <p>Suivez vos écarts, ajustez à la volée et gardez une vision sereine de votre trésorerie.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="grid gap-6">
+          <div class="rounded-3xl bg-gradient-to-br from-[#58a9ff] via-[#3a8eff] to-[#1e66ff] p-6 text-white shadow-lg">
+            <h3 class="text-lg font-semibold">Votre coach financier personnel</h3>
+            <p class="mt-2 text-sm text-white/80">
+              Recevez des suggestions contextualisées pour lisser vos dépenses et atteindre vos objectifs plus vite.
+            </p>
+          </div>
+          <div class="rounded-3xl border border-[#d7e3ff] bg-[#f6f8ff] p-6 shadow-inner">
+            <h3 class="text-lg font-semibold text-[#1e2b6f]">Synchronisation sécurisée</h3>
+            <p class="mt-2 text-sm text-slate-600">
+              Connexions bancaires protégées, chiffrement de bout en bout et stockage conforme aux standards européens.
+            </p>
+          </div>
+          <div class="rounded-3xl border border-[#ffe5bb] bg-[#fff8ec] p-6 shadow-inner">
+            <h3 class="text-lg font-semibold text-[#7f4c15]">Multi-appareils</h3>
+            <p class="mt-2 text-sm text-slate-600">
+              Retrouvez vos données sur mobile, tablette et ordinateur. Les mises à jour sont instantanées.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="temoignages" class="max-w-6xl mx-auto px-6 py-20 space-y-10">
+      <div class="text-center max-w-3xl mx-auto space-y-4">
+        <h2 class="text-3xl font-semibold text-[#1e2b6f]">Ils ont transformé leur façon de gérer leur argent</h2>
+        <p class="text-base text-slate-600">
+          Des familles, des indépendants, des étudiants... Tous ont adopté une nouvelle discipline budgétaire avec Le budget.
+        </p>
+      </div>
+      <div class="grid gap-6 md:grid-cols-3">
+        <blockquote class="testimonial">
+          <p>
+            « En trois mois, nous avons mis fin aux découvertes à répétition. Les enveloppes digitales sont devenues notre rituel du dimanche soir. »
+          </p>
+          <footer>— Clara & Maxime, Lyon</footer>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>
+            « La visualisation des objectifs m'aide à garder le cap sur mon projet de van. Chaque euro a désormais une mission claire. »
+          </p>
+          <footer>— Julien, Bordeaux</footer>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>
+            « Le budget est mon copilote financier : simple, élégant et surtout efficace pour lisser les revenus irréguliers. »
+          </p>
+          <footer>— Amina, consultante indépendante</footer>
+        </blockquote>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-[#1e2b6f] text-white">
+    <div class="max-w-6xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/75">
+      <p>© {{ currentYear }} Le budget. Tous droits réservés.</p>
+      <nav class="flex items-center gap-6">
+        <a class="hover:text-white transition" href="#fonctionnalites">Fonctionnalités</a>
+        <a class="hover:text-white transition" href="#comment-ca-marche">Tutoriels</a>
+        <a class="hover:text-white transition" routerLink="/login">Connexion</a>
+      </nav>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,112 @@
+:host {
+  display: block;
+}
+
+.landing-page header {
+  background: linear-gradient(135deg, #1e66ff, #3a8eff, #58a9ff);
+}
+
+.hero-glow {
+  background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.25), transparent 55%),
+    radial-gradient(circle at bottom left, rgba(255, 198, 119, 0.25), transparent 50%);
+  opacity: 0.9;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, rgba(30, 102, 255, 0.95), rgba(58, 142, 255, 0.92), rgba(88, 169, 255, 0.9)),
+    radial-gradient(circle at 20% 20%, rgba(255, 221, 135, 0.35), transparent 45%);
+}
+
+.mockup-card {
+  border-radius: 32px;
+  box-shadow: 0 30px 60px rgba(16, 24, 64, 0.25);
+}
+
+.feature-card {
+  border-radius: 24px;
+  background: linear-gradient(145deg, #ffffff, #f4f7ff);
+  border: 1px solid #e1e9ff;
+  padding: 32px 28px;
+  box-shadow: 0 20px 40px rgba(30, 102, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feature-card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e2b6f;
+}
+
+.feature-card p {
+  font-size: 0.95rem;
+  color: #5a6889;
+  line-height: 1.6;
+}
+
+.step-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: rgba(244, 247, 255, 0.85);
+  border: 1px solid rgba(165, 189, 255, 0.4);
+  border-radius: 18px;
+  padding: 18px 22px;
+  box-shadow: 0 10px 25px rgba(18, 36, 94, 0.08);
+}
+
+.step-index {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  color: #1e2b6f;
+  background: linear-gradient(140deg, rgba(30, 102, 255, 0.15), rgba(88, 169, 255, 0.45));
+  border: 1px solid rgba(30, 102, 255, 0.25);
+}
+
+.step-item h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e2b6f;
+}
+
+.step-item p {
+  font-size: 0.95rem;
+  color: #5a6889;
+  margin-top: 4px;
+}
+
+.testimonial {
+  background: linear-gradient(160deg, #ffffff, #f7f8ff);
+  border-radius: 24px;
+  border: 1px solid #dfe6ff;
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 16px 36px rgba(30, 102, 255, 0.07);
+  color: #1f2a55;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.testimonial footer {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #3a4c7f;
+}
+
+@media (max-width: 768px) {
+  .feature-card {
+    padding: 24px 20px;
+  }
+
+  .testimonial {
+    padding: 24px 22px;
+  }
+}
