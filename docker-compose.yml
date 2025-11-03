@@ -20,6 +20,8 @@ services:
     image: ${REGISTRY:-ghcr.io}/${REGISTRY_NAMESPACE:-valcriss}/le-budget-frontend:${IMAGE_TAG:-latest}
     depends_on:
       - backend
+    environment:
+      API_BASE_URL: ${FRONTEND_API_BASE_URL:-http://backend:3000}
     ports:
       - "${FRONTEND_PORT:-8080}:80"
     restart: unless-stopped
