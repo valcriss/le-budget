@@ -9,7 +9,6 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
-import { API_BASE_URL } from './core/config/api-base-url.token';
 
 export const appConfig: ApplicationConfig = {
   providers: [
