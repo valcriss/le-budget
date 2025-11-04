@@ -4,7 +4,7 @@ WORKDIR /app
 # Ensure apt is noninteractive and install openssl and libssl for Prisma during build
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y \
-	&& apt-get install -y --no-install-recommends openssl ca-certificates libssl1.1 libssl-dev \
+	&& apt-get install -y --no-install-recommends openssl ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
@@ -23,7 +23,7 @@ ENV NODE_ENV=production
 # Install openssl runtime libraries so Prisma can detect libssl at runtime
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y \
-	&& apt-get install -y --no-install-recommends openssl ca-certificates libssl1.1 \
+	&& apt-get install -y --no-install-recommends openssl ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Reuse dependencies
