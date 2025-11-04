@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { computed, signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
 import { AccountsStore } from '../../../core/accounts/accounts.store';
 import { AccountsList } from './accounts-list';
+import { Subject } from 'rxjs';
 
 describe('AccountsList', () => {
   let component: AccountsList;
@@ -22,11 +23,14 @@ describe('AccountsList', () => {
       saveError: signal<string | null>(null),
     } satisfies Partial<AccountsStore>;
 
+    const paramMap$ = new Subject<ParamMap>();
+
     await TestBed.configureTestingModule({
       imports: [AccountsList],
       providers: [
-        { provide: AccountsStore, useValue: storeMock },
         provideRouter([]),
+        { provide: AccountsStore, useValue: storeMock },
+        { provide: ActivatedRoute, useValue: { paramMap: paramMap$, snapshot: { paramMap: convertToParamMap({}) } } },
       ],
     })
     .compileComponents();
@@ -34,6 +38,18 @@ describe('AccountsList', () => {
     fixture = TestBed.createComponent(AccountsList);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('updates highlightedAccountId when route paramMap changes', () => {
+    const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { paramMap: Subject<ParamMap> };
+    // initially null
+    expect(component['highlightedAccountId']()).toBeNull();
+
+    // emit a new paramMap
+    activatedRoute.paramMap.next(convertToParamMap({ id: 'account-1' }));
+    fixture.detectChanges();
+
+    expect(component['highlightedAccountId']()).toBe('account-1');
   });
 
   it('should create', () => {

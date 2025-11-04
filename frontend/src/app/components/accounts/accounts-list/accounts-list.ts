@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AccountsStore } from '../../../core/accounts/accounts.store';
 import { Account } from '../../../core/accounts/accounts.models';
 import { formatCurrencyWithSign, getAmountClass } from '../../../shared/formatters';
@@ -26,10 +27,16 @@ export class AccountsList {
   protected readonly dialogError = signal<string | null>(null);
   protected readonly defaultCurrency = this.accountsStore.defaultCurrency;
   private readonly route = inject(ActivatedRoute);
-  protected readonly highlightedAccountId = computed(() => this.route.snapshot.paramMap.get('id'));
+  private readonly destroyRef = inject(DestroyRef);
+  protected readonly highlightedAccountId = signal<string | null>(null);
 
   constructor() {
     void this.accountsStore.loadAccounts().catch(() => undefined);
+    // Keep highlightedAccountId in sync with the route params so the list updates
+    // immediately when the user navigates to another account.
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.highlightedAccountId.set(params.get('id'));
+    });
   }
 
   // Expose the formatter functions to the template
