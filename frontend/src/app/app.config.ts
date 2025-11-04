@@ -17,7 +17,6 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
-    { provide: API_BASE_URL, useValue: 'http://localhost:3000' },
     importProvidersFrom(FontAwesomeModule),
   ],
 };
