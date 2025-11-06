@@ -1,34 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { computed, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { Header } from './header';
 import { AccountsStore } from '../../../core/accounts/accounts.store';
 import { AuthStore } from '../../../core/auth/auth.store';
 
-import { Header } from './header';
-
 describe('Header', () => {
-  let component: Header;
   let fixture: ComponentFixture<Header>;
+  let component: Header;
+  let accountsStoreMock: { accounts: ReturnType<typeof signal> };
+  let authStoreMock: { logout: jest.Mock };
 
   beforeEach(async () => {
-    const accountsStoreMock = {
-      accounts: signal([
-        {
-          id: 'account-1',
-          name: 'Compte courant',
-          type: 'checking',
-          currentBalance: 1000,
-          reconciledBalance: 1000,
-          pointedBalance: 1000,
-          currency: 'EUR',
-          archived: false,
-        },
-      ]),
-    } satisfies Partial<AccountsStore>;
-    const authStoreMock = {
+    accountsStoreMock = {
+      accounts: signal([{ id: 'acc-1' }, { id: 'acc-2' }] as any),
+    };
+    authStoreMock = {
       logout: jest.fn(),
-      user: computed(() => ({ email: 'user@example.com' })),
-    } satisfies Partial<AuthStore>;
+    };
 
     await TestBed.configureTestingModule({
       imports: [Header],
@@ -44,7 +33,63 @@ describe('Header', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('toggles menus and closes them', () => {
+    component.toggleMobile();
+    component.toggleUser();
+    expect(component.mobileOpen()).toBe(true);
+    expect(component.userMenuOpen()).toBe(true);
+
+    component.closeMenus();
+    expect(component.mobileOpen()).toBe(false);
+    expect(component.userMenuOpen()).toBe(false);
+  });
+
+  it('computes desktop accounts link', () => {
+    const link = (component as any).desktopAccountsLink();
+    expect(link).toBe('/accounts/acc-1');
+    accountsStoreMock.accounts.set([]);
+    expect((component as any).desktopAccountsLink()).toBe('/accounts');
+  });
+
+  it('returns default accounts route when store starts empty', async () => {
+    accountsStoreMock.accounts.set([]);
+    fixture.detectChanges();
+    expect((component as any).desktopAccountsLink()).toBe('/accounts');
+  });
+
+  it('closes menus on outside click but not inside', () => {
+    component.toggleMobile();
+    component.toggleUser();
+    const outside = new Event('click');
+    Object.defineProperty(outside, 'target', { value: document.createElement('div') });
+    component.onDocumentClick(outside);
+    expect(component.mobileOpen()).toBe(false);
+    expect(component.userMenuOpen()).toBe(false);
+
+    component.toggleMobile();
+    component.toggleUser();
+    const insideTarget = fixture.nativeElement.querySelector('header') || fixture.nativeElement;
+    const insideEvent = new Event('click');
+    Object.defineProperty(insideEvent, 'target', { value: insideTarget });
+    component.onDocumentClick(insideEvent);
+    expect(component.mobileOpen()).toBe(true);
+    expect(component.userMenuOpen()).toBe(true);
+  });
+
+  it('closes menus on Escape key', () => {
+    component.toggleMobile();
+    component.toggleUser();
+    component.onDocumentKeydown(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(component.mobileOpen()).toBe(false);
+    expect(component.userMenuOpen()).toBe(false);
+  });
+
+  it('calls logout and closes menus', () => {
+    component.toggleMobile();
+    component.toggleUser();
+    component.logout();
+    expect(authStoreMock.logout).toHaveBeenCalled();
+    expect(component.mobileOpen()).toBe(false);
+    expect(component.userMenuOpen()).toBe(false);
   });
 });

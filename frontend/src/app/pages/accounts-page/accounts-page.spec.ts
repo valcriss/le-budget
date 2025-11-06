@@ -9,9 +9,23 @@ import { AccountsPage } from './accounts-page';
 describe('AccountsPage', () => {
   let component: AccountsPage;
   let fixture: ComponentFixture<AccountsPage>;
+  let storeMock: {
+    accounts: ReturnType<typeof signal>;
+    loading: ReturnType<typeof signal>;
+    error: ReturnType<typeof signal>;
+    totals: ReturnType<typeof computed>;
+    loadAccounts: jest.Mock;
+    defaultCurrency: ReturnType<typeof signal>;
+    clearSaveError: jest.Mock;
+    createAccount: jest.Mock;
+    saveError: ReturnType<typeof signal>;
+    hasData: ReturnType<typeof signal>;
+    getDefaultCurrency: jest.Mock;
+    updateAccount: jest.Mock;
+  };
 
   beforeEach(async () => {
-    const storeMock = {
+    storeMock = {
       accounts: signal([]),
       loading: signal(false),
       error: signal<string | null>(null),
@@ -24,7 +38,7 @@ describe('AccountsPage', () => {
       hasData: signal(false),
       getDefaultCurrency: jest.fn().mockReturnValue('EUR'),
       updateAccount: jest.fn(),
-    } satisfies Partial<AccountsStore>;
+    } satisfies Partial<AccountsStore> as typeof storeMock;
 
     const authStoreMock = {
       logout: jest.fn(),
@@ -47,5 +61,17 @@ describe('AccountsPage', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+    expect(storeMock.loadAccounts).toHaveBeenCalledTimes(1);
+  });
+
+  it('catches load errors without throwing', async () => {
+    storeMock.loadAccounts.mockRejectedValueOnce(new Error('fail'));
+
+    fixture = TestBed.createComponent(AccountsPage);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await Promise.resolve();
+
+    expect(storeMock.loadAccounts).toHaveBeenCalledTimes(2);
   });
 });

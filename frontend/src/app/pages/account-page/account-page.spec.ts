@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { computed, signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -84,5 +85,19 @@ describe('AccountPage', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should expose addTransactionTrigger starting at zero', () => {
+    expect(component['addTransactionTrigger']).toBe(0);
+  });
+
+  it('should increment addTransactionTrigger when account menu emits', () => {
+    const menu = fixture.debugElement.query(By.css('app-account-menu'));
+    expect(menu).not.toBeNull();
+
+    menu!.triggerEventHandler('addTransaction', undefined);
+    fixture.detectChanges();
+
+    expect(component['addTransactionTrigger']).toBe(1);
   });
 });
