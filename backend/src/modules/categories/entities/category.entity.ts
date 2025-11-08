@@ -34,4 +34,8 @@ export class CategoryEntity {
   @ApiProperty()
   @Expose()
   updatedAt!: Date;
+
+  isTransferCategory(): boolean {
+    return this.kind === CategoryKind.TRANSFER;
+  }
 }

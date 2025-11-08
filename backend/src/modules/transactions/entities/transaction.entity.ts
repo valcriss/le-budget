@@ -62,4 +62,8 @@ export class TransactionEntity {
   @ApiProperty()
   @Expose()
   updatedAt!: Date;
+
+  isCredit(): boolean {
+    return this.amount > 0;
+  }
 }

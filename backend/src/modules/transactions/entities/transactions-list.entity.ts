@@ -15,4 +15,8 @@ export class TransactionsListEntity {
     skip: number;
     take: number;
   };
+
+  hasItems(): boolean {
+    return Array.isArray(this.items) && this.items.length > 0;
+  }
 }

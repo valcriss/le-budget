@@ -7,37 +7,30 @@ interface EnvWindow {
   };
 }
 
-type GlobalWithEnvWindow = typeof globalThis & { window?: EnvWindow };
-
-const testGlobal = globalThis as GlobalWithEnvWindow;
-
 describe('API_BASE_URL token', () => {
-  const originalWindow = testGlobal.window;
-
+  const originalWindow = (globalThis as EnvWindow & typeof globalThis).window;
   const setWindow = (value: EnvWindow | undefined) => {
-    if (value) {
-      testGlobal.window = value;
-    } else {
-      delete testGlobal.window;
+    if (typeof window === 'undefined') {
+      (globalThis as EnvWindow & typeof globalThis).window = value;
+      return;
     }
+    (window as EnvWindow & Window).__env = value?.__env;
   };
 
   afterEach(() => {
-    if (typeof originalWindow !== 'undefined') {
-      setWindow(originalWindow);
-    } else {
-      setWindow(undefined);
-    }
+    setWindow(originalWindow);
+    TestBed.resetTestingModule();
   });
+
+  const configureToken = () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+    return TestBed.inject(API_BASE_URL);
+  };
 
   it('falls back to localhost when window is undefined', () => {
     setWindow(undefined);
-    TestBed.resetTestingModule();
-
-    TestBed.configureTestingModule({});
-    const token = TestBed.inject(API_BASE_URL);
-
-    expect(token).toBe('http://localhost:3000');
+    expect(configureToken()).toBe('http://localhost:3000');
   });
 
   it('factory yields fallback when window missing', () => {
@@ -47,36 +40,17 @@ describe('API_BASE_URL token', () => {
   });
 
   it('uses fallback when window env missing', () => {
-    const stubWindow: EnvWindow = originalWindow ? { ...originalWindow } : {};
-    setWindow(stubWindow);
-    delete stubWindow.__env;
-
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({});
-    const token = TestBed.inject(API_BASE_URL);
-
-    expect(token).toBe('http://localhost:3000');
+    setWindow({});
+    expect(configureToken()).toBe('http://localhost:3000');
   });
+
   it('uses fallback when env value missing', () => {
-    const stubWindow: EnvWindow = originalWindow ? { ...originalWindow } : {};
-    stubWindow.__env = {};
-    setWindow(stubWindow);
-
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({});
-    const token = TestBed.inject(API_BASE_URL);
-
-    expect(token).toBe('http://localhost:3000');
+    setWindow({ __env: {} });
+    expect(configureToken()).toBe('http://localhost:3000');
   });
+
   it('reads value from window.__env.API_BASE_URL when available', () => {
-    const stubWindow: EnvWindow = originalWindow ? { ...originalWindow } : {};
-    stubWindow.__env = { API_BASE_URL: 'https://api.example.com' };
-    setWindow(stubWindow);
-
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({});
-    const token = TestBed.inject(API_BASE_URL);
-
-    expect(token).toBe('https://api.example.com');
+    setWindow({ __env: { API_BASE_URL: 'https://api.example.com' } });
+    expect(configureToken()).toBe('https://api.example.com');
   });
 });

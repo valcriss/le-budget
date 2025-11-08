@@ -39,4 +39,8 @@ export class BudgetCategoryGroupEntity {
   @Expose()
   @Type(() => BudgetCategoryEntity)
   items!: BudgetCategoryEntity[];
+
+  hasItems(): boolean {
+    return Array.isArray(this.items) && this.items.length > 0;
+  }
 }

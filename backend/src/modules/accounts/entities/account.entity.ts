@@ -46,4 +46,8 @@ export class AccountEntity {
   @ApiProperty()
   @Expose()
   updatedAt!: Date;
+
+  hasPositiveBalance(): boolean {
+    return this.currentBalance > 0;
+  }
 }

@@ -55,4 +55,8 @@ export class BudgetMonthEntity {
   @ApiProperty()
   @Expose()
   updatedAt!: Date;
+
+  hasSurplus(): boolean {
+    return this.available > 0;
+  }
 }

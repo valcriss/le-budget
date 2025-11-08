@@ -280,7 +280,6 @@ describe('AccountsStore', () => {
       statusText: 'Bad Request',
       error: { message: ['Invalid'], error: 'Ignored' },
     });
-    const storeHarness = getHarness();
     expect(storeHarness.mapError(error, 'fallback')).toBe('Invalid');
     expect(storeHarness.extractBackendMessage({ error: 'Error message' })).toBe('Error message');
     expect(storeHarness.mapError(new HttpErrorResponse({ status: 500, error: null }), 'fallback')).toBe(

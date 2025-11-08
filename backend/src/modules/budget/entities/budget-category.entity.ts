@@ -39,4 +39,8 @@ export class BudgetCategoryEntity {
   @ApiProperty()
   @Expose()
   updatedAt!: Date;
+
+  hasAvailableFunds(): boolean {
+    return this.available > 0;
+  }
 }
