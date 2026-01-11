@@ -6,6 +6,7 @@ type RequestWithUser = FastifyRequest & { user?: { sub?: string } };
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserContextService {
+  /* c8 ignore next */
   constructor(@Inject(REQUEST) private readonly request: RequestWithUser) {}
 
   getUserId(): string {

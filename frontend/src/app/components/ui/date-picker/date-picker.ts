@@ -35,10 +35,12 @@ type CalendarDay = {
   imports: [CommonModule, FontAwesomeModule],
   templateUrl: './date-picker.html',
   styleUrl: './date-picker.css',
+  /* istanbul ignore next */
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DatePickerComponent),
+      useExisting: forwardRef(/* istanbul ignore next */ () => DatePickerComponent),
+      /* istanbul ignore next */
       multi: true,
     },
   ],

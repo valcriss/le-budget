@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
 export class CategoryEntity {
+  /* c8 ignore start */
   @ApiProperty()
   @Expose()
   id!: string;
@@ -34,6 +35,7 @@ export class CategoryEntity {
   @ApiProperty()
   @Expose()
   updatedAt!: Date;
+  /* c8 ignore end */
 
   isTransferCategory(): boolean {
     return this.kind === CategoryKind.TRANSFER;

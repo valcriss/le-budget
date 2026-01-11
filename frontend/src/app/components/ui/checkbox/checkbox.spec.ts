@@ -44,6 +44,15 @@ describe('Checkbox', () => {
     expect(toggleSpy).toHaveBeenCalledTimes(2);
   });
 
+  it('ignores unrelated key presses', () => {
+    const toggleSpy = jest.spyOn(component, 'toggle');
+    const event = new KeyboardEvent('keydown', { key: 'Tab' });
+    const preventSpy = jest.spyOn(event, 'preventDefault');
+    component.onKeydown(event);
+    expect(toggleSpy).not.toHaveBeenCalled();
+    expect(preventSpy).not.toHaveBeenCalled();
+  });
+
   it('prevents key handling when disabled', () => {
     component.disabled = true;
     const toggleSpy = jest.spyOn(component, 'toggle');

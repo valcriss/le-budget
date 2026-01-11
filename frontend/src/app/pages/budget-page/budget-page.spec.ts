@@ -176,6 +176,15 @@ describe('BudgetPage', () => {
     expect(routerNavigate).not.toHaveBeenCalled();
   });
 
+  it('swallows loadMonth errors when reacting to query param updates', async () => {
+    store.loadMonth.mockRejectedValueOnce(new Error('boom'));
+    queryParamMap$.next(convertToParamMap({ month: '2024-04' }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(store.loadMonth).toHaveBeenCalledWith('2024-04', false);
+  });
+
   it('passes hasData flag when month already loaded', async () => {
     store.setMonth(createBudgetMonth({ month: '2024-03' }));
     store.setMonthKey('2024-03');
@@ -214,6 +223,21 @@ describe('BudgetPage', () => {
       totalCharges: 200,
     });
     expect(component.monthLabel()).toBe(BudgetUtils.formatMonthLabel('2024-02'));
+  });
+
+  it('derives monthKey from store when month data is missing', () => {
+    store.setMonth(null);
+    store.setMonthKey('2024-08');
+    expect(component.monthKey()).toBe('2024-08');
+  });
+
+  it('falls back to current month when no month key is available', () => {
+    const currentSpy = jest.spyOn(BudgetUtils, 'getCurrentMonthKey').mockReturnValue('2024-12');
+    store.setMonth(null);
+    store.setMonthKey(null);
+
+    expect(component.monthKey()).toBe('2024-12');
+    currentSpy.mockRestore();
   });
 
   it('handles category selection and clearing', () => {

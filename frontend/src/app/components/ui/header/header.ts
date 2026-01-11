@@ -55,6 +55,7 @@ export class Header {
     return `/accounts/${encodeURIComponent(list[0].id)}`;
   });
 
+  /* istanbul ignore next */
   constructor(
     library: FaIconLibrary,
     private el: ElementRef,

@@ -18,6 +18,12 @@ describe('DatePickerComponent', () => {
     component.closed.subscribe(closedSpy);
   });
 
+  it('uses default noop callbacks before registration', () => {
+    const raw = new DatePickerComponent({ addIcons: jest.fn() } as any);
+    (raw as any).onChange(null);
+    (raw as any).onTouched();
+  });
+
   it('writes values and keeps display in sync', () => {
     component.writeValue('2024-03-05');
     expect((component as any).value).toBe('2024-03-05');
@@ -65,6 +71,24 @@ describe('DatePickerComponent', () => {
     expect(closedSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('sets internal values without emitting when asked', () => {
+    (component as any).setInternalValue(null, false);
+    expect((component as any).value).toBeNull();
+    expect(component.displayValue).toBe('');
+  });
+
+  it('keeps the calendar view date when selected iso is invalid', () => {
+    const day = {
+      iso: 'invalid',
+      label: 1,
+      isCurrentMonth: true,
+      isSelected: false,
+      isToday: false,
+    };
+    component.selectCalendarDate(day as any);
+    expect(component.calendarViewDate).toBeInstanceOf(Date);
+  });
+
   it('provides month label formatted in french', () => {
     const label = component.getMonthYearLabel(new Date('2024-04-01'));
     expect(label.toLowerCase()).toContain('avril');
@@ -74,6 +98,13 @@ describe('DatePickerComponent', () => {
     component.datePickerOpen = false;
     component.onInputBlur();
     expect(touchedSpy).toHaveBeenCalled();
+  });
+
+  it('does nothing on blur when picker is open', () => {
+    touchedSpy.mockClear();
+    component.datePickerOpen = true;
+    component.onInputBlur();
+    expect(touchedSpy).not.toHaveBeenCalled();
   });
 
   it('closes when clicking outside but not inside', () => {
@@ -91,6 +122,12 @@ describe('DatePickerComponent', () => {
     component.onDocumentClick(outsideEvent);
     expect(component.datePickerOpen).toBe(false);
     expect(closedSpy).toHaveBeenCalled();
+  });
+
+  it('ignores document clicks when datepicker is closed', () => {
+    component.datePickerOpen = false;
+    component.onDocumentClick(new MouseEvent('click'));
+    expect(closedSpy).not.toHaveBeenCalled();
   });
 
   it('parses various inputs into ISO dates', () => {
@@ -129,4 +166,5 @@ describe('DatePickerComponent', () => {
     expect(flat.some((day: any) => day.isSelected)).toBe(true);
     expect(flat.some((day: any) => day.isToday)).toBe(true);
   });
+
 });

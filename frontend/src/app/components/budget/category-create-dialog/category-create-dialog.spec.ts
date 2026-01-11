@@ -56,12 +56,26 @@ describe('CategoryCreateDialog', () => {
     expect(edit.isEdit()).toBe(true);
   });
 
+  it('uses default labels when data is missing', () => {
+    const { component } = createMocks(undefined as unknown as CategoryCreateDialogData);
+    expect(component.title).toBe('Créer une catégorie');
+    expect(component.nameLabel).toBe('Nom de la catégorie');
+    expect(component.placeholder).toBe('Ex : Courses');
+    expect(component.submitLabel).toBe('Créer');
+  });
+
   it('disables submit while submitting or when input empty', () => {
     const { component } = createMocks(createData);
     expect(component.disableSubmit).toBe(true);
     component.nameControl.setValue('Test');
     expect(component.disableSubmit).toBe(false);
     component.isSubmitting.set(true);
+    expect(component.disableSubmit).toBe(true);
+  });
+
+  it('disables submit when name is whitespace only', () => {
+    const { component } = createMocks(createData);
+    component.nameControl.setValue('   ');
     expect(component.disableSubmit).toBe(true);
   });
 
@@ -101,6 +115,20 @@ describe('CategoryCreateDialog', () => {
     expect(component.isSubmitting()).toBe(false);
   });
 
+  it('creates categories with fallback parent id when missing', async () => {
+    const { component, categoriesStore } = createMocks({
+      mode: 'create',
+    });
+    component.nameControl.setValue('Category');
+    categoriesStore.create.mockResolvedValue({ id: 'new-cat' });
+
+    await component.submit();
+
+    expect(categoriesStore.create).toHaveBeenCalledWith(
+      expect.objectContaining({ parentCategoryId: null }),
+    );
+  });
+
   it('surfaces store error when creation fails', async () => {
     const { component, categoriesStore, dialogRef } = createMocks(createData);
     component.nameControl.setValue('Courses');
@@ -111,6 +139,17 @@ describe('CategoryCreateDialog', () => {
 
     expect(component.hasError()).toBe('Store error');
     expect(dialogRef.close).not.toHaveBeenCalledWith(true);
+  });
+
+  it('uses fallback error message when creation fails without store error', async () => {
+    const { component, categoriesStore } = createMocks(createData);
+    component.nameControl.setValue('Courses');
+    categoriesStore.create.mockResolvedValue(null);
+    categoriesStore.error.mockReturnValue(null);
+
+    await component.submit();
+
+    expect(component.hasError()).toBe('Impossible de créer cette catégorie.');
   });
 
   it('handles unexpected creation failures', async () => {
@@ -130,6 +169,28 @@ describe('CategoryCreateDialog', () => {
     component.nameControl.setValue('Alimentation');
     await component.submit();
     expect(dialogRef.close).toHaveBeenCalledWith(true);
+  });
+
+  it('trims and compares edit name before early return', async () => {
+    const { component, dialogRef } = createMocks(editData);
+    component.nameControl.setValue('  Alimentation  ');
+    await component.submit();
+    expect(dialogRef.close).toHaveBeenCalledWith(true);
+  });
+
+  it('prevents default events when submitting', async () => {
+    const { component, categoriesStore } = createMocks(createData);
+    const event = {
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    } as unknown as Event;
+    component.nameControl.setValue('Name');
+    categoriesStore.create.mockResolvedValue({ id: 'cat-2' });
+
+    await component.submit(event);
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(event.stopPropagation).toHaveBeenCalled();
   });
 
   it('updates a category successfully', async () => {
@@ -153,6 +214,17 @@ describe('CategoryCreateDialog', () => {
     await component.submit();
 
     expect(component.hasError()).toBe('Update failed');
+  });
+
+  it('uses fallback error message when update fails without store error', async () => {
+    const { component, categoriesStore } = createMocks(editData);
+    component.nameControl.setValue('Courses');
+    categoriesStore.update.mockResolvedValue(null);
+    categoriesStore.error.mockReturnValue(null);
+
+    await component.submit();
+
+    expect(component.hasError()).toBe('Impossible de mettre à jour cette catégorie.');
   });
 
   it('handles unexpected update errors', async () => {
@@ -187,6 +259,17 @@ describe('CategoryCreateDialog', () => {
     confirmSpy.mockRestore();
   });
 
+  it('does nothing when deletion is not confirmed', async () => {
+    const { component, categoriesStore, dialogRef } = createMocks(editData);
+    const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false);
+
+    await component.deleteCategory();
+
+    expect(categoriesStore.remove).not.toHaveBeenCalled();
+    expect(dialogRef.close).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
+
   it('stores errors when deletion fails', async () => {
     const { component, categoriesStore } = createMocks(editData);
     const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
@@ -196,6 +279,18 @@ describe('CategoryCreateDialog', () => {
     await component.deleteCategory();
 
     expect(component.hasError()).toBe('Cannot delete');
+    confirmSpy.mockRestore();
+  });
+
+  it('uses fallback error message when deletion fails without store error', async () => {
+    const { component, categoriesStore } = createMocks(editData);
+    const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+    categoriesStore.remove.mockResolvedValue(false);
+    categoriesStore.error.mockReturnValue(null);
+
+    await component.deleteCategory();
+
+    expect(component.hasError()).toBe('Impossible de supprimer cette catégorie.');
     confirmSpy.mockRestore();
   });
 

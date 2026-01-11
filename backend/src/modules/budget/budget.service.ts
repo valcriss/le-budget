@@ -20,12 +20,14 @@ type CategoryWithRelation = Prisma.BudgetCategoryGetPayload<{
 
 @Injectable()
 export class BudgetService {
+  /* c8 ignore start */
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: EventsService,
     private readonly userContext: UserContextService,
     private readonly transactions: TransactionsService,
   ) {}
+  /* c8 ignore end */
 
   async getMonth(monthKey: string): Promise<BudgetMonthEntity> {
     const userId = this.userContext.getUserId();

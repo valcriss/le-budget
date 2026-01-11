@@ -11,6 +11,7 @@ declare global {
 const FALLBACK_API_BASE_URL = 'http://localhost:3000';
 
 const resolveApiBaseUrl = (): string => {
+  /* istanbul ignore next -- jsdom always defines window */
   if (typeof window === 'undefined') {
     return FALLBACK_API_BASE_URL;
   }

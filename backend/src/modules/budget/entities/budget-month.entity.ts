@@ -3,6 +3,7 @@ import { Expose, Type } from 'class-transformer';
 import { BudgetCategoryGroupEntity } from './budget-group.entity';
 
 export class BudgetMonthEntity {
+  /* c8 ignore start */
   @ApiProperty()
   @Expose()
   id!: string;
@@ -55,6 +56,7 @@ export class BudgetMonthEntity {
   @ApiProperty()
   @Expose()
   updatedAt!: Date;
+  /* c8 ignore end */
 
   hasSurplus(): boolean {
     return this.available > 0;

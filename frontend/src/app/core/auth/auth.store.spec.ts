@@ -191,6 +191,16 @@ describe('AuthStore', () => {
     refreshProfileSpy.mockRestore();
   });
 
+  it('ignores incomplete stored sessions during bootstrap', () => {
+    storage['le-budget:auth'] = JSON.stringify({
+      accessToken: 'stored-access',
+      user: sessionPayload.user,
+    });
+    const store = TestBed.inject(AuthStore);
+    expect(store.accessToken()).toBeNull();
+    expect(store.user()).toBeNull();
+  });
+
   it('clears state and navigates on logout', async () => {
     const store = TestBed.inject(AuthStore);
     const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -293,6 +303,26 @@ describe('AuthStore', () => {
     saveSpy.mockRestore();
   });
 
+  it('does not persist session when refresh token missing', async () => {
+    const store = TestBed.inject(AuthStore);
+    (store as unknown as { tokenSignal: { set(value: string): void } }).tokenSignal.set('token');
+    (store as unknown as { refreshTokenSignal: { set(value: string | null): void } }).refreshTokenSignal.set(
+      null,
+    );
+    const saveSpy = jest.spyOn(store as unknown as { saveSession(session: unknown): void }, 'saveSession');
+
+    const profilePromise = store.refreshProfile();
+    const req = httpMock.expectOne(`${apiUrl}/auth/me`);
+    req.flush({
+      ...sessionPayload.user,
+      settings: sessionPayload.user.settings,
+    });
+
+    await profilePromise;
+    expect(saveSpy).not.toHaveBeenCalled();
+    saveSpy.mockRestore();
+  });
+
   it('skips profile refresh when not authenticated', async () => {
     const store = TestBed.inject(AuthStore);
     await store.refreshProfile();
@@ -384,6 +414,12 @@ describe('AuthStore', () => {
       mapError(error: unknown, fallback: string): string;
     };
 
+    const badRequest = new HttpErrorResponse({ status: 400, error: null });
+    expect(store.mapError(badRequest, 'fallback')).toBe('Les données envoyées sont invalides.');
+
+    const unauthorized = new HttpErrorResponse({ status: 401, error: null });
+    expect(store.mapError(unauthorized, 'fallback')).toBe('Email ou mot de passe invalide.');
+
     const forbidden = new HttpErrorResponse({ status: 403, error: {} });
     expect(store.mapError(forbidden, 'fallback')).toBe("Vous n'êtes pas autorisé à effectuer cette action.");
 
@@ -392,6 +428,9 @@ describe('AuthStore', () => {
 
     const server = new HttpErrorResponse({ status: 500, error: 'Serveur' });
     expect(store.mapError(server, 'fallback')).toBe('Serveur');
+
+    const serverFallback = new HttpErrorResponse({ status: 500, error: null });
+    expect(store.mapError(serverFallback, 'fallback')).toBe('Une erreur serveur est survenue.');
 
     const fallback = new HttpErrorResponse({ status: 418, error: null as unknown });
     expect(store.mapError(fallback, 'fallback message')).toBe('fallback message');
@@ -405,8 +444,10 @@ describe('AuthStore', () => {
     expect(store.extractBackendMessage(null)).toBeNull();
     expect(store.extractBackendMessage('Plain')).toBe('Plain');
     expect(store.extractBackendMessage({ message: ['One', 'Two'] })).toBe('One Two');
+    expect(store.extractBackendMessage({ message: [] })).toBeNull();
     expect(store.extractBackendMessage({ message: 'Single' })).toBe('Single');
     expect(store.extractBackendMessage({ error: 'Problem' })).toBe('Problem');
+    expect(store.extractBackendMessage({ error: 123 })).toBeNull();
     expect(store.extractBackendMessage({})).toBeNull();
   });
 });

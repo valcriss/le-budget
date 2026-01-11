@@ -84,6 +84,14 @@ describe('Header', () => {
     expect(component.userMenuOpen()).toBe(false);
   });
 
+  it('keeps menus open on non-escape keydown', () => {
+    component.toggleMobile();
+    component.toggleUser();
+    component.onDocumentKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(component.mobileOpen()).toBe(true);
+    expect(component.userMenuOpen()).toBe(true);
+  });
+
   it('calls logout and closes menus', () => {
     component.toggleMobile();
     component.toggleUser();

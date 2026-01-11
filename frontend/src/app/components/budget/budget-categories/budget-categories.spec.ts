@@ -182,7 +182,12 @@ describe('BudgetCategories', () => {
   it('reorders groups on drop and schedules persistence', () => {
     const groups = [makeGroup('1', []), makeGroup('2', [])];
     setGroups(groups);
-    const scheduleSpy = jest.spyOn(component as any, 'schedulePersistence').mockImplementation(() => {});
+    const scheduleSpy = jest
+      .spyOn(component as any, 'schedulePersistence')
+      .mockImplementation((task: () => Promise<void>) => {
+        void task();
+      });
+    jest.spyOn(component as any, 'persistGroupOrder').mockResolvedValue();
     const event = { previousIndex: 0, currentIndex: 1 } as CdkDragDrop<any[]>;
     component.dropGroup(event);
     expect(component.groups[0].categoryId).toBe('group-cat-2');
@@ -212,11 +217,36 @@ describe('BudgetCategories', () => {
     expect(scheduleSpy).toHaveBeenCalled();
   });
 
+  it('reorders items using the same container reference and recalculates totals', () => {
+    const items = [
+      { ...makeItem('1', 'group-cat-1', 'A'), assigned: 10, activity: -2 },
+      { ...makeItem('2', 'group-cat-1', 'B'), assigned: 5, activity: 1 },
+    ];
+    setGroups([makeGroup('1', items)]);
+    const container = { data: component.groups[0].items };
+    const event = {
+      previousContainer: container,
+      container,
+      previousIndex: 0,
+      currentIndex: 1,
+    } as unknown as CdkDragDrop<any[]>;
+
+    component.dropItem(event, 0);
+
+    expect(component.groups[0].items[0].id).toBe('item-2');
+    expect(component.groups[0].assigned).toBe(15);
+  });
+
   it('moves items across groups and recalculates totals', () => {
     const groupA = makeGroup('1', [makeItem('1', 'group-cat-1', 'A')]);
     const groupB = makeGroup('2', [makeItem('2', 'group-cat-2', 'B')]);
     setGroups([groupA, groupB]);
-    const scheduleSpy = jest.spyOn(component as any, 'schedulePersistence').mockImplementation(() => {});
+    const scheduleSpy = jest
+      .spyOn(component as any, 'schedulePersistence')
+      .mockImplementation((task: () => Promise<void>) => {
+        void task();
+      });
+    jest.spyOn(component as any, 'persistItemOrder').mockResolvedValue();
     const event = {
       previousContainer: { data: component.groups[0].items },
       container: { data: component.groups[1].items },
@@ -268,6 +298,33 @@ describe('BudgetCategories', () => {
     expect(scheduleSpy).toHaveBeenCalled();
   });
 
+  it('handles assigned changes when activity is not numeric', () => {
+    const item = makeItem('1', 'group-cat-1', 'A');
+    item.activity = null as any;
+    const group = makeGroup('1', [item]);
+    setGroups([group]);
+    const scheduleSpy = jest.spyOn(component as any, 'schedulePersistence').mockImplementation(() => {});
+
+    component.onItemAssignedChange(0, 0, 20);
+
+    expect(component.groups[0].items[0].available).toBe(20);
+    expect(scheduleSpy).toHaveBeenCalled();
+  });
+
+  it('recalculates group totals based on item values', () => {
+    const item = makeItem('1', 'group-cat-1', 'A');
+    item.assigned = '7' as any;
+    item.activity = '3' as any;
+    const group = makeGroup('1', [item]);
+    setGroups([group]);
+
+    (component as any).recalcGroupTotals(0);
+
+    expect(component.groups[0].assigned).toBe(7);
+    expect(component.groups[0].activity).toBe(3);
+    expect(component.groups[0].available).toBe(10);
+  });
+
   it('opens dialog for add/edit actions when data available', () => {
     const group = makeGroup('1', [makeItem('1', 'group-cat-1', 'A')]);
     setGroups([group]);
@@ -284,6 +341,30 @@ describe('BudgetCategories', () => {
     component.openEditCategory(component.groups[0], component.groups[0].items[0]);
     expect(dialogOpenSpy).toHaveBeenNthCalledWith(3, expect.any(Function), expect.objectContaining({
       data: expect.objectContaining({ parentCategoryId: 'group-cat-1' }),
+    }));
+  });
+
+  it('skips add dialog when group is missing', () => {
+    setGroups([]);
+    dialogOpenSpy.mockClear();
+    component.openAddCategoryDialog(0);
+    expect(dialogOpenSpy).not.toHaveBeenCalled();
+  });
+
+  it('uses fallback placeholders when category names are missing', () => {
+    const group = makeGroup('1', [makeItem('1', 'group-cat-1', 'A')]);
+    group.category.name = null as any;
+    group.items[0].category!.name = null as any;
+    setGroups([group]);
+
+    component.openEditGroup(component.groups[0]);
+    component.openEditCategory(component.groups[0], component.groups[0].items[0]);
+
+    expect(dialogOpenSpy).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({
+      data: expect.objectContaining({ placeholder: 'Nom du groupe' }),
+    }));
+    expect(dialogOpenSpy).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({
+      data: expect.objectContaining({ placeholder: 'Nom de la catégorie' }),
     }));
   });
 
@@ -308,6 +389,31 @@ describe('BudgetCategories', () => {
     expect(budgetStoreMock.reloadCurrentMonth).toHaveBeenCalled();
   });
 
+  it('skips group order persistence when sort order already matches', async () => {
+    const group = makeGroup('1', [], 0);
+    group.category.sortOrder = 0;
+    setGroups([group]);
+    const reloadSpy = jest.spyOn(component as any, 'reloadBudgetSilently').mockResolvedValue();
+
+    await (component as any).persistGroupOrder();
+
+    expect(categoriesStoreMock.update).not.toHaveBeenCalled();
+    expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
+  it('persists group order and keeps desired sort order when server omits it', async () => {
+    const group = makeGroup('1', [], 1);
+    group.category.sortOrder = 1;
+    setGroups([group]);
+    categoriesStoreMock.update.mockResolvedValue({ ...group.category, sortOrder: undefined });
+    const reloadSpy = jest.spyOn(component as any, 'reloadBudgetSilently').mockResolvedValue();
+
+    await (component as any).persistGroupOrder();
+
+    expect(group.category.sortOrder).toBe(0);
+    expect(reloadSpy).toHaveBeenCalled();
+  });
+
   it('records errors when group order persistence fails', async () => {
     const group1 = makeGroup('1', [], 0);
     group1.category.sortOrder = 1;
@@ -319,6 +425,20 @@ describe('BudgetCategories', () => {
     await (component as any).persistGroupOrder();
 
     expect(component.errorMessage).toBe('Store error');
+    expect(reloadSpy).toHaveBeenCalled();
+  });
+
+  it('handles exceptions while persisting group order', async () => {
+    const group1 = makeGroup('1', [], 0);
+    group1.category.sortOrder = 1;
+    setGroups([group1]);
+    categoriesStoreMock.update.mockRejectedValue(new Error('boom'));
+    categoriesStoreMock.error.mockReturnValue(null);
+    const reloadSpy = jest.spyOn(component as any, 'reloadBudgetSilently').mockResolvedValue();
+
+    await (component as any).persistGroupOrder();
+
+    expect(component.errorMessage).toContain("Impossible");
     expect(reloadSpy).toHaveBeenCalled();
   });
 
@@ -357,6 +477,25 @@ describe('BudgetCategories', () => {
     expect(budgetStoreMock.reloadCurrentMonth).toHaveBeenCalled();
   });
 
+  it('updates parent category when items move to new group', async () => {
+    const itemA = makeItem('1', 'group-cat-1', 'A', 0);
+    itemA.category.sortOrder = 1;
+    itemA.category.parentCategoryId = 'other-parent';
+    const group1 = makeGroup('1', [itemA], 0);
+    setGroups([group1]);
+    categoriesStoreMock.update.mockImplementation(async (_id, payload) => ({
+      sortOrder: payload.sortOrder,
+      parentCategoryId: payload.parentCategoryId,
+    }));
+
+    await (component as any).persistItemOrder([0]);
+
+    expect(categoriesStoreMock.update).toHaveBeenCalledWith(itemA.category.id, {
+      parentCategoryId: 'group-cat-1',
+      sortOrder: 0,
+    });
+  });
+
   it('handles item order persistence errors', async () => {
     const item = makeItem('1', 'group-cat-1', 'A', 0);
     item.category.sortOrder = 1;
@@ -369,6 +508,21 @@ describe('BudgetCategories', () => {
     await (component as any).persistItemOrder([0]);
 
     expect(component.errorMessage).toBe('Order error');
+    expect(reloadSpy).toHaveBeenCalled();
+  });
+
+  it('handles exceptions while persisting item order', async () => {
+    const item = makeItem('1', 'group-cat-1', 'A', 0);
+    item.category.sortOrder = 1;
+    const group1 = makeGroup('1', [item]);
+    setGroups([group1]);
+    categoriesStoreMock.update.mockRejectedValue(new Error('boom'));
+    categoriesStoreMock.error.mockReturnValue(null);
+    const reloadSpy = jest.spyOn(component as any, 'reloadBudgetSilently').mockResolvedValue();
+
+    await (component as any).persistItemOrder([0]);
+
+    expect(component.errorMessage).toContain('Impossible');
     expect(reloadSpy).toHaveBeenCalled();
   });
 
@@ -400,6 +554,42 @@ describe('BudgetCategories', () => {
     expect(reloadSpy).not.toHaveBeenCalled();
   });
 
+  it('skips missing groups while persisting item order', async () => {
+    component.groups = [undefined as any];
+    await (component as any).persistItemOrder([0]);
+    expect(categoriesStoreMock.update).not.toHaveBeenCalled();
+  });
+
+  it('updates category sort order and parent when persisting item order', async () => {
+    const item = makeItem('1', 'group-cat-1', 'A', 5);
+    const group = makeGroup('1', [item]);
+    group.categoryId = 'new-parent';
+    setGroups([group]);
+    categoriesStoreMock.update.mockResolvedValue({
+      ...item.category,
+      sortOrder: undefined,
+      parentCategoryId: undefined,
+    });
+    const reloadSpy = jest.spyOn(component as any, 'reloadBudgetSilently').mockResolvedValue();
+
+    await (component as any).persistItemOrder([0]);
+
+    expect(categoriesStoreMock.update).toHaveBeenCalled();
+    expect(item.category!.sortOrder).toBe(0);
+    expect(item.category!.parentCategoryId).toBe('new-parent');
+    expect(reloadSpy).toHaveBeenCalled();
+  });
+
+  it('persists assigned value when assigned is a string', async () => {
+    const item = makeItem('1', 'group-cat-1', 'A');
+    item.assigned = '42' as any;
+    setGroups([makeGroup('1', [item])]);
+
+    await (component as any).persistAssignedChange(0, 0);
+
+    expect(budgetStoreMock.updateCategoryAssigned).toHaveBeenCalledWith('2024-01', item.categoryId, 42);
+  });
+
   it('persists assigned changes and handles errors', async () => {
     const item = makeItem('1', 'group-cat-1', 'A');
     const group = makeGroup('1', [item]);
@@ -417,6 +607,49 @@ describe('BudgetCategories', () => {
     expect(component.errorMessage).toBe('Assigned error');
     expect(reloadSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
+  });
+
+  it('uses fallback error when assigned update fails without store error', async () => {
+    const item = makeItem('1', 'group-cat-1', 'A');
+    setGroups([makeGroup('1', [item])]);
+    budgetStoreMock.updateCategoryAssigned.mockRejectedValue(new Error('fail'));
+    budgetStoreMock.error.mockReturnValue(null);
+    const reloadSpy = jest.spyOn(component as any, 'reloadBudgetSilently').mockResolvedValue();
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await (component as any).persistAssignedChange(0, 0);
+
+    expect(component.errorMessage).toBe('Impossible de mettre à jour le montant assigné.');
+    expect(reloadSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it('skips persisting assigned changes when data is missing', async () => {
+    setGroups([]);
+    await (component as any).persistAssignedChange(0, 0);
+    expect(budgetStoreMock.updateCategoryAssigned).not.toHaveBeenCalled();
+
+    setGroups([makeGroup('1', [makeItem('1', 'group-cat-1', 'A')])]);
+    component.groups[0].items[0].categoryId = '';
+    await (component as any).persistAssignedChange(0, 0);
+    expect(budgetStoreMock.updateCategoryAssigned).not.toHaveBeenCalled();
+
+    budgetStoreMock.monthKey = jest.fn(() => null);
+    component.groups[0].items[0].categoryId = 'cat-1';
+    await (component as any).persistAssignedChange(0, 0);
+    expect(budgetStoreMock.updateCategoryAssigned).not.toHaveBeenCalled();
+    budgetStoreMock.monthKey = jest.fn(() => '2024-01');
+  });
+
+  it('skips persisting assigned changes when month key is missing', async () => {
+    setGroups([makeGroup('1', [makeItem('1', 'group-cat-1', 'A')])]);
+    component.groups[0].items[0].categoryId = 'cat-1';
+    budgetStoreMock.monthKey = jest.fn(() => null);
+
+    await (component as any).persistAssignedChange(0, 0);
+
+    expect(budgetStoreMock.updateCategoryAssigned).not.toHaveBeenCalled();
+    budgetStoreMock.monthKey = jest.fn(() => '2024-01');
   });
 
   it('reloads budget silently and swallows errors', async () => {
@@ -469,6 +702,29 @@ describe('BudgetCategories', () => {
     document.body.removeChild(groupEl);
   });
 
+  it('chooses the nearest group when pointer is between groups', () => {
+    const g1 = document.createElement('div');
+    g1.className = 'group-drag';
+    Object.assign(g1, {
+      getBoundingClientRect: () => ({ top: 0, bottom: 10, left: 0, width: 100, height: 10 }) as DOMRect,
+    });
+    const g2 = document.createElement('div');
+    g2.className = 'group-drag';
+    Object.assign(g2, {
+      getBoundingClientRect: () => ({ top: 40, bottom: 50, left: 0, width: 120, height: 10 }) as DOMRect,
+    });
+    document.body.appendChild(g1);
+    document.body.appendChild(g2);
+
+    component['previewIsGroup'] = true;
+    component.onDragMoved({ pointerPosition: { x: 5, y: 25 } } as any);
+
+    expect(component.showDropIndicator).toBe(true);
+
+    document.body.removeChild(g1);
+    document.body.removeChild(g2);
+  });
+
   it('updates drop indicator while dragging items', () => {
     setGroups([makeGroup('1', [makeItem('1', 'group-cat-1', 'A')])]);
     component['previewIsGroup'] = false;
@@ -492,6 +748,83 @@ describe('BudgetCategories', () => {
     expect(component.showDropIndicator).toBe(true);
 
     document.body.removeChild(list);
+    (document as any).elementFromPoint = originalElementFromPoint;
+  });
+
+  it('skips drag preview elements when resolving item targets', () => {
+    setGroups([makeGroup('1', [makeItem('1', 'group-cat-1', 'A')])]);
+    component['previewIsGroup'] = false;
+    const preview = document.createElement('div');
+    preview.className = 'cdk-drag-preview';
+    const target = document.createElement('div');
+    target.className = 'item-drag';
+    (target as any).closest = jest.fn(() => target);
+    Object.assign(target, {
+      getBoundingClientRect: () => ({ top: 0, bottom: 20, left: 0, width: 60, height: 20 }) as DOMRect,
+    });
+    const originalElementFromPoint = document.elementFromPoint;
+    (document as any).elementFromPoint = jest
+      .fn()
+      .mockReturnValueOnce(preview)
+      .mockReturnValueOnce(target);
+
+    component.onDragMoved({ pointerPosition: { x: 5, y: 5 } } as any);
+
+    expect(component.showDropIndicator).toBe(true);
+
+    (document as any).elementFromPoint = originalElementFromPoint;
+  });
+
+  it('picks nearest row when pointer is outside item rows', () => {
+    setGroups([makeGroup('1', [makeItem('1', 'group-cat-1', 'A')])]);
+    component['previewIsGroup'] = false;
+    const list = document.createElement('div');
+    list.id = 'items-0';
+    const row1 = document.createElement('div');
+    row1.className = 'item-drag';
+    const row2 = document.createElement('div');
+    row2.className = 'item-drag';
+    list.appendChild(row1);
+    list.appendChild(row2);
+    document.body.appendChild(list);
+
+    Object.assign(row1, {
+      getBoundingClientRect: () => ({ top: 0, bottom: 10, left: 0, width: 50, height: 10 }) as DOMRect,
+      closest: (selector: string) => (selector.startsWith('[id^="items-"]') ? list : row1),
+    });
+    Object.assign(row2, {
+      getBoundingClientRect: () => ({ top: 30, bottom: 40, left: 0, width: 70, height: 10 }) as DOMRect,
+      closest: (selector: string) => (selector.startsWith('[id^="items-"]') ? list : row2),
+    });
+
+    const originalElementFromPoint = document.elementFromPoint;
+    (document as any).elementFromPoint = jest.fn(() => row1);
+
+    component.onDragMoved({ pointerPosition: { x: 5, y: 20 } } as any);
+
+    expect(component.showDropIndicator).toBe(true);
+
+    document.body.removeChild(list);
+    (document as any).elementFromPoint = originalElementFromPoint;
+  });
+
+  it('falls back to highlighting the target element when no list is found', () => {
+    component['previewIsGroup'] = false;
+    const target = document.createElement('div');
+    target.className = 'group-drag';
+    (target as any).closest = jest.fn((selector: string) =>
+      selector === '[id^="items-"]' ? null : target,
+    );
+    Object.assign(target, {
+      getBoundingClientRect: () => ({ top: 5, bottom: 15, left: 2, width: 90, height: 10 }) as DOMRect,
+    });
+    const originalElementFromPoint = document.elementFromPoint;
+    (document as any).elementFromPoint = jest.fn(() => target);
+
+    component.onDragMoved({ pointerPosition: { x: 4, y: 6 } } as any);
+
+    expect(component.showDropIndicator).toBe(true);
+
     (document as any).elementFromPoint = originalElementFromPoint;
   });
 
@@ -538,6 +871,17 @@ describe('BudgetCategories', () => {
     (document as any).elementFromPoint = original;
   });
 
+  it('clears indicator when drag move throws', () => {
+    const original = document.elementFromPoint;
+    (document as any).elementFromPoint = jest.fn(() => {
+      throw new Error('boom');
+    });
+    component.showDropIndicator = true;
+    component.onDragMoved({ pointerPosition: { x: 1, y: 1 } } as any);
+    expect(component.showDropIndicator).toBe(false);
+    (document as any).elementFromPoint = original;
+  });
+
   it('provides label and formatting helpers', () => {
     const group = makeGroup('1', [makeItem('1', 'group-cat-1', 'A')]);
     expect((component as any).groupLabel(group)).toBe('Group 1');
@@ -568,6 +912,19 @@ describe('BudgetCategories', () => {
     document.body.removeChild(header);
   });
 
+  it('clears preview width when group drag measurement fails', () => {
+    setGroups([makeGroup('1', [])]);
+    const spy = jest.spyOn(document, 'getElementById').mockImplementation(() => {
+      throw new Error('boom');
+    });
+
+    component.previewWidthPx = 99;
+    component.onGroupDragStarted(0, {} as any);
+
+    expect(component['previewWidthPx']).toBe(0);
+    spy.mockRestore();
+  });
+
   it('tracks item drag start width', () => {
     setGroups([makeGroup('1', [makeItem('1', 'group-cat-1', 'A')])]);
     const row = document.createElement('div');
@@ -586,6 +943,19 @@ describe('BudgetCategories', () => {
     expect(component['previewWidthPx']).toBe(80);
 
     document.body.removeChild(row);
+  });
+
+  it('clears preview width when item drag measurement fails', () => {
+    setGroups([makeGroup('1', [makeItem('1', 'group-cat-1', 'A')])]);
+    const spy = jest.spyOn(document, 'getElementById').mockImplementation(() => {
+      throw new Error('boom');
+    });
+
+    component.previewWidthPx = 88;
+    component.onItemDragStarted(0, 0, {} as any);
+
+    expect(component['previewWidthPx']).toBe(0);
+    spy.mockRestore();
   });
 
   it('resets preview state on drag end', () => {

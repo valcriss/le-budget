@@ -34,6 +34,12 @@ describe('InputAmount', () => {
     jest.useRealTimers();
   });
 
+  it('defaults display value when no input value set', () => {
+    component.value = undefined;
+    component.enterEdit();
+    expect(component.displayValue).toBe('');
+  });
+
   it('finishes editing and emits numeric values', () => {
     const emitted: number[] = [];
     component.valueChange.subscribe((value) => emitted.push(value));

@@ -67,6 +67,30 @@ describe('CategoriesStore', () => {
     expect(store.hasData()).toBe(true);
   });
 
+  it('sorts categories by name when sort order ties', async () => {
+    const loadPromise = store.load(true);
+    httpMock.expectOne(`${apiUrl}/categories`).flush([
+      toCategory({ id: 'cat-2', name: 'B', sortOrder: 1 }),
+      toCategory({ id: 'cat-1', name: 'A', sortOrder: 1 }),
+    ]);
+
+    await loadPromise;
+
+    expect(store.categories().map((c) => c.id)).toEqual(['cat-1', 'cat-2']);
+  });
+
+  it('sorts categories with missing sortOrder values', async () => {
+    const loadPromise = store.load(true);
+    httpMock.expectOne(`${apiUrl}/categories`).flush([
+      toCategory({ id: 'cat-2', name: 'B', sortOrder: undefined as any }),
+      toCategory({ id: 'cat-1', name: 'A', sortOrder: undefined as any }),
+    ]);
+
+    await loadPromise;
+
+    expect(store.categories().map((c) => c.id)).toEqual(['cat-1', 'cat-2']);
+  });
+
   it('skips load when already loaded and not forced', async () => {
     const storeHarness = harness();
     storeHarness.loadedSignal.set(true);
@@ -102,6 +126,15 @@ describe('CategoriesStore', () => {
     spy.mockRestore();
   });
 
+  it('swallows errors when ensureLoaded fails', async () => {
+    const spy = jest.spyOn(store, 'load').mockRejectedValue(new Error('boom'));
+
+    await store.ensureLoaded();
+
+    expect(spy).toHaveBeenCalledWith(false);
+    spy.mockRestore();
+  });
+
   it('creates categories and inserts them sorted', async () => {
     const createPromise = store.create({ name: 'New', kind: 'EXPENSE' });
     httpMock.expectOne(`${apiUrl}/categories`).flush(toCategory({ id: 'cat-3', name: 'New' }));
@@ -128,6 +161,21 @@ describe('CategoriesStore', () => {
     const updated = await updatePromise;
     expect(updated?.name).toBe('Updated');
     expect(store.categories()[0].name).toBe('Updated');
+  });
+
+  it('resorts categories when updated sort order changes', async () => {
+    harness().categoriesSignal.set([
+      toCategory({ id: 'cat-1', name: 'First', sortOrder: 2 }),
+      toCategory({ id: 'cat-2', name: 'Second', sortOrder: 1 }),
+    ]);
+
+    const updatePromise = store.update('cat-1', { name: 'First', sortOrder: 0 });
+    httpMock.expectOne(`${apiUrl}/categories/cat-1`).flush(
+      toCategory({ id: 'cat-1', name: 'First', sortOrder: 0 }),
+    );
+
+    await updatePromise;
+    expect(store.categories().map((c) => c.id)).toEqual(['cat-1', 'cat-2']);
   });
 
   it('returns null and sets error when update fails', async () => {
@@ -192,8 +240,10 @@ describe('CategoriesStore', () => {
       const extract = harness().extractBackendMessage.bind(store);
       expect(extract('Plain error')).toBe('Plain error');
       expect(extract({ message: ['First', 'Second'] })).toBe('First Second');
+      expect(extract({ message: [] })).toBeNull();
       expect(extract({ message: 'Single' })).toBe('Single');
       expect(extract({ error: 'Nested' })).toBe('Nested');
+      expect(extract({})).toBeNull();
       expect(extract(null)).toBeNull();
     });
   });

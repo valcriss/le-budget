@@ -15,7 +15,7 @@
     "prisma:create-init": "prisma migrate reset && prisma migrate dev --name init",
     "prisma:init": "npm run prisma:generate && npm run prisma:migrate",
     "prisma:seed": "ts-node --project tsconfig.json prisma/seed.ts",
-    "test": "c8 --reporter=text --reporter=lcov ts-node --transpile-only --project tsconfig.test.json test/index.ts"
+    "test": "c8 --check-coverage --lines 100 --branches 100 --functions 100 --statements 100 --reporter=text --reporter=lcov ts-node --transpile-only --project tsconfig.test.json test/index.ts"
   },
   "keywords": [],
   "author": "",

@@ -95,6 +95,22 @@ describe('AccountsMenu', () => {
     expect(readSignal('submitting')).toBe(false);
   });
 
+  it('defaults initial balance to zero when omitted', async () => {
+    const payload = { name: 'Zero', type: 'CHECKING' } as CreateAccountInput;
+    const instance = harness();
+    instance.openDialog();
+
+    await instance.handleCreateAccount(payload);
+
+    expect(storeMock.createAccount).toHaveBeenCalledWith({
+      name: 'Zero',
+      type: 'CHECKING',
+      initialBalance: 0,
+      reconciledBalance: 0,
+      currency: 'EUR',
+    });
+  });
+
   it('surfaces store error messages when creation fails', async () => {
     const error = new Error('boom');
     storeMock.createAccount.mockRejectedValueOnce(error);
@@ -113,6 +129,15 @@ describe('AccountsMenu', () => {
     await harness().handleCreateAccount({ name: 'Y', type: 'CHECKING', initialBalance: 0 });
 
     expect(readSignal('dialogError')).toBe('boom');
+  });
+
+  it('uses generic error message when no store or error details exist', async () => {
+    storeMock.createAccount.mockRejectedValueOnce({ code: 'unknown' });
+    storeMock.saveError.mockReturnValueOnce(null);
+
+    await harness().handleCreateAccount({ name: 'Z', type: 'CHECKING', initialBalance: 0 });
+
+    expect(readSignal('dialogError')).toBe('Impossible de créer le compte.');
   });
 
   it('ignores duplicate submissions while submitting', async () => {

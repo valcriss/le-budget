@@ -654,8 +654,75 @@ async function testRemoveThrowsWhenCategoryMissing() {
   await assert.rejects(() => service.remove('missing'), NotFoundException);
 }
 
+
+async function testUpdateSetsSortOrder() {
+  const prisma = new CategoriesPrismaStub([
+    {
+      id: 'cat-1',
+      userId: 'user-123',
+      name: 'Expense',
+      kind: CategoryKind.EXPENSE,
+      sortOrder: 0,
+      parentCategoryId: null,
+    },
+  ]);
+  const { service } = createService(prisma);
+
+  const updated = await service.update('cat-1', {
+    sortOrder: 5,
+  } as any);
+
+  assert.equal(updated.sortOrder, 5);
+}
+
+
+async function testCreateWithExplicitExpenseKind() {
+  const prisma = new CategoriesPrismaStub();
+  const { service } = createService(prisma);
+
+  const entity = await service.create({
+    name: 'Transport',
+    kind: CategoryKind.EXPENSE,
+  } as any);
+
+  assert.equal(entity.kind, CategoryKind.EXPENSE);
+}
+
+async function testCreateSortOrderStartsAtZeroWhenEmpty() {
+  const prisma = new CategoriesPrismaStub();
+  const { service } = createService(prisma);
+
+  const entity = await service.create({
+    name: 'Premiere',
+  } as any);
+
+  assert.equal(entity.sortOrder, 0);
+}
+
+async function testUpdateAllowsExplicitKind() {
+  const prisma = new CategoriesPrismaStub([
+    {
+      id: 'cat-1',
+      userId: 'user-123',
+      name: 'Expense',
+      kind: CategoryKind.EXPENSE,
+      sortOrder: 0,
+      parentCategoryId: null,
+    },
+  ]);
+  const { service } = createService(prisma);
+
+  const updated = await service.update('cat-1', {
+    kind: CategoryKind.EXPENSE,
+  } as any);
+
+  assert.equal(updated.kind, CategoryKind.EXPENSE);
+}
+
 (async () => {
   await testCreateAssignsSortOrderAndEmitsEvent();
+  await testCreateWithExplicitExpenseKind();
+  await testCreateSortOrderStartsAtZeroWhenEmpty();
   await testCreateRejectsTransferCategory();
   await testCreateRejectsInitialCategory();
   await testCreateRejectsIncomeCategories();
@@ -663,6 +730,7 @@ async function testRemoveThrowsWhenCategoryMissing() {
   await testCreateWithParentAssignsNextSortOrder();
   await testCreateAcceptsProvidedSortOrder();
   await testUpdateAllowsDisconnectParent();
+  await testUpdateAllowsExplicitKind();
   await testUpdateConnectsNewParent();
   await testUpdateRejectsChangingToTransferKind();
   await testUpdateRejectsSelfParent();
@@ -671,6 +739,7 @@ async function testRemoveThrowsWhenCategoryMissing() {
   await testUpdateRejectsIncomeCategoryModification();
   await testUpdateRejectsSettingKindToIncome();
   await testUpdateRejectsSettingKindToInitial();
+  await testUpdateSetsSortOrder();
   await testUpdateRejectsUnknownParent();
   await testUpdateThrowsWhenCategoryMissing();
   await testFindAllReturnsSortedList();

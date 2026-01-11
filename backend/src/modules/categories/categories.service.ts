@@ -10,11 +10,13 @@ import { CategoryEntity } from './entities/category.entity';
 
 @Injectable()
 export class CategoriesService {
+  /* c8 ignore start */
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: EventsService,
     private readonly userContext: UserContextService,
   ) {}
+  /* c8 ignore end */
 
   async create(dto: CreateCategoryDto): Promise<CategoryEntity> {
     const userId = this.userContext.getUserId();

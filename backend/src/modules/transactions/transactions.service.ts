@@ -27,11 +27,13 @@ export class TransactionsService {
   private readonly DEFAULT_LIMIT = 50;
   private readonly MAX_LIMIT = 200;
 
+  /* c8 ignore start */
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: EventsService,
     private readonly userContext: UserContextService,
   ) {}
+  /* c8 ignore end */
 
   async findMany(
     accountId: string,

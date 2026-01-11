@@ -11,12 +11,14 @@ import { UserContextService } from '../../common/services/user-context.service';
 
 @Injectable()
 export class AccountsService {
+  /* c8 ignore start */
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: EventsService,
     private readonly transactions: TransactionsService,
     private readonly userContext: UserContextService,
   ) {}
+  /* c8 ignore end */
 
   async create(dto: CreateAccountDto): Promise<AccountEntity> {
     const userId = this.userContext.getUserId();

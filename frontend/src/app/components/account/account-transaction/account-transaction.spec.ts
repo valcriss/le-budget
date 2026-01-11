@@ -114,6 +114,15 @@ describe('AccountTransaction', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
+  it('toggles from pointed back to none', () => {
+    const spy = jest.spyOn(component.changeStatus, 'emit');
+    component.transaction = createTransaction({ status: 'POINTED' });
+
+    component['onStatusToggle']();
+
+    expect(spy).toHaveBeenCalledWith({ id: 'tx-1', status: 'NONE' });
+  });
+
   it('enters edit mode when requested', () => {
     expect(component['editing']).toBe(false);
     component['onDoubleClick']();
@@ -137,6 +146,26 @@ describe('AccountTransaction', () => {
     component.ngOnChanges({ autoEditKey: new SimpleChange(null, 1, false) });
     expect(component['editing']).toBe(true);
     expect(component['editModel']).toMatchObject({ debit: 10, credit: null });
+  });
+
+  it('starts editing when transaction changes and autoEditKey set', () => {
+    component.transaction = createTransaction({ amount: 20 });
+    component.autoEditKey = 1;
+
+    component.ngOnChanges({ transaction: new SimpleChange(null, component.transaction, false) });
+
+    expect(component['editing']).toBe(true);
+    expect(component['editModel']).not.toBeNull();
+  });
+
+  it('does not start editing when autoEditKey is null', () => {
+    component.transaction = createTransaction({ amount: 5 });
+    component.autoEditKey = null;
+
+    component.ngOnChanges({ autoEditKey: new SimpleChange(1, null, false) });
+
+    expect(component['editing']).toBe(false);
+    expect(component['editModel']).toBeNull();
   });
 
   it('cancels editing and emits cancel', () => {
@@ -214,6 +243,58 @@ describe('AccountTransaction', () => {
     expect(payload.changes.categoryId).toBe('root');
   });
 
+  it('keeps initial transaction category when none is set', () => {
+    component.transaction = createTransaction({ transactionType: 'INITIAL', categoryId: null });
+    component['editModel'] = {
+      date: '2024-02-02',
+      label: 'ignored',
+      categoryId: 'cat-9',
+      debit: null,
+      credit: 10,
+    };
+
+    const saveSpy = jest.spyOn(component.save, 'emit');
+    component['onSave']();
+
+    const payload = saveSpy.mock.calls[0][0] as AccountTransactionUpdateEvent;
+    expect(payload.changes.categoryId).toBeNull();
+  });
+
+  it('falls back to original label when edit label is empty', () => {
+    component.transaction = createTransaction({ label: 'Original' });
+    component['editModel'] = {
+      date: '2024-02-02',
+      label: '   ',
+      categoryId: null,
+      debit: null,
+      credit: 10,
+    };
+
+    const saveSpy = jest.spyOn(component.save, 'emit');
+    component['onSave']();
+
+    const payload = saveSpy.mock.calls[0][0] as AccountTransactionUpdateEvent;
+    expect(payload.changes.label).toBe('Original');
+  });
+
+  it('falls back to original label and null category when edit model omits values', () => {
+    component.transaction = createTransaction({ label: 'Original label', categoryId: 'cat-1' });
+    component['editModel'] = {
+      date: '2024-02-02',
+      label: undefined as any,
+      categoryId: undefined as any,
+      debit: null,
+      credit: 10,
+    };
+    const saveSpy = jest.spyOn(component.save, 'emit');
+
+    component['onSave']();
+
+    const payload = saveSpy.mock.calls[0][0] as AccountTransactionUpdateEvent;
+    expect(payload.changes.label).toBe('Original label');
+    expect(payload.changes.categoryId).toBeNull();
+  });
+
   it('sanitizes dates when saving', () => {
     component.transaction = createTransaction({ date: '2024-02-10' });
     component['editModel'] = {
@@ -253,6 +334,25 @@ describe('AccountTransaction', () => {
     });
   });
 
+  it('falls back to invalid transaction date when edit date is empty', () => {
+    component.transaction = createTransaction({ date: 'not-a-date' });
+    component['editModel'] = {
+      date: '',
+      label: 'Label',
+      categoryId: null,
+      debit: null,
+      credit: null,
+    };
+    const saveSpy = jest.spyOn(component.save, 'emit');
+
+    component['onSave']();
+
+    expect(saveSpy).toHaveBeenCalledWith({
+      id: 'tx-1',
+      changes: expect.objectContaining({ date: 'not-a-date' }),
+    });
+  });
+
   it('uses provided date and trims labels when saving', () => {
     component.transaction = createTransaction({ date: '2024-02-10', label: 'Ancien' });
     component['editModel'] = {
@@ -289,6 +389,10 @@ describe('AccountTransaction', () => {
     expect(component['toInputDate']('March 20 2024')).toBe(expected);
   });
 
+  it('returns empty input date for invalid strings', () => {
+    expect(component['toInputDate']('not-a-date')).toBe('');
+  });
+
   it('sanitizes non-ISO dates to standard format', () => {
     component.transaction = createTransaction({ date: '2024-04-01' });
     component['editModel'] = {
@@ -308,6 +412,25 @@ describe('AccountTransaction', () => {
     expect(saveSpy).toHaveBeenCalledWith({
       id: 'tx-1',
       changes: expect.objectContaining({ date: expectedDate }),
+    });
+  });
+
+  it('falls back to invalid transaction date when edit date is invalid', () => {
+    component.transaction = createTransaction({ date: 'invalid-date' });
+    component['editModel'] = {
+      date: 'not-a-date',
+      label: 'Label',
+      categoryId: null,
+      debit: null,
+      credit: null,
+    };
+    const saveSpy = jest.spyOn(component.save, 'emit');
+
+    component['onSave']();
+
+    expect(saveSpy).toHaveBeenCalledWith({
+      id: 'tx-1',
+      changes: expect.objectContaining({ date: 'invalid-date' }),
     });
   });
 });

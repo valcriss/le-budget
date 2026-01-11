@@ -143,6 +143,14 @@ describe('TransactionsStore', () => {
     expect(store.loading()).toBe(false);
   });
 
+  it('swallows refresh account errors after update', async () => {
+    accountsStore.refreshAccount.mockRejectedValueOnce(new Error('boom'));
+    const updatePromise = store.update(accountId, 'tx-1', { label: 'Updated' });
+    const req = httpMock.expectOne(`${apiUrl}/accounts/${accountId}/transactions/tx-1`);
+    req.flush(createTransaction({ id: 'tx-1', label: 'Updated', date: '2024-03-05' }));
+
+    await expect(updatePromise).resolves.toEqual(expect.objectContaining({ id: 'tx-1' }));
+  });
   it('returns null when update fails', async () => {
     const updatePromise = store.update(accountId, 'tx-1', { label: 'Updated' });
     const req = httpMock.expectOne(`${apiUrl}/accounts/${accountId}/transactions/tx-1`);
@@ -187,6 +195,15 @@ describe('TransactionsStore', () => {
     expect(store.transactions()[0]?.id).toBe('new');
     expect(store.meta().total).toBe(2);
     expect(accountsStore.refreshAccount).toHaveBeenCalledWith(accountId);
+  });
+
+  it('swallows refresh account errors after create', async () => {
+    accountsStore.refreshAccount.mockRejectedValueOnce(new Error('boom'));
+    const createPromise = store.create(accountId, { date: '2024-04-01', label: 'New', amount: 50 });
+    const req = httpMock.expectOne(`${apiUrl}/accounts/${accountId}/transactions`);
+    req.flush(createTransaction({ id: 'new', date: '2024-04-01', amount: 50, createdAt: '2024-04-01T00:00:00Z' }));
+
+    await expect(createPromise).resolves.toEqual(expect.objectContaining({ id: 'new' }));
   });
 
   it('returns null when create fails', async () => {
@@ -307,5 +324,9 @@ describe('TransactionsStore', () => {
   it('extracts backend message from plain payloads', () => {
     const extract = harness().extractBackendMessage({ message: ['One', 'Two'] });
     expect(extract).toBe('One Two');
+    expect(harness().extractBackendMessage({ message: 'Single' })).toBe('Single');
+    expect(harness().extractBackendMessage({ error: 'Boom' })).toBe('Boom');
+    expect(harness().extractBackendMessage({ message: [] })).toBeNull();
+    expect(harness().extractBackendMessage({})).toBeNull();
   });
 });

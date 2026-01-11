@@ -85,7 +85,7 @@ describe('EventsGateway', () => {
     TestBed.configureTestingModule({
       providers: [
         EventsGateway,
-        { provide: API_BASE_URL, useValue: 'https://api.test' },
+        { provide: API_BASE_URL, useValue: 'https://api.test/' },
         { provide: AuthStore, useValue: { accessToken: accessTokenSpy } as AuthStore },
         { provide: DestroyRef, useValue: destroyRefStub },
       ],
@@ -110,7 +110,7 @@ describe('EventsGateway', () => {
     internals.ensureConnected();
   }
 
-  async function connectViaEffect(gateway: EventsGateway, token = 'token') {
+  async function connectViaEffect(gateway: EventsGateway, token: string | null = 'token') {
     tokenSignal.set(token);
     const flush = (TestBed as typeof TestBed & { flushEffects?: () => void }).flushEffects;
     if (typeof flush === 'function') {
@@ -154,6 +154,19 @@ describe('EventsGateway', () => {
     expect(MockEventSource.instances).toHaveLength(2);
   });
 
+  it('disposes the source when the token is cleared', async () => {
+    const gateway = TestBed.inject(EventsGateway);
+    gateway.on('budget.updated', jest.fn());
+
+    await connectViaEffect(gateway, 'token-1');
+    const instance = MockEventSource.instances[0];
+    expect(instance.closed).toBe(false);
+
+    await connectViaEffect(gateway, null);
+    expect(instance.closed).toBe(true);
+    expect(MockEventSource.instances).toHaveLength(1);
+  });
+
   it('does not recreate the source when already connected', async () => {
     const gateway = TestBed.inject(EventsGateway);
     gateway.on('accounts.updated', jest.fn());
@@ -163,6 +176,17 @@ describe('EventsGateway', () => {
 
     (gateway as EventsGatewayInternals).ensureConnected();
     expect(MockEventSource.instances).toHaveLength(1);
+  });
+
+  it('trims trailing slashes from the base URL', async () => {
+    const gateway = TestBed.inject(EventsGateway);
+    gateway.on('accounts.updated', jest.fn());
+
+    await connectViaEffect(gateway);
+
+    expect(MockEventSource.instances[0]?.url).toBe(
+      'https://api.test/events?access_token=token',
+    );
   });
 
   it('reconnects when the EventSource triggers an error', () => {

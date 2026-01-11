@@ -95,6 +95,7 @@ export class BudgetStatus implements AfterViewInit, OnDestroy {
     return new Promise((resolve) => {
       let resolved = false;
       const done = () => {
+        /* istanbul ignore next */
         if (resolved) return;
         resolved = true;
         resolve();

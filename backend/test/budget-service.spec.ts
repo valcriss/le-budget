@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { BudgetService } from '../src/modules/budget/budget.service';
 
@@ -488,9 +488,155 @@ async function testGetMonthCreatesStructure() {
   assert.equal(transactions.calls.length, 2); // ensureMonthStructure + final recalculation
 }
 
+
+async function testUpdateCategoryNoChangesReturnsEntity() {
+  const prisma = new FakeBudgetPrisma(true);
+  const { service, events, transactions } = createBudgetService(prisma);
+
+  const result = await service.updateCategory('month-2025-01', 'cat-1', {} as any);
+
+  assert.equal(result.id, 'budget-cat-1');
+  assert.equal(events.emitted.length, 0);
+  assert.equal(transactions.calls.length, 0);
+}
+
+async function testUpdateCategoryThrowsWhenMissing() {
+  const prisma = new FakeBudgetPrisma(true);
+  const { service } = createBudgetService(prisma);
+
+  await assert.rejects(
+    () => service.updateCategory('month-2025-01', 'missing', {} as any),
+    NotFoundException,
+  );
+}
+
+async function testUpdateCategoryUsesAvailableWhenProvided() {
+  const prisma = new FakeBudgetPrisma(true);
+  const { service, events, transactions } = createBudgetService(prisma);
+
+  const result = await service.updateCategory('month-2025-01', 'cat-1', {
+    available: 99,
+  });
+
+  assert.equal(result.available, 99);
+  assert.equal(events.emitted.length, 1);
+  assert.equal(transactions.calls.length, 1);
+}
+
+async function testEnsureMonthStructureSkipsRecalculateWhenNoNewCategories() {
+  const prisma = new FakeBudgetPrisma(true);
+  const { service, transactions } = createBudgetService(prisma);
+  const month = prisma.findMonthByUserAndDate('user-123', new Date(Date.UTC(2025, 0, 1)));
+  assert(month, 'Expected seed month to exist');
+
+  await (service as any).ensureMonthStructure(month, 'user-123');
+
+  assert.equal(prisma.createdBudgetCategories.length, 0);
+  assert.equal(transactions.calls.length, 0);
+}
+
+async function testGetOrCreateMonthUsesIdMatch() {
+  const prisma = new FakeBudgetPrisma(true);
+  const { service } = createBudgetService(prisma);
+
+  const result = await (service as any).getOrCreateMonth('month-2025-01', 'user-123');
+
+  assert.equal(result.created, false);
+  assert.equal(result.month.id, 'month-2025-01');
+}
+
+async function testIsSameMonthHelper() {
+  const prisma = new FakeBudgetPrisma();
+  const { service } = createBudgetService(prisma);
+
+  const isSameMonth = (service as any).isSameMonth.bind(service);
+  const a = new Date(Date.UTC(2025, 0, 1));
+  const b = new Date(Date.UTC(2025, 0, 31));
+  const c = new Date(Date.UTC(2025, 1, 1));
+
+  assert.equal(isSameMonth(a, b), true);
+  assert.equal(isSameMonth(a, c), false);
+}
+
+
+async function testUpdateCategoryUsesAssignedFallback() {
+  const prisma = new FakeBudgetPrisma(true);
+  const { service } = createBudgetService(prisma);
+
+  const result = await service.updateCategory('month-2025-01', 'cat-1', {
+    activity: -30,
+  });
+
+  assert.equal(result.available, 20);
+}
+
+async function testUpdateCategoryUsesActivityFallback() {
+  const prisma = new FakeBudgetPrisma(true);
+  const { service } = createBudgetService(prisma);
+
+  const result = await service.updateCategory('month-2025-01', 'cat-1', {
+    assigned: 80,
+  });
+
+  assert.equal(result.available, 55);
+}
+
+async function testGetOrCreateMonthUpdatesMismatchedMonth() {
+  const baseMonth = new Date(Date.UTC(2025, 1, 1));
+  const existingMonth = {
+    id: 'month-legacy',
+    userId: 'user-123',
+    month: new Date(Date.UTC(2025, 0, 1)),
+    availableCarryover: 0,
+    income: 0,
+    assigned: 0,
+    activity: 0,
+    available: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  const prisma = {
+    updated: null as any,
+    budgetMonth: {
+      findFirst: async ({ where }: { where: any }) => {
+        if (where.id) {
+          return null;
+        }
+        return { ...existingMonth };
+      },
+      create: async () => {
+        throw new Error('Unexpected create');
+      },
+      update: async ({ where, data }: { where: { id: string }; data: { month: Date } }) => {
+        const record = { ...existingMonth, id: where.id, month: new Date(data.month) };
+        (prisma as any).updated = record;
+        return record;
+      },
+    },
+  };
+  const events = { emit: () => undefined };
+  const userContext = { getUserId: () => 'user-123' };
+  const transactions = { recalculateBudgetMonthForUser: async () => undefined };
+  const service = new BudgetService(prisma as any, events as any, userContext as any, transactions as any);
+
+  const result = await (service as any).getOrCreateMonth('2025-02', 'user-123');
+
+  assert.equal(result.created, false);
+  assert.equal((prisma as any).updated.month.getUTCMonth(), baseMonth.getUTCMonth());
+}
+
 (async () => {
   await testUpdateCategoryRecomputesAvailable();
+  await testUpdateCategoryNoChangesReturnsEntity();
+  await testUpdateCategoryThrowsWhenMissing();
+  await testUpdateCategoryUsesAvailableWhenProvided();
+  await testUpdateCategoryUsesAssignedFallback();
+  await testUpdateCategoryUsesActivityFallback();
   await testMonthStringToDateValidation();
   await testGetMonthCreatesStructure();
+  await testEnsureMonthStructureSkipsRecalculateWhenNoNewCategories();
+  await testGetOrCreateMonthUsesIdMatch();
+  await testGetOrCreateMonthUpdatesMismatchedMonth();
+  await testIsSameMonthHelper();
   console.log('Budget service tests passed ✓');
 })();

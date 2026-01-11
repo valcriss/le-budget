@@ -170,6 +170,138 @@ async function testToBudgetCategoryEntityHandlesMissingCategory() {
   assert.equal(entity.category, undefined);
 }
 
+async function testToBudgetCategoryEntityDefaultsMissingValues() {
+  const { service } = createService();
+  const now = new Date();
+  const entity = (service as any).toBudgetCategoryEntity({
+    id: 'budget-3',
+    groupId: 'group-1',
+    categoryId: 'cat-3',
+    createdAt: now,
+    updatedAt: now,
+    category: { id: 'cat-3', name: 'Courses' },
+  });
+
+  assert.equal(entity.assigned, 0);
+  assert.equal(entity.activity, 0);
+  assert.equal(entity.available, 0);
+  assert.equal(entity.category?.sortOrder, 0);
+}
+
+async function testToEntityCategoryFallbacks() {
+  const { service } = createService();
+  const now = new Date();
+  const base = {
+    id: 'tx-1',
+    accountId: 'acc-1',
+    date: new Date(Date.UTC(2025, 0, 1)),
+    label: 'Test',
+    amount: new Prisma.Decimal(5),
+    status: 'NONE',
+    transactionType: 'NONE',
+    linkedTransactionId: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const withCategory = (service as any).toEntity(
+    {
+      ...base,
+      categoryId: 'cat-1',
+      category: { id: 'cat-1', name: 'Categorie' },
+    },
+    10,
+  );
+  assert.equal(withCategory.categoryId, 'cat-1');
+  assert.equal(withCategory.categoryName, 'Categorie');
+
+  const withoutCategory = (service as any).toEntity(
+    {
+      ...base,
+      categoryId: null,
+      category: null,
+    },
+    5,
+  );
+  assert.equal(withoutCategory.categoryId, null);
+  assert.equal(withoutCategory.categoryName, null);
+}
+
+async function testEmitAccountUpdatedSkipsNull() {
+  const { service, events } = createService();
+
+  (service as any).emitAccountUpdated(null);
+
+  assert.equal(events.emitted.length, 0);
+}
+
+async function testEmitAccountUpdatedEmitsEntity() {
+  const { service, events } = createService();
+  const now = new Date();
+  const account = {
+    id: 'acc-1',
+    userId: 'user-123',
+    name: 'Compte courant',
+    type: 'CHECKING',
+    currency: 'EUR',
+    archived: false,
+    initialBalance: new Prisma.Decimal(10),
+    currentBalance: new Prisma.Decimal(25),
+    pointedBalance: new Prisma.Decimal(20),
+    reconciledBalance: new Prisma.Decimal(15),
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  (service as any).emitAccountUpdated(account);
+
+  assert.equal(events.emitted.length, 1);
+  assert.equal(events.emitted[0].event, 'account.updated');
+  assert.equal((events.emitted[0].payload as any).currentBalance, 25);
+}
+
+async function testRecalculateBudgetMonthSummaryFallsBackToLastMonth() {
+  const { service } = createService();
+  const baseMonth = new Date(Date.UTC(2025, 0, 15));
+  const monthRecord = {
+    id: 'month-1',
+    userId: 'user-123',
+    month: new Date(Date.UTC(2024, 11, 1)),
+    availableCarryover: new Prisma.Decimal(0),
+    income: new Prisma.Decimal(0),
+    assigned: new Prisma.Decimal(0),
+    available: new Prisma.Decimal(0),
+    activity: new Prisma.Decimal(0),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const client = {
+    budgetMonth: {
+      upsert: async () => monthRecord,
+      findMany: async () => [monthRecord],
+      update: async () => monthRecord,
+    },
+    transaction: {
+      aggregate: async () => ({ _sum: { amount: new Prisma.Decimal(0) } }),
+      findMany: async () => [],
+    },
+    budgetCategory: {
+      aggregate: async () => ({ _sum: { assigned: new Prisma.Decimal(0) } }),
+      findMany: async () => [],
+    },
+  };
+
+  const summary = await (service as any).recalculateBudgetMonthSummary(
+    client,
+    'user-123',
+    baseMonth,
+  );
+
+  assert.equal(summary.month.id, 'month-1');
+  assert.equal(summary.months.length, 1);
+}
+
 (async () => {
   await testEnsureCategoryOwnershipAllowsKnownCategory();
   await testEnsureTransactionOwnershipAllowsOwnedTransaction();
@@ -178,5 +310,10 @@ async function testToBudgetCategoryEntityHandlesMissingCategory() {
   await testEmitBudgetMonthUpdatesDeduplicates();
   await testToBudgetCategoryEntityMapsCategory();
   await testToBudgetCategoryEntityHandlesMissingCategory();
+  await testToBudgetCategoryEntityDefaultsMissingValues();
+  await testToEntityCategoryFallbacks();
+  await testEmitAccountUpdatedSkipsNull();
+  await testEmitAccountUpdatedEmitsEntity();
+  await testRecalculateBudgetMonthSummaryFallsBackToLastMonth();
   console.log('Transactions internals tests passed ✓');
 })();

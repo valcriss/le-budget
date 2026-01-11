@@ -22,8 +22,15 @@ function testGetUserIdThrowsWhenMissing() {
   assert.throws(() => service.getUserId(), UnauthorizedException);
 }
 
+
+function testGetUserIdThrowsWhenSubNotString() {
+  const service = createService(createRequest({ sub: 42 as any }));
+  assert.throws(() => service.getUserId(), UnauthorizedException);
+}
+
 (async () => {
   testGetUserIdReturnsSub();
   testGetUserIdThrowsWhenMissing();
+  testGetUserIdThrowsWhenSubNotString();
   console.log('User context service tests passed ✓');
 })();

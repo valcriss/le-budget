@@ -144,6 +144,17 @@ describe('AccountsTable', () => {
     expect(readSignal('dialogError')).toBe('boom');
   });
 
+  it('uses a generic error message when no error details are available', async () => {
+    const instance = harness();
+    instance.openEditDialog(account);
+    storeMock.updateAccount.mockRejectedValueOnce({ code: 'unknown' });
+    storeMock.saveError.mockReturnValueOnce(null);
+
+    await instance.handleUpdate({ name: 'Updated', type: 'CHECKING' });
+
+    expect(readSignal('dialogError')).toContain('Impossible');
+  });
+
   it('maps account types to icons', () => {
     const instance = harness();
     const checkingIcon = instance.iconFor(account);

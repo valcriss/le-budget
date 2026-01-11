@@ -55,8 +55,16 @@ describe('BudgetStatus', () => {
     expect(component.displayedAvailable).toBe(150);
     component.available = 75;
     expect(component.displayedAvailable).toBe(75);
+    component.available = 'invalid' as any;
+    expect(component.displayedAvailable).toBe(0);
     component.available = undefined;
     expect(component.displayedAvailable).toBe(0);
+  });
+
+  it('skips focus trap creation when root is missing', () => {
+    component.root = undefined;
+    component.ngAfterViewInit();
+    expect(focusTrapFactory.create).not.toHaveBeenCalled();
   });
 
   it('creates and initializes focus trap after view init', () => {
@@ -81,10 +89,32 @@ describe('BudgetStatus', () => {
     await expect(promise).resolves.toBeUndefined();
   });
 
+  it('ignores duplicate resolves after animation and timeout', async () => {
+    jest.useFakeTimers();
+    const promise = component.startClose();
+    component.root?.nativeElement.dispatchEvent(new Event('animationend'));
+    jest.advanceTimersByTime(500);
+    await expect(promise).resolves.toBeUndefined();
+    jest.useRealTimers();
+  });
+
   it('resolves startClose when animation event never fires', async () => {
     jest.useFakeTimers();
     const promise = component.startClose();
     jest.advanceTimersByTime(500);
+    await expect(promise).resolves.toBeUndefined();
+    jest.useRealTimers();
+  });
+
+  it('ignores animation events from child elements', async () => {
+    jest.useFakeTimers();
+    const child = document.createElement('div');
+    component.root?.nativeElement.appendChild(child);
+
+    const promise = component.startClose();
+    child.dispatchEvent(new Event('animationend', { bubbles: true }));
+    jest.advanceTimersByTime(500);
+
     await expect(promise).resolves.toBeUndefined();
     jest.useRealTimers();
   });

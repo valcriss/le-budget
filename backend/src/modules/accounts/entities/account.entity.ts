@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
 export class AccountEntity {
+  /* c8 ignore start */
   @ApiProperty()
   @Expose()
   id!: string;
@@ -46,6 +47,7 @@ export class AccountEntity {
   @ApiProperty()
   @Expose()
   updatedAt!: Date;
+  /* c8 ignore end */
 
   hasPositiveBalance(): boolean {
     return this.currentBalance > 0;

@@ -4,6 +4,7 @@ import { CategoryEntity } from '../../categories/entities/category.entity';
 import { BudgetCategoryEntity } from './budget-category.entity';
 
 export class BudgetCategoryGroupEntity {
+  /* c8 ignore start */
   @ApiProperty()
   @Expose()
   id!: string;
@@ -39,6 +40,7 @@ export class BudgetCategoryGroupEntity {
   @Expose()
   @Type(() => BudgetCategoryEntity)
   items!: BudgetCategoryEntity[];
+  /* c8 ignore end */
 
   hasItems(): boolean {
     return Array.isArray(this.items) && this.items.length > 0;

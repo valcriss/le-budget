@@ -80,8 +80,23 @@ describe('AccountsList', () => {
     expect(storeMock.loadAccounts).toHaveBeenCalled();
   });
 
+  it('swallows load errors during init', async () => {
+    storeMock.loadAccounts.mockRejectedValueOnce(new Error('boom'));
+    fixture = TestBed.createComponent(AccountsList);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await Promise.resolve();
+
+    expect(storeMock.loadAccounts).toHaveBeenCalled();
+  });
+
   it('formats amounts using the shared formatter', () => {
     expect(component['formatAmount'](100)).toBe(formatCurrencyWithSign(100, false));
+  });
+
+  it('tracks accounts by id', () => {
+    const account = { id: 'acc-1' } as any;
+    expect(component['trackByAccountId'](0, account)).toBe('acc-1');
   });
 
   it('opens and closes the creation dialog', () => {

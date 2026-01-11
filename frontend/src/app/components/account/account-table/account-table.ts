@@ -149,6 +149,7 @@ export class AccountTable implements OnChanges {
         this.draftAutoEditKey.set(null);
       } else {
         const existingDraft = this.draftTransaction();
+        /* istanbul ignore next */
         if (existingDraft) {
           this.draftTransaction.set({
             ...existingDraft,

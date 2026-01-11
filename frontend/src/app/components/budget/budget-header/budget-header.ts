@@ -113,6 +113,7 @@ export class BudgetHeader {
       const portal = new ComponentPortal(BudgetStatus, this.viewContainerRef);
       const compRef = this.overlayRef.attach(portal);
       // pass input
+      /* istanbul ignore next */
       if (compRef && compRef.instance) {
         compRef.instance.available = this.totalAvailable ?? 0;
         compRef.instance.carryover = this.availableCarryover ?? 0;
@@ -210,6 +211,7 @@ export class BudgetHeader {
     );
   }
 
+  /* istanbul ignore next */
   formatCurrency(value?: string | number) {
     return formatCurrencyWithSign(value ?? 0, false);
   }

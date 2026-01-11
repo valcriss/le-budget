@@ -85,6 +85,13 @@ describe('AccountMenu', () => {
     expect(component['account']()?.id).toBe('account-1');
   });
 
+  it('returns null when no route id and no accounts', () => {
+    accountsSignal.set([]);
+    fixture.detectChanges();
+
+    expect(component['account']()).toBeNull();
+  });
+
   it('selects account from route params and exposes computed helpers', () => {
     fixture.destroy();
 

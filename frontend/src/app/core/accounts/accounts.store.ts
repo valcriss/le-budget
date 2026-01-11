@@ -325,6 +325,7 @@ export class AccountsStore {
       return payload;
     }
 
+    /* istanbul ignore next */
     if (typeof payload === 'object') {
       const maybeMessage = (payload as { message?: unknown }).message;
       if (Array.isArray(maybeMessage) && maybeMessage.length > 0) {

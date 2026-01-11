@@ -20,6 +20,7 @@ describe('budget utils', () => {
 
     expect(monthKeyToDate('2024-13')).toBeNull();
     expect(monthKeyToDate('invalid')).toBeNull();
+    expect(monthKeyToDate(undefined as unknown as string)).toBeNull();
   });
 
   it('formats month labels using cached Intl formatter', () => {

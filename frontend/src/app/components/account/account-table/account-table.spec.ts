@@ -64,6 +64,14 @@ describe('AccountTable', () => {
     expect(transactionsStore.load).toHaveBeenCalledWith('account-2');
   });
 
+  it('swallows load errors when navigating to a different account', async () => {
+    transactionsStore.load.mockRejectedValueOnce(new Error('boom'));
+    paramMap$.next(convertToParamMap({ id: 'account-3' }));
+    await Promise.resolve();
+
+    expect(transactionsStore.load).toHaveBeenCalledWith('account-3');
+  });
+
   it('does not reload when account id stays the same', () => {
     transactionsStore.load.mockClear();
 
@@ -196,6 +204,39 @@ describe('AccountTable', () => {
     expect(component['autoEditKeyFor'](draft)).toBeNull();
   });
 
+  it('uses draft defaults when save changes omit fields', async () => {
+    const created: Transaction = {
+      id: 'server-2',
+      accountId: 'account-1',
+      date: '2024-03-01',
+      label: 'Draft label',
+      categoryId: 'cat-1',
+      categoryName: 'Category',
+      amount: 12,
+      balance: 12,
+      status: 'NONE',
+      transactionType: 'NONE',
+      linkedTransactionId: null,
+      createdAt: '2024-03-01T00:00:00Z',
+      updatedAt: '2024-03-01T00:00:00Z',
+    };
+    transactionsStore.create.mockResolvedValueOnce(created);
+
+    component.startNewTransaction();
+    const draft = component['rows']()[0];
+
+    await component['handleSave'](draft, { changes: {} });
+
+    expect(transactionsStore.create).toHaveBeenCalledWith('account-1', {
+      date: draft.date,
+      label: draft.label,
+      amount: draft.amount,
+      categoryId: null,
+      status: 'NONE',
+      transactionType: 'NONE',
+    });
+  });
+
   it('keeps draft open when creation fails and applies changes', async () => {
     transactionsStore.create.mockResolvedValueOnce(null);
     component.startNewTransaction();
@@ -212,6 +253,29 @@ describe('AccountTable', () => {
     expect(updatedDraft.label).toBe('Échec');
     expect(component['autoEditKeyFor'](updatedDraft)).not.toBe(initialKey);
     nowSpy.mockRestore();
+  });
+
+  it('updates the stored draft when creation fails', async () => {
+    transactionsStore.create.mockResolvedValueOnce(null);
+    component.startNewTransaction();
+    const draft = component['rows']()[0];
+
+    await component['handleSave'](draft, {
+      changes: { label: 'Retry label', date: '2024-03-10', amount: 12 },
+    });
+
+    expect((component as any).draftTransaction().label).toBe('Retry label');
+  });
+
+  it('updates existing draft data when creation fails with a live draft', async () => {
+    transactionsStore.create.mockResolvedValueOnce(null);
+    component.startNewTransaction();
+    const draft = component['rows']()[0];
+    (component as any).draftTransaction.set({ ...draft, label: 'Existing' });
+
+    await component['handleSave'](draft, { changes: { label: 'Updated' } });
+
+    expect(component['rows']()[0].label).toBe('Updated');
   });
 
   it('updates existing transactions via store', async () => {

@@ -133,6 +133,118 @@ describe('BudgetStore', () => {
     expect(month?.assigned).toBe(5);
     expect(month?.groups[0]?.items[0]?.available).toBe(1);
     expect(store.hasData()).toBe(true);
+    expect(store.groups().length).toBe(1);
+  });
+
+  it('normalizes month and category values when fields are missing', async () => {
+    const response = createMonthResponse();
+    response.availableCarryover = undefined;
+    response.income = undefined;
+    response.assigned = undefined;
+    response.activity = undefined;
+    response.available = undefined;
+    response.totalAssigned = undefined;
+    response.totalActivity = undefined;
+    response.totalAvailable = undefined;
+    response.groups = [
+      {
+        ...response.groups[0],
+        assigned: undefined,
+        activity: undefined,
+        available: undefined,
+        items: [
+          {
+            ...response.groups[0].items[0],
+            assigned: undefined,
+            activity: undefined,
+            available: undefined,
+          },
+        ],
+      },
+    ];
+
+    const monthPromise = store.loadMonth(monthKey);
+    httpMock.expectOne(`${apiUrl}/budget/months/${monthKey}`).flush(response);
+    await monthPromise;
+
+    const month = store.month();
+    expect(month?.availableCarryover).toBe(0);
+    expect(month?.income).toBe(0);
+    expect(month?.totalAssigned).toBe(0);
+    expect(month?.totalActivity).toBe(0);
+    expect(month?.totalAvailable).toBe(0);
+    expect(month?.groups[0].items[0].assigned).toBe(0);
+    expect(month?.groups[0].items[0].activity).toBe(0);
+    expect(month?.groups[0].items[0].available).toBe(0);
+  });
+
+  it('normalizes groups and months when arrays are missing', () => {
+    const normalizeGroup = (store as any).normalizeGroup.bind(store) as (group: any) => any;
+    const normalizeMonth = (store as any).normalizeMonth.bind(store) as (month: any) => any;
+
+    const normalizedGroup = normalizeGroup({
+      id: 'group',
+      items: undefined,
+      assigned: undefined,
+      activity: undefined,
+      available: undefined,
+    });
+    expect(normalizedGroup.items).toEqual([]);
+    expect(normalizedGroup.assigned).toBe(0);
+    expect(normalizedGroup.activity).toBe(0);
+    expect(normalizedGroup.available).toBe(0);
+
+    const normalizedMonth = normalizeMonth({
+      id: 'month',
+      month: monthKey,
+      groups: undefined,
+      availableCarryover: undefined,
+      income: undefined,
+      assigned: undefined,
+      activity: undefined,
+      available: undefined,
+      totalAssigned: undefined,
+      totalActivity: undefined,
+      totalAvailable: undefined,
+    });
+    expect(normalizedMonth.groups).toEqual([]);
+    expect(normalizedMonth.availableCarryover).toBe(0);
+  });
+  it('derives group totals from items when fields are missing', async () => {
+    const response = createMonthResponse();
+    response.groups = [
+      {
+        ...response.groups[0],
+        assigned: undefined,
+        activity: undefined,
+        available: undefined,
+        items: [
+          {
+            ...response.groups[0].items[0],
+            assigned: '2',
+            activity: '-1',
+            available: '1',
+          },
+          {
+            ...response.groups[0].items[0],
+            id: 'budget-2',
+            assigned: '3',
+            activity: '0',
+            available: '3',
+          },
+        ],
+      },
+    ];
+
+    const monthPromise = store.loadMonth(monthKey);
+    httpMock.expectOne(`${apiUrl}/budget/months/${monthKey}`).flush(response);
+
+    await monthPromise;
+
+    const group = store.groups()[0];
+    expect(group.assigned).toBe(5);
+    expect(group.activity).toBe(-1);
+    expect(group.available).toBe(4);
   });
 
   it('maps errors when load fails', async () => {
@@ -193,12 +305,34 @@ describe('BudgetStore', () => {
     expect(store.error()).toBe('Not allowed');
   });
 
+  it('swallows refresh errors after updating assigned', async () => {
+    const refreshSpy = jest
+      .spyOn(store as any, 'refreshMonthInPlace')
+      .mockRejectedValue(new Error('fail'));
+    const updatePromise = store.updateCategoryAssigned(monthKey, 'cat-1', 200);
+    httpMock.expectOne(`${apiUrl}/budget/months/${monthKey}/categories/cat-1`).flush({});
+
+    await expect(updatePromise).resolves.toBeUndefined();
+    expect(refreshSpy).toHaveBeenCalled();
+    refreshSpy.mockRestore();
+  });
+
   it('responds to server events by refreshing the current month', async () => {
     const load = store.loadMonth(monthKey);
     httpMock.expectOne(`${apiUrl}/budget/months/${monthKey}`).flush(createMonthResponse());
     await load;
 
     events.emit('budget.category.updated', { month: monthKey });
+    httpMock.expectOne(`${apiUrl}/budget/months/${monthKey}`).flush(createMonthResponse());
+    expect(store.error()).toBeNull();
+  });
+
+  it('refreshes current month on month updated events', async () => {
+    const load = store.loadMonth(monthKey);
+    httpMock.expectOne(`${apiUrl}/budget/months/${monthKey}`).flush(createMonthResponse());
+    await load;
+
+    events.emit('budget.month.updated', { month: monthKey });
     httpMock.expectOne(`${apiUrl}/budget/months/${monthKey}`).flush(createMonthResponse());
     expect(store.error()).toBeNull();
   });
@@ -224,6 +358,16 @@ describe('BudgetStore', () => {
     httpMock.expectNone(`${apiUrl}/budget/months/${monthKey}`);
     expect(store.month()).toBeNull();
     expect(store.hasData()).toBe(false);
+  });
+
+  it('ignores refresh events when payload has no month', async () => {
+    const load = store.loadMonth(monthKey);
+    httpMock.expectOne(`${apiUrl}/budget/months/${monthKey}`).flush(createMonthResponse());
+    await load;
+
+    events.emit('budget.category.updated', {});
+    events.emit('budget.month.updated', {});
+    httpMock.expectNone(`${apiUrl}/budget/months/${monthKey}`);
   });
 
   it('refreshes month in place and reuses pending promise', async () => {
@@ -293,6 +437,9 @@ describe('BudgetStore', () => {
       const mapError = getHarness().mapError.bind(store);
       const error = new HttpErrorResponse({ status: 400, error: { message: ['Invalid'] } });
       expect(mapError(error, 'fallback')).toBe('Invalid');
+      expect(mapError(new HttpErrorResponse({ status: 400, error: null }), 'fallback')).toBe(
+        'Les paramètres fournis sont invalides.',
+      );
       expect(mapError(new HttpErrorResponse({ status: 401 }), 'fallback')).toBe('Authentification requise.');
       expect(mapError(new HttpErrorResponse({ status: 403 }), 'fallback')).toBe("Vous n'êtes pas autorisé à consulter ce budget.");
       expect(mapError(new HttpErrorResponse({ status: 404 }), 'fallback')).toBe('Budget introuvable pour ce mois.');
@@ -307,6 +454,7 @@ describe('BudgetStore', () => {
       expect(extract({ message: ['First', 'Second'] })).toBe('First Second');
       expect(extract({ message: 'Single' })).toBe('Single');
       expect(extract({ error: 'Error field' })).toBe('Error field');
+      expect(extract({})).toBeNull();
       expect(extract(null)).toBeNull();
     });
   });

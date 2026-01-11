@@ -10,5 +10,6 @@ import './accounts-service.spec';
 import './categories-service.spec';
 import './transactions-internals.spec';
 import './entities.spec';
+import './decorators-coverage.spec';
 
 // This file exists to ensure ts-node loads every spec file when running `npm test`.

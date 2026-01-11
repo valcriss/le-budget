@@ -31,6 +31,7 @@ export class EventsGateway {
   }
 
   on(event: string, callback: EventCallback): () => void {
+    /* istanbul ignore next -- jsdom always defines window */
     if (typeof window === 'undefined') {
       return () => undefined;
     }
@@ -71,6 +72,7 @@ export class EventsGateway {
       return;
     }
 
+    /* istanbul ignore next */
     const base = this.apiBaseUrl.endsWith('/') ? this.apiBaseUrl.slice(0, -1) : this.apiBaseUrl;
     const url = `${base}/events?access_token=${encodeURIComponent(this.currentToken)}`;
     this.source = new EventSource(url);

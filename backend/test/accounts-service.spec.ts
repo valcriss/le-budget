@@ -409,11 +409,125 @@ async function testCreateUsesUppercaseCurrencyFromSettings() {
   assert.equal(entity.currency, 'USD');
 }
 
+
+async function testCreateUsesExistingInitialCategory() {
+  const prisma = new AccountsPrismaStub([], [
+    {
+      id: 'cat-initial',
+      userId: 'user-123',
+      name: 'Solde initial',
+      kind: CategoryKind.INITIAL,
+      sortOrder: 0,
+      parentCategoryId: null,
+    },
+  ]);
+  const { service } = createService(prisma);
+
+  await service.create({
+    name: 'Compte courant',
+    initialBalance: 0,
+  } as any);
+
+  const initialCategories = prisma.categories.filter((cat) => cat.kind === CategoryKind.INITIAL);
+  assert.equal(initialCategories.length, 1);
+  assert.equal(initialCategories[0].id, 'cat-initial');
+}
+
+async function testCreateAddsMissingIncomeCategory() {
+  const prisma = new AccountsPrismaStub([], [
+    {
+      id: 'cat-income',
+      userId: 'user-123',
+      name: 'Revenus du mois',
+      kind: CategoryKind.INCOME,
+      sortOrder: 0,
+      parentCategoryId: null,
+    },
+  ]);
+  const { service } = createService(prisma);
+
+  await service.create({
+    name: 'Compte courant',
+    initialBalance: 0,
+  } as any);
+
+  const incomeNames = prisma.categories
+    .filter((cat) => cat.name.startsWith('Revenus'))
+    .map((cat) => cat.name);
+  assert.equal(incomeNames.includes('Revenus du mois'), true);
+  assert.equal(incomeNames.includes('Revenus du mois suivant'), true);
+}
+
+
+async function testCreateRespectsReconciledBalanceAndType() {
+  const prisma = new AccountsPrismaStub();
+  const { service } = createService(prisma);
+
+  const entity = await service.create({
+    name: 'Compte special',
+    initialBalance: 100,
+    reconciledBalance: 80,
+    type: AccountType.SAVINGS,
+    archived: true,
+  } as any);
+
+  assert.equal(entity.type, AccountType.SAVINGS);
+  assert.equal(entity.archived, true);
+  assert.equal(Number(entity.reconciledBalance), 80);
+}
+
+async function testCreateFallsBackToDefaultCurrencyWhenSettingsMissing() {
+  const prisma = new AccountsPrismaStub();
+  (prisma as any).settings.set('user-123', { currency: undefined });
+  const { service } = createService(prisma);
+
+  const entity = await service.create({
+    name: 'Compte sans devise',
+  } as any);
+
+  assert.equal(entity.currency, 'EUR');
+  assert.equal(Number(entity.initialBalance), 0);
+}
+
+async function testUpdateKeepsExistingNameAndCurrency() {
+  const existing: AccountRecord = {
+    id: 'acc-1',
+    userId: 'user-123',
+    name: 'Compte courant',
+    type: AccountType.CHECKING,
+    currency: 'CHF',
+    archived: false,
+    initialBalance: new Prisma.Decimal(10),
+    currentBalance: new Prisma.Decimal(10),
+    reconciledBalance: new Prisma.Decimal(10),
+    pointedBalance: new Prisma.Decimal(10),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  const prisma = new AccountsPrismaStub([existing]);
+  const { service } = createService(prisma);
+
+  const updated = await service.update('acc-1', {
+    type: AccountType.SAVINGS,
+    archived: true,
+  } as any);
+
+  assert.equal(updated.name, 'Compte courant');
+  assert.equal(updated.currency, 'CHF');
+  assert.equal(updated.type, AccountType.SAVINGS);
+  assert.equal(updated.archived, true);
+}
+
 (async () => {
   await testCreateAccountGeneratesCategoriesAndTransaction();
   await testCreateSkipsExistingIncomeCategories();
+  await testCreateUsesExistingInitialCategory();
+  await testCreateAddsMissingIncomeCategory();
   await testCreateUsesUppercaseCurrencyFromSettings();
+  await testCreateRespectsReconciledBalanceAndType();
+  await testCreateFallsBackToDefaultCurrencyWhenSettingsMissing();
   await testUpdateAdjustsBalancesAndTransactions();
+  await testUpdateKeepsExistingNameAndCurrency();
   await testUpdateWithoutInitialBalanceSkipsTransactionUpdate();
   await testUpdateThrowsWhenAccountMissing();
   await testRemoveArchivesAccount();

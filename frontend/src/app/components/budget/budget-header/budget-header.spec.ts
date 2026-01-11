@@ -134,6 +134,7 @@ describe('BudgetHeader', () => {
     expect(ref.attach).toHaveBeenCalled();
     expect(component.showStatus()).toBe(true);
     expect(ref.componentRef.instance.available).toBe(100);
+    expect(ref.componentRef.instance.totalAvailable).toBe(100);
     expect(typeof ref.componentRef.instance.requestClose).toBe('function');
 
     // simulate escape key via overlay stream
@@ -145,6 +146,47 @@ describe('BudgetHeader', () => {
     expect(ref.detach).toHaveBeenCalled();
     expect(ref.dispose).toHaveBeenCalled();
     expect(component.showStatus()).toBe(false);
+  });
+
+  it('closes overlay on backdrop clicks', async () => {
+    component.totalAvailable = 100;
+    component.budgetAvailable = new ElementRef(document.createElement('button'));
+    component.toggleStatus();
+
+    overlayStub.ref.backdrop$.next(new MouseEvent('click'));
+    await Promise.resolve();
+
+    expect(overlayStub.ref.detach).toHaveBeenCalled();
+  });
+
+  it('returns early when closeOverlay is called without an overlay', async () => {
+    (component as any).overlayRef = undefined;
+    await (component as any).closeOverlay();
+    expect(component.showStatus()).toBe(false);
+  });
+
+  it('handles missing component instance when attaching overlay', () => {
+    component.totalAvailable = 100;
+    component.budgetAvailable = new ElementRef(document.createElement('div'));
+    overlayStub.ref.attach = jest.fn(() => null as any);
+
+    component.toggleStatus();
+
+    expect(overlayStub.create).toHaveBeenCalled();
+    expect(component.showStatus()).toBe(true);
+  });
+
+  it('returns focus to origin when overlay detaches', async () => {
+    component.totalAvailable = 100;
+    const origin = document.createElement('button');
+    const focusSpy = jest.spyOn(origin, 'focus');
+    component.budgetAvailable = new ElementRef(origin);
+
+    component.toggleStatus();
+    overlayStub.ref.detach$.next();
+    await Promise.resolve();
+
+    expect(focusSpy).toHaveBeenCalled();
   });
 
   it('closes overlay when toggle invoked while open', async () => {
@@ -159,10 +201,30 @@ describe('BudgetHeader', () => {
     expect(overlayStub.ref.componentRef.instance.startClose).toHaveBeenCalled();
   });
 
+  it('keeps overlay open on non-escape keydown events', () => {
+    component.totalAvailable = 100;
+    component.budgetAvailable = new ElementRef(document.createElement('button'));
+    component.toggleStatus();
+
+    overlayStub.ref.keydown$.next(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+    expect(component.showStatus()).toBe(true);
+  });
+
   it('handles closeOverlay when component has no startClose', async () => {
     component.totalAvailable = 40;
     component.budgetAvailable = new ElementRef(document.createElement('div'));
     overlayStub.ref.componentRef.instance.startClose = undefined as any;
+    component.toggleStatus();
+    component.toggleStatus();
+    await Promise.resolve();
+    expect(overlayStub.ref.detach).toHaveBeenCalled();
+  });
+
+  it('swallows startClose errors and still detaches overlay', async () => {
+    component.totalAvailable = 40;
+    component.budgetAvailable = new ElementRef(document.createElement('div'));
+    overlayStub.ref.componentRef.instance.startClose = jest.fn().mockRejectedValue(new Error('boom'));
     component.toggleStatus();
     component.toggleStatus();
     await Promise.resolve();
@@ -177,6 +239,14 @@ describe('BudgetHeader', () => {
     component.onEscape(new KeyboardEvent('keydown', { key: 'Escape' }));
     await Promise.resolve();
     expect(ref.detach).toHaveBeenCalled();
+  });
+
+  it('ignores document escape when overlay is not shown', () => {
+    const ref = overlayStub.ref;
+    (component as any).overlayRef = ref;
+    component.showStatus.set(false);
+    component.onEscape(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(ref.detach).not.toHaveBeenCalled();
   });
 
   it('formats currency using shared helper', () => {

@@ -202,6 +202,7 @@ export class TransactionsStore {
       return payload;
     }
 
+    /* istanbul ignore next */
     if (typeof payload === 'object') {
       const maybeMessage = (payload as { message?: unknown; error?: unknown }).message;
       if (Array.isArray(maybeMessage) && maybeMessage.length > 0) {

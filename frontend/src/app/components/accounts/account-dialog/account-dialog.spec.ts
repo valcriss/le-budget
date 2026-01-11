@@ -94,6 +94,15 @@ describe('AccountDialog', () => {
     expect(cancelled).toHaveBeenCalled();
   });
 
+  it('ignores backdrop clicks from non-backdrop targets', () => {
+    const cancelled = jest.spyOn(component.cancelled, 'emit');
+    const event = { target: { dataset: { backdrop: 'false' } } } as unknown as MouseEvent;
+
+    component['onBackdropClick'](event);
+
+    expect(cancelled).not.toHaveBeenCalled();
+  });
+
   it('marks controls as touched when submitting invalid form', () => {
     const nameControl = component['form'].controls.name;
     expect(nameControl.touched).toBe(false);
@@ -118,6 +127,28 @@ describe('AccountDialog', () => {
       name: 'Nouveau compte',
       type: 'CHECKING',
       initialBalance: 123.45,
+    });
+  });
+
+  it('defaults missing name and type on submit', () => {
+    const submitted = jest.spyOn(component.submitted, 'emit');
+
+    component['form'].controls.name.clearValidators();
+    component['form'].controls.type.clearValidators();
+    component['form'].setValue({
+      name: null,
+      type: null,
+      initialBalance: '10',
+    });
+    component['form'].controls.name.updateValueAndValidity();
+    component['form'].controls.type.updateValueAndValidity();
+
+    component['onSubmit']();
+
+    expect(submitted).toHaveBeenCalledWith({
+      name: '',
+      type: 'CHECKING',
+      initialBalance: 10,
     });
   });
 

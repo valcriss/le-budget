@@ -3,6 +3,7 @@ import { Expose } from 'class-transformer';
 import { TransactionStatus, TransactionType } from '@prisma/client';
 
 export class TransactionEntity {
+  /* c8 ignore start */
   @ApiProperty()
   @Expose()
   id!: string;
@@ -62,6 +63,7 @@ export class TransactionEntity {
   @ApiProperty()
   @Expose()
   updatedAt!: Date;
+  /* c8 ignore end */
 
   isCredit(): boolean {
     return this.amount > 0;

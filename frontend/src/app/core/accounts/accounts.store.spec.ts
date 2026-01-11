@@ -143,6 +143,30 @@ describe('AccountsStore', () => {
     expect(store.hasData()).toBe(true);
   });
 
+  it('sorts accounts by name when createdAt ties', async () => {
+    const loadPromise = store.loadAccounts(true);
+    httpMock.expectOne(`${apiUrl}/accounts`).flush([
+      accountResponse({ id: 'acc-2', name: 'B name', createdAt: '2024-03-01T00:00:00Z' }),
+      accountResponse({ id: 'acc-1', name: 'A name', createdAt: '2024-03-01T00:00:00Z' }),
+    ]);
+
+    await loadPromise;
+
+    expect(store.accounts().map((acc) => acc.name)).toEqual(['A name', 'B name']);
+  });
+
+  it('sorts accounts with missing createdAt values', async () => {
+    const loadPromise = store.loadAccounts(true);
+    httpMock.expectOne(`${apiUrl}/accounts`).flush([
+      accountResponse({ id: 'acc-2', name: 'B name', createdAt: null }),
+      accountResponse({ id: 'acc-1', name: 'A name', createdAt: null }),
+    ]);
+
+    await loadPromise;
+
+    expect(store.accounts().map((acc) => acc.name)).toEqual(['A name', 'B name']);
+  });
+
   it('skips loading when data already present and not forced', async () => {
     getHarness().accountsSignal.set([toAccount({ id: 'seed' })]);
 
@@ -253,6 +277,17 @@ describe('AccountsStore', () => {
     expect(store.accounts()[0].archived).toBe(true);
   });
 
+  it('adds or updates accounts via applyAccountUpdate', () => {
+    const storeHarness = getHarness();
+    storeHarness.accountsSignal.set([toAccount({ id: 'acc-1', name: 'First' })]);
+
+    storeHarness.applyAccountUpdate(accountResponse({ id: 'acc-2', name: 'Second' }) as any);
+    expect(store.accounts().some((acc) => acc.id === 'acc-2')).toBe(true);
+
+    storeHarness.applyAccountUpdate(accountResponse({ id: 'acc-1', name: 'First Updated' }) as any);
+    expect(store.accounts().find((acc) => acc.id === 'acc-1')?.name).toBe('First Updated');
+  });
+
   it('ignores malformed event payloads', () => {
     const storeHarness = getHarness();
     storeHarness.accountsSignal.set([toAccount({ id: 'known' })]);
@@ -267,13 +302,16 @@ describe('AccountsStore', () => {
     expect(storeHarness.normalizeCurrency('longcode')).toBe('LON');
     expect(storeHarness.toAccountType('credit_card')).toBe('CREDIT_CARD');
     expect(storeHarness.toAccountType('custom')).toBe('OTHER');
+    expect(storeHarness.toAccountType(123 as any)).toBe('OTHER');
     expect(storeHarness.toAccountType(null)).toBe('CHECKING');
     expect(storeHarness.toNumber('12')).toBe(12);
     expect(storeHarness.toNumber(5)).toBe(5);
     expect(storeHarness.toNumber('oops')).toBe(0);
+    expect(storeHarness.toNumber(null)).toBe(0);
     expect(storeHarness.toIsoString('2024-01-01T00:00:00Z')).toBe('2024-01-01T00:00:00.000Z');
     expect(storeHarness.toIsoString('invalid')).toBeNull();
     expect(storeHarness.toIsoString(new Date('2024-02-01T00:00:00Z'))).toBe('2024-02-01T00:00:00.000Z');
+    expect(storeHarness.toIsoString(null)).toBeNull();
 
     const error = new HttpErrorResponse({
       status: 400,
@@ -281,10 +319,26 @@ describe('AccountsStore', () => {
       error: { message: ['Invalid'], error: 'Ignored' },
     });
     expect(storeHarness.mapError(error, 'fallback')).toBe('Invalid');
+    expect(storeHarness.mapError(new HttpErrorResponse({ status: 400, error: null }), 'fallback')).toBe(
+      'Requête invalide.',
+    );
+    expect(storeHarness.mapError(new HttpErrorResponse({ status: 401 }), 'fallback')).toBe(
+      'Authentification requise.',
+    );
+    expect(storeHarness.mapError(new HttpErrorResponse({ status: 404 }), 'fallback')).toBe(
+      'Aucun compte trouvé.',
+    );
     expect(storeHarness.extractBackendMessage({ error: 'Error message' })).toBe('Error message');
+    expect(storeHarness.extractBackendMessage('Raw string')).toBe('Raw string');
+    expect(storeHarness.extractBackendMessage({ message: 'Message' })).toBe('Message');
+    expect(storeHarness.extractBackendMessage({})).toBeNull();
     expect(storeHarness.mapError(new HttpErrorResponse({ status: 500, error: null }), 'fallback')).toBe(
       'Erreur interne du serveur.',
     );
+    expect(storeHarness.mapError(new HttpErrorResponse({ status: 418, error: { message: 'Nope' } }), 'fallback')).toBe(
+      'Nope',
+    );
+    expect(storeHarness.mapError(new HttpErrorResponse({ status: 418, error: null }), 'fallback')).toBe('fallback');
     expect(storeHarness.mapError(new Error('boom'), 'fallback')).toBe('fallback');
   });
 

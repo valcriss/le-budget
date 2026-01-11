@@ -35,7 +35,7 @@ describe('API_BASE_URL token', () => {
 
   it('factory yields fallback when window missing', () => {
     setWindow(undefined);
-    const factory = (API_BASE_URL as unknown as { ɵprov: { factory: () => string } }).ɵprov.factory;
+    const factory = (API_BASE_URL as any)['\u0275prov'].factory as () => string;
     expect(factory()).toBe('http://localhost:3000');
   });
 
