@@ -281,8 +281,8 @@ describe('AccountTransaction', () => {
     component.transaction = createTransaction({ label: 'Original label', categoryId: 'cat-1' });
     component['editModel'] = {
       date: '2024-02-02',
-      label: undefined as any,
-      categoryId: undefined as any,
+      label: undefined as unknown as string,
+      categoryId: undefined as unknown as string | null,
       debit: null,
       credit: 10,
     };

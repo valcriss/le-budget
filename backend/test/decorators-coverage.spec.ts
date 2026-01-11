@@ -1,6 +1,8 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
+import { createRequire } from 'node:module';
 
 type Decorator = (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
+
+const require = createRequire(import.meta.url);
 
 function reloadModule(path: string) {
   const resolved = require.resolve(path);

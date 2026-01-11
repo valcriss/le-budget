@@ -179,8 +179,10 @@ describe('BudgetStore', () => {
   });
 
   it('normalizes groups and months when arrays are missing', () => {
-    const normalizeGroup = (store as any).normalizeGroup.bind(store) as (group: any) => any;
-    const normalizeMonth = (store as any).normalizeMonth.bind(store) as (month: any) => any;
+    const normalizeGroup = (store as unknown as { normalizeGroup: (group: unknown) => unknown })
+      .normalizeGroup.bind(store);
+    const normalizeMonth = (store as unknown as { normalizeMonth: (month: unknown) => unknown })
+      .normalizeMonth.bind(store);
 
     const normalizedGroup = normalizeGroup({
       id: 'group',
@@ -189,10 +191,11 @@ describe('BudgetStore', () => {
       activity: undefined,
       available: undefined,
     });
-    expect(normalizedGroup.items).toEqual([]);
-    expect(normalizedGroup.assigned).toBe(0);
-    expect(normalizedGroup.activity).toBe(0);
-    expect(normalizedGroup.available).toBe(0);
+    const group = normalizedGroup as { items: unknown[]; assigned: number; activity: number; available: number };
+    expect(group.items).toEqual([]);
+    expect(group.assigned).toBe(0);
+    expect(group.activity).toBe(0);
+    expect(group.available).toBe(0);
 
     const normalizedMonth = normalizeMonth({
       id: 'month',
@@ -207,8 +210,9 @@ describe('BudgetStore', () => {
       totalActivity: undefined,
       totalAvailable: undefined,
     });
-    expect(normalizedMonth.groups).toEqual([]);
-    expect(normalizedMonth.availableCarryover).toBe(0);
+    const month = normalizedMonth as { groups: unknown[]; availableCarryover: number };
+    expect(month.groups).toEqual([]);
+    expect(month.availableCarryover).toBe(0);
   });
   it('derives group totals from items when fields are missing', async () => {
     const response = createMonthResponse();
@@ -307,7 +311,7 @@ describe('BudgetStore', () => {
 
   it('swallows refresh errors after updating assigned', async () => {
     const refreshSpy = jest
-      .spyOn(store as any, 'refreshMonthInPlace')
+      .spyOn(store as unknown as { refreshMonthInPlace: (key: string) => Promise<void> }, 'refreshMonthInPlace')
       .mockRejectedValue(new Error('fail'));
     const updatePromise = store.updateCategoryAssigned(monthKey, 'cat-1', 200);
     httpMock.expectOne(`${apiUrl}/budget/months/${monthKey}/categories/cat-1`).flush({});
@@ -368,6 +372,7 @@ describe('BudgetStore', () => {
     events.emit('budget.category.updated', {});
     events.emit('budget.month.updated', {});
     httpMock.expectNone(`${apiUrl}/budget/months/${monthKey}`);
+    expect(store.month()).not.toBeNull();
   });
 
   it('refreshes month in place and reuses pending promise', async () => {

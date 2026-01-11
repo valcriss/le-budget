@@ -82,8 +82,8 @@ describe('CategoriesStore', () => {
   it('sorts categories with missing sortOrder values', async () => {
     const loadPromise = store.load(true);
     httpMock.expectOne(`${apiUrl}/categories`).flush([
-      toCategory({ id: 'cat-2', name: 'B', sortOrder: undefined as any }),
-      toCategory({ id: 'cat-1', name: 'A', sortOrder: undefined as any }),
+      toCategory({ id: 'cat-2', name: 'B', sortOrder: undefined }),
+      toCategory({ id: 'cat-1', name: 'A', sortOrder: undefined }),
     ]);
 
     await loadPromise;

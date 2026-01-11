@@ -281,10 +281,14 @@ describe('AccountsStore', () => {
     const storeHarness = getHarness();
     storeHarness.accountsSignal.set([toAccount({ id: 'acc-1', name: 'First' })]);
 
-    storeHarness.applyAccountUpdate(accountResponse({ id: 'acc-2', name: 'Second' }) as any);
+    storeHarness.applyAccountUpdate(
+      accountResponse({ id: 'acc-2', name: 'Second' }) as unknown as Account,
+    );
     expect(store.accounts().some((acc) => acc.id === 'acc-2')).toBe(true);
 
-    storeHarness.applyAccountUpdate(accountResponse({ id: 'acc-1', name: 'First Updated' }) as any);
+    storeHarness.applyAccountUpdate(
+      accountResponse({ id: 'acc-1', name: 'First Updated' }) as unknown as Account,
+    );
     expect(store.accounts().find((acc) => acc.id === 'acc-1')?.name).toBe('First Updated');
   });
 
@@ -302,7 +306,7 @@ describe('AccountsStore', () => {
     expect(storeHarness.normalizeCurrency('longcode')).toBe('LON');
     expect(storeHarness.toAccountType('credit_card')).toBe('CREDIT_CARD');
     expect(storeHarness.toAccountType('custom')).toBe('OTHER');
-    expect(storeHarness.toAccountType(123 as any)).toBe('OTHER');
+    expect(storeHarness.toAccountType(123 as unknown as string)).toBe('OTHER');
     expect(storeHarness.toAccountType(null)).toBe('CHECKING');
     expect(storeHarness.toNumber('12')).toBe(12);
     expect(storeHarness.toNumber(5)).toBe(5);

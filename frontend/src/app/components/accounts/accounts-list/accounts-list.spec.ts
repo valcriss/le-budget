@@ -5,6 +5,7 @@ import { AccountsStore } from '../../../core/accounts/accounts.store';
 import { AccountsList } from './accounts-list';
 import { Subject } from 'rxjs';
 import { formatCurrencyWithSign } from '../../../shared/formatters';
+import { Account } from '../../../core/accounts/accounts.models';
 
 describe('AccountsList', () => {
   let component: AccountsList;
@@ -95,7 +96,7 @@ describe('AccountsList', () => {
   });
 
   it('tracks accounts by id', () => {
-    const account = { id: 'acc-1' } as any;
+    const account = { id: 'acc-1' } as Account;
     expect(component['trackByAccountId'](0, account)).toBe('acc-1');
   });
 

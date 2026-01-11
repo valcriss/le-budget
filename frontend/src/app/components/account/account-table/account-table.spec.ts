@@ -264,14 +264,20 @@ describe('AccountTable', () => {
       changes: { label: 'Retry label', date: '2024-03-10', amount: 12 },
     });
 
-    expect((component as any).draftTransaction().label).toBe('Retry label');
+    const draftSignal = (component as unknown as {
+      draftTransaction: { set(value: Transaction | null): void } & (() => Transaction | null);
+    }).draftTransaction;
+    expect(draftSignal().label).toBe('Retry label');
   });
 
   it('updates existing draft data when creation fails with a live draft', async () => {
     transactionsStore.create.mockResolvedValueOnce(null);
     component.startNewTransaction();
     const draft = component['rows']()[0];
-    (component as any).draftTransaction.set({ ...draft, label: 'Existing' });
+    const draftSignal = (component as unknown as {
+      draftTransaction: { set(value: Transaction | null): void } & (() => Transaction | null);
+    }).draftTransaction;
+    draftSignal.set({ ...draft, label: 'Existing' });
 
     await component['handleSave'](draft, { changes: { label: 'Updated' } });
 
