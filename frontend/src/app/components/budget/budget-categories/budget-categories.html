@@ -82,7 +82,7 @@
             <button
               type="button"
               class="group-label"
-              (click)="openEditGroup(g, $event)"
+              (dblclick)="openEditGroup(g, $event)"
             >
               {{ groupLabel(g) }}
             </button>
@@ -159,7 +159,7 @@
                       <button
                         type="button"
                         class="item-label"
-                        (click)="openEditCategory(g, it, $event)"
+                        (dblclick)="openEditCategory(g, it, $event)"
                       >
                         {{ itemLabel(it) }}
                       </button>

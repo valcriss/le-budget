@@ -40,6 +40,8 @@ async function testBudgetCategoryEntityAvailableFunds() {
     assigned: 0,
     activity: 0,
     available: 5,
+    requiredAmount: 0,
+    optimizedAmount: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
   });

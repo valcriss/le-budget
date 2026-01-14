@@ -137,6 +137,8 @@ export class BudgetStore {
       assigned: Number(category.assigned ?? 0),
       activity: Number(category.activity ?? 0),
       available: Number(category.available ?? 0),
+      requiredAmount: Number(category.requiredAmount ?? 0),
+      optimizedAmount: Number(category.optimizedAmount ?? 0),
     };
   }
 

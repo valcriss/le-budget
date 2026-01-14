@@ -33,6 +33,14 @@ export class BudgetCategoryEntity {
   @Expose()
   available!: number;
 
+  @ApiProperty({ description: 'Required amount for the month based on planned expenses' })
+  @Expose()
+  requiredAmount!: number;
+
+  @ApiProperty({ description: 'Optimized amount with smoothing for future expenses' })
+  @Expose()
+  optimizedAmount!: number;
+
   @ApiProperty()
   @Expose()
   createdAt!: Date;

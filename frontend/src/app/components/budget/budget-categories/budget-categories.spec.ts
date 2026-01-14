@@ -47,6 +47,8 @@ describe('BudgetCategories', () => {
       assigned: 10,
       activity: -5,
       available: 5,
+      requiredAmount: 0,
+      optimizedAmount: 0,
       createdAt: '2024-01-01',
       updatedAt: '2024-01-01',
     };

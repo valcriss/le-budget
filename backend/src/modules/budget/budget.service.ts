@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { BudgetMonth, Prisma } from '@prisma/client';
+import { BudgetMonth, CategoryKind, Prisma, TransactionType } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
@@ -17,6 +17,11 @@ type GroupWithCategories = Prisma.BudgetCategoryGroupGetPayload<{
 type CategoryWithRelation = Prisma.BudgetCategoryGetPayload<{
   include: { category: true };
 }>;
+
+type CategoryAmounts = {
+  requiredAmount: number;
+  optimizedAmount: number;
+};
 
 @Injectable()
 export class BudgetService {
@@ -120,7 +125,13 @@ export class BudgetService {
       },
     });
 
-    const groupEntities = groups.map((group) => this.toGroupEntity(group));
+    const groupCategories = groups.flatMap((group) => group.categories);
+    const computedAmounts = await this.computeCategoryAmounts(
+      monthDate,
+      groupCategories,
+      month.userId,
+    );
+    const groupEntities = groups.map((group) => this.toGroupEntity(group, computedAmounts));
     const totalAssigned = groupEntities.reduce((sum, g) => sum + g.assigned, 0);
     const totalActivity = groupEntities.reduce((sum, g) => sum + g.activity, 0);
     const totalAvailable = groupEntities.reduce((sum, g) => sum + g.available, 0);
@@ -142,8 +153,13 @@ export class BudgetService {
     });
   }
 
-  private toGroupEntity(group: GroupWithCategories): BudgetCategoryGroupEntity {
-    const items = group.categories.map((category) => this.toCategoryEntity(category));
+  private toGroupEntity(
+    group: GroupWithCategories,
+    computedAmounts: Map<string, CategoryAmounts>,
+  ): BudgetCategoryGroupEntity {
+    const items = group.categories.map((category) =>
+      this.toCategoryEntity(category, computedAmounts.get(category.categoryId)),
+    );
     const assigned = items.reduce((sum, c) => sum + c.assigned, 0);
     const activity = items.reduce((sum, c) => sum + c.activity, 0);
     const available = items.reduce((sum, c) => sum + c.available, 0);
@@ -160,7 +176,10 @@ export class BudgetService {
     });
   }
 
-  private toCategoryEntity(category: CategoryWithRelation): BudgetCategoryEntity {
+  private toCategoryEntity(
+    category: CategoryWithRelation,
+    computed?: CategoryAmounts,
+  ): BudgetCategoryEntity {
     return plainToInstance(BudgetCategoryEntity, {
       id: category.id,
       groupId: category.groupId,
@@ -169,9 +188,123 @@ export class BudgetService {
       assigned: Number(category.assigned),
       activity: Number(category.activity),
       available: Number(category.available),
+      requiredAmount: computed?.requiredAmount ?? 0,
+      optimizedAmount: computed?.optimizedAmount ?? 0,
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,
     });
+  }
+
+  private async computeCategoryAmounts(
+    monthStart: Date,
+    categories: CategoryWithRelation[],
+    userId: string,
+  ): Promise<Map<string, CategoryAmounts>> {
+    const results = new Map<string, CategoryAmounts>();
+    const categoryIds = Array.from(
+      new Set(categories.map((category) => category.categoryId).filter(Boolean)),
+    );
+    if (categoryIds.length === 0) {
+      return results;
+    }
+
+    const nextMonthStart = this.getNextMonth(monthStart);
+
+    const currentTransactions = await this.prisma.transaction.findMany({
+      where: {
+        account: { userId },
+        categoryId: { in: categoryIds },
+        category: { kind: CategoryKind.EXPENSE },
+        transactionType: TransactionType.NONE,
+        amount: { lt: 0 },
+        date: { gte: monthStart, lt: nextMonthStart },
+      },
+      select: { categoryId: true, amount: true },
+    });
+
+    const futureTransactions = await this.prisma.transaction.findMany({
+      where: {
+        account: { userId },
+        categoryId: { in: categoryIds },
+        category: { kind: CategoryKind.EXPENSE },
+        transactionType: TransactionType.NONE,
+        amount: { lt: 0 },
+        date: { gte: nextMonthStart },
+      },
+      select: { categoryId: true, amount: true, date: true },
+      orderBy: { date: 'asc' },
+    });
+
+    const requiredByCategory = new Map<string, number>();
+    for (const txn of currentTransactions) {
+      if (!txn.categoryId) {
+        continue;
+      }
+      const current = requiredByCategory.get(txn.categoryId) ?? 0;
+      requiredByCategory.set(txn.categoryId, current + Math.abs(Number(txn.amount)));
+    }
+
+    const futuresByCategory = new Map<string, Array<{ amount: number; date: Date }>>();
+    for (const txn of futureTransactions) {
+      if (!txn.categoryId) {
+        continue;
+      }
+      const list = futuresByCategory.get(txn.categoryId) ?? [];
+      list.push({ amount: Math.abs(Number(txn.amount)), date: txn.date });
+      futuresByCategory.set(txn.categoryId, list);
+    }
+
+    for (const category of categories) {
+      const requiredRaw = requiredByCategory.get(category.categoryId) ?? 0;
+      const required = this.roundTo4(requiredRaw);
+      const futures = futuresByCategory.get(category.categoryId) ?? [];
+      if (futures.length === 0) {
+        results.set(category.categoryId, {
+          requiredAmount: required,
+          optimizedAmount: required,
+        });
+        continue;
+      }
+
+      const available = Math.max(0, Number(category.available ?? 0));
+      let remainingBalance = available;
+      let smoothingTotal = 0;
+
+      for (const future of futures) {
+        const take = Math.min(remainingBalance, future.amount);
+        remainingBalance -= take;
+        const remaining = Math.max(0, future.amount - take);
+        const monthsUseful = this.monthsBetweenInclusive(
+          monthStart,
+          this.getMonthStart(future.date),
+        );
+        if (monthsUseful > 0) {
+          smoothingTotal += remaining / monthsUseful;
+        }
+      }
+
+      const optimized = this.roundTo4(requiredRaw + smoothingTotal);
+      results.set(category.categoryId, {
+        requiredAmount: required,
+        optimizedAmount: optimized,
+      });
+    }
+
+    return results;
+  }
+
+  private monthsBetweenInclusive(from: Date, to: Date): number {
+    const fromIndex = from.getUTCFullYear() * 12 + from.getUTCMonth();
+    const toIndex = to.getUTCFullYear() * 12 + to.getUTCMonth();
+    if (toIndex < fromIndex) {
+      return 0;
+    }
+    return toIndex - fromIndex + 1;
+  }
+
+  private roundTo4(value: number): number {
+    const factor = 10_000;
+    return Math.round((value + Number.EPSILON) * factor) / factor;
   }
 
   private async getOrCreateMonth(

@@ -737,6 +737,8 @@ export class TransactionsService {
       assigned: Number(assigned ?? 0),
       activity: Number(activity ?? 0),
       available: Number(available ?? 0),
+      requiredAmount: 0,
+      optimizedAmount: 0,
       createdAt,
       updatedAt,
     });

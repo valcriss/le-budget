@@ -8,6 +8,8 @@ export interface BudgetCategory {
   assigned: number;
   activity: number;
   available: number;
+  requiredAmount: number;
+  optimizedAmount: number;
   createdAt: string;
   updatedAt: string;
 }

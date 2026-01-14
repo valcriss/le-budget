@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { CategoryKind, Prisma, TransactionType } from '@prisma/client';
 import { BudgetService } from '../src/modules/budget/budget.service';
 
 type MonthRecord = {
@@ -40,6 +40,16 @@ type CategoryRecord = {
   sortOrder: number;
   kind: string;
   parentCategoryId: string | null;
+};
+
+type TransactionRecord = {
+  id: string;
+  accountUserId: string;
+  categoryId: string;
+  categoryKind: string;
+  date: Date;
+  amount: number;
+  transactionType: string;
 };
 
 class StubEventsService {
@@ -88,6 +98,7 @@ class FakeBudgetPrisma {
   private readonly groups = new Map<string, BudgetGroupRecord>();
   private readonly budgetCategories = new Map<string, BudgetCategoryRecord>();
   private readonly categories = new Map<string, CategoryRecord>();
+  private readonly transactions: TransactionRecord[] = [];
 
   public readonly createdGroups: BudgetGroupRecord[] = [];
   public readonly createdBudgetCategories: BudgetCategoryRecord[] = [];
@@ -165,6 +176,10 @@ class FakeBudgetPrisma {
 
   addCategory(category: CategoryRecord) {
     this.categories.set(category.id, { ...category });
+  }
+
+  addTransaction(txn: TransactionRecord) {
+    this.transactions.push({ ...txn });
   }
 
   get budgetMonth() {
@@ -404,6 +419,72 @@ class FakeBudgetPrisma {
       },
     };
   }
+
+  get transaction() {
+    return {
+      findMany: async ({ where, select, orderBy }: { where?: any; select?: any; orderBy?: any }) => {
+        let items = [...this.transactions];
+        if (where?.account?.userId) {
+          items = items.filter((item) => item.accountUserId === where.account.userId);
+        }
+        if (where?.categoryId?.in) {
+          const allowed = new Set(where.categoryId.in);
+          items = items.filter((item) => allowed.has(item.categoryId));
+        }
+        if (where?.category?.kind) {
+          const kind = where.category.kind;
+          if (kind?.in) {
+            const allowed = new Set(kind.in);
+            items = items.filter((item) => allowed.has(item.categoryKind));
+          } else {
+            items = items.filter((item) => item.categoryKind === kind);
+          }
+        }
+        if (where?.transactionType) {
+          items = items.filter((item) => item.transactionType === where.transactionType);
+        }
+        if (where?.amount?.lt !== undefined) {
+          items = items.filter((item) => item.amount < where.amount.lt);
+        }
+        if (where?.date?.gte || where?.date?.lt) {
+          const gte = where.date.gte?.getTime();
+          const lt = where.date.lt?.getTime();
+          items = items.filter((item) => {
+            const time = item.date.getTime();
+            if (gte !== undefined && time < gte) {
+              return false;
+            }
+            if (lt !== undefined && time >= lt) {
+              return false;
+            }
+            return true;
+          });
+        }
+        if (orderBy?.date) {
+          items.sort((a, b) =>
+            orderBy.date === 'asc' ? a.date.getTime() - b.date.getTime() : b.date.getTime() - a.date.getTime(),
+          );
+        }
+
+        if (!select) {
+          return items.map((item) => ({ ...item }));
+        }
+        return items.map((item) => {
+          const result: any = {};
+          if (select.categoryId) {
+            result.categoryId = item.categoryId;
+          }
+          if (select.amount) {
+            result.amount = item.amount;
+          }
+          if (select.date) {
+            result.date = new Date(item.date);
+          }
+          return result;
+        });
+      },
+    };
+  }
 }
 
 function createBudgetService(prisma: FakeBudgetPrisma) {
@@ -486,6 +567,44 @@ async function testGetMonthCreatesStructure() {
   assert.equal(prisma.createdGroups.length, 2);
   assert.equal(prisma.createdBudgetCategories.length, 1);
   assert.equal(transactions.calls.length, 2); // ensureMonthStructure + final recalculation
+}
+
+async function testGetMonthComputesRequiredAndOptimized() {
+  const prisma = new FakeBudgetPrisma(true);
+  prisma.addTransaction({
+    id: 'txn-jan',
+    accountUserId: 'user-123',
+    categoryId: 'cat-1',
+    categoryKind: CategoryKind.EXPENSE,
+    date: new Date(Date.UTC(2025, 0, 5)),
+    amount: -50,
+    transactionType: TransactionType.NONE,
+  });
+  prisma.addTransaction({
+    id: 'txn-aug',
+    accountUserId: 'user-123',
+    categoryId: 'cat-1',
+    categoryKind: CategoryKind.EXPENSE,
+    date: new Date(Date.UTC(2025, 7, 15)),
+    amount: -500,
+    transactionType: TransactionType.NONE,
+  });
+  prisma.addTransaction({
+    id: 'txn-dec',
+    accountUserId: 'user-123',
+    categoryId: 'cat-1',
+    categoryKind: CategoryKind.EXPENSE,
+    date: new Date(Date.UTC(2025, 11, 20)),
+    amount: -700,
+    transactionType: TransactionType.NONE,
+  });
+
+  const { service } = createBudgetService(prisma);
+
+  const month = await service.getMonth('2025-01');
+  const item = month.groups[0].items[0];
+  assert.equal(item.requiredAmount, 50);
+  assert.equal(item.optimizedAmount, 167.7084);
 }
 
 
@@ -634,6 +753,7 @@ async function testGetOrCreateMonthUpdatesMismatchedMonth() {
   await testUpdateCategoryUsesActivityFallback();
   await testMonthStringToDateValidation();
   await testGetMonthCreatesStructure();
+  await testGetMonthComputesRequiredAndOptimized();
   await testEnsureMonthStructureSkipsRecalculateWhenNoNewCategories();
   await testGetOrCreateMonthUsesIdMatch();
   await testGetOrCreateMonthUpdatesMismatchedMonth();
