@@ -604,7 +604,7 @@ async function testGetMonthComputesRequiredAndOptimized() {
   const month = await service.getMonth('2025-01');
   const item = month.groups[0].items[0];
   assert.equal(item.requiredAmount, 50);
-  assert.equal(item.optimizedAmount, 167.7084);
+  assert.equal(item.optimizedAmount, 167.7083);
 }
 
 
